@@ -1,0 +1,429 @@
+/* Palette: neutral dark greys with a slight warm bias so the amber brand colour
+   sits well. Amber is the one accent (buttons, focus, highlights, logo). Result
+   colours keep their meaning: green advances, violet = losers bracket, red = out. */
+:root {
+  --bg: #111318;
+  --panel: #181b22;
+  --panel-2: #20232c;
+  --border: #2e323d;
+  --text: #eceef2;
+  --muted: #9599a6;
+  --accent: #ffb020;
+  --accent-hover: #ffc24d;
+  --on-accent: #1d1503;
+  --accent-2: var(--accent);
+  --losers: #a685ff;
+  --win: #35c17a;
+  --lose: #e35b5b;
+  --radius: 10px;
+  --font-text: "Funnel Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: "Funnel Display", var(--font-text);
+  font-family: var(--font-text);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+#app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 16px 60px;
+}
+/* Bracket screen uses the full viewport so wide brackets aren't clipped. */
+#app.wide { max-width: none; padding-left: 24px; padding-right: 24px; }
+
+h1, h2, h3 { margin: 0 0 12px; font-family: var(--font-display); font-weight: 650; letter-spacing: -0.01em; }
+h1 { font-size: 22px; }
+h2 { font-size: 18px; }
+h3 { font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+
+p { color: var(--muted); line-height: 1.5; }
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.topbar .title { display: flex; align-items: baseline; gap: 10px; }
+.topbar .title small { color: var(--muted); font-weight: normal; }
+
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
+
+button, .btn {
+  font: inherit;
+  line-height: 1.25;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 9px 14px;
+  transition: background 0.15s, border-color 0.15s;
+}
+button:hover { background: #2a2e39; border-color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+button.ghost { background: transparent; }
+button.danger { border-color: var(--lose); color: var(--lose); background: transparent; }
+button.danger:hover { background: #e35b5b22; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+button.small { padding: 5px 10px; font-size: 12px; }
+
+input[type="text"], input[type="number"] {
+  font: inherit;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 9px 12px;
+  width: 100%;
+}
+input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.field { margin-bottom: 16px; max-width: 360px; }
+.field-row { display: flex; gap: 16px; flex-wrap: wrap; }
+
+.estimate {
+  margin-top: 18px;
+  padding: 14px;
+  background: var(--panel-2);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+.estimate .row { display: flex; justify-content: space-between; padding: 4px 0; }
+.estimate .row span:first-child { color: var(--muted); }
+
+.format-options { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.format-option {
+  flex: 1;
+  min-width: 180px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  cursor: pointer;
+  background: var(--panel-2);
+}
+.format-option.selected { border-color: var(--accent); background: #ffb0201f; }
+.format-option input { display: none; }
+.format-option .label { font-weight: 600; margin-bottom: 4px; }
+.format-option .sub { font-size: 12px; color: var(--muted); }
+
+.name-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+  margin: 16px 0 20px;
+}
+
+.tournament-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.tournament-list .item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.tournament-list .item .meta { color: var(--muted); font-size: 12px; }
+
+.up-next { margin-bottom: 26px; }
+.up-next-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+
+.bracket-graph { position: relative; overflow-x: auto; padding-bottom: 10px; }
+.bracket-lines { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 0; overflow: visible; }
+.bracket-columns { position: relative; z-index: 1; display: flex; gap: 56px; align-items: stretch; }
+.bracket-column { flex: 1 0 230px; max-width: 360px; display: flex; flex-direction: column; }
+/* Once measured (ui.js syncColumns), every bracket column - Final 4, Winners,
+   Losers - shares one width, so rounds line up down the page. */
+#app[style*="--col-w"] .bracket-column { flex: 0 0 var(--col-w); max-width: none; }
+.bracket-column > .round-title { font-size: 12px; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
+/* Each cell takes an equal share of the column height, so a round-N match sits
+   centred between its two round-(N-1) feeders. */
+.round-matches { flex: 1; display: flex; flex-direction: column; }
+.match-cell { flex: 1 1 0; display: flex; flex-direction: column; justify-content: center; padding: 6px 0; }
+
+.final4-graph .bracket-columns { gap: 56px; }
+.final4-graph .bracket-column { flex-grow: 0; }
+/* Equal-height rows (incl. the empty ones) keep the Small Final below the semis. */
+.final4-graph .match-cell { min-height: 140px; }
+
+.edge { fill: none; stroke: #3c414e; stroke-width: 2; }
+.edge.done { stroke: var(--win); opacity: 0.75; }
+.edge.lose { stroke-dasharray: 5 4; }
+.edge.lose.done { stroke: var(--lose); }
+
+.legend { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; margin: 0 0 8px; }
+.legend span { display: inline-block; width: 22px; border-top: 2px solid var(--win); }
+.legend .legend-lose { border-top: 2px dashed var(--lose); margin-left: 10px; }
+
+.lb-list { display: flex; flex-direction: column; gap: 10px; }
+
+.match-card {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 14px;
+}
+.match-card.bye { opacity: 0.55; }
+.match-card.ready { border-color: var(--accent); }
+.match-card.completed { opacity: 0.7; }
+/* Bracket finals stand out by weight, not colour: amber borders mean "ready to ride". */
+.match-card.final-marker { border-width: 2px; }
+.match-card.pending { border-style: dashed; opacity: 0.75; }
+.match-card.placeholder { border-style: dashed; }
+
+.slot {
+  min-height: 34px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 6px;
+  margin: 3px 0;
+}
+.slot .name { flex: 1; }
+.slot .score { color: var(--muted); font-size: 12px; margin-right: 8px; }
+.slot.winner { background: #35c17a22; }
+.slot.winner .name { color: var(--win); font-weight: 600; }
+.slot.loser { opacity: 0.6; }
+.slot button { padding: 4px 10px; font-size: 12px; }
+.slot .tbd { color: var(--muted); font-style: italic; }
+.result-icon { margin-left: 6px; }
+.result-icon.eliminated { color: var(--lose); opacity: 0.85; font-size: 12px; font-weight: 700; }
+.result-icon.medal { font-size: 15px; }
+
+.drop-tag {
+  font-size: 10px; line-height: 14px; white-space: nowrap; margin-right: 8px;
+  color: var(--losers); border: 1px solid #a685ff66; border-radius: 6px; padding: 0 5px;
+}
+.drop-tag.semi-tag { color: var(--accent-2); border-color: #ffb02066; }
+.slot.bye-slot .name { color: var(--muted); font-size: 12px; font-style: italic; }
+
+/* Tags float on the card's top edge so they don't change card height
+   (keeps cards in a round the same size, which keeps the lines tidy). */
+.bye-tag, .final-tag {
+  position: absolute; top: -9px; right: 10px;
+  font-size: 10px; line-height: 14px; color: var(--accent-2); background: var(--panel);
+  border: 1px solid var(--accent-2); border-radius: 6px; padding: 1px 6px;
+}
+.final-tag { color: var(--text); border-color: var(--muted); }
+
+.section { margin-bottom: 30px; }
+
+
+.standings { list-style: none; padding: 0; margin: 0; max-width: 420px; }
+.standings li {
+  display: flex; gap: 12px; align-items: center; min-height: 44px; padding: 0 10px;
+  border-bottom: 1px solid var(--border);
+}
+.standings li .rank { font-weight: 700; color: var(--accent-2); width: 28px; line-height: 1; } /* medals don't make rows taller */
+
+/* Finished tournament: standings and Final 4 side by side on desktop. */
+.results-row { display: flex; gap: 56px; align-items: flex-start; }
+.results-row > .section:first-child { flex: 0 0 var(--col-w, 380px); min-width: 0; } /* standings = one column */
+.results-row > .section:last-child { flex: 1; min-width: 0; }
+.standings .top1 .rank { color: #ffd451; }
+.standings .standing-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* With a mouse, the hover-only button floats over the row's right end instead
+   of reserving space, so names get the full (one-column) width. */
+@media (hover: hover) {
+  .standings li { position: relative; }
+  .standings .journey-btn { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); }
+}
+.standings .journey-btn { opacity: 0; transition: opacity 0.12s; }
+.standings li:hover .journey-btn, .standings .journey-btn:focus { opacity: 1; }
+@media (hover: none) { .standings .journey-btn { opacity: 1; } }
+.replay-row select {
+  font: inherit; background: var(--panel-2); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 10px; max-width: 100%;
+}
+
+.empty { color: var(--muted); font-style: italic; padding: 20px 0; }
+
+.file-input-label { display: inline-flex; align-items: center; margin: 0; } /* not a form label: drop the 6px label spacing */
+.file-input-label input { display: none; }
+
+footer.note { margin-top: 40px; font-size: 12px; color: var(--muted); }
+
+/* ---- path tracing (hover a competitor) ---- */
+.match-card, .edge, .standings li { transition: opacity 0.12s; }
+#app.tracing .match-card { opacity: 0.3; }
+#app.tracing .match-card.path-card { opacity: 1; border-color: var(--accent-2); }
+#app.tracing .edge { opacity: 0.12; }
+#app.tracing .edge.path { opacity: 1; stroke: var(--accent-2); stroke-width: 3; }
+#app.tracing .standings li { opacity: 0.4; }
+#app.tracing .standings li.path-hl { opacity: 1; }
+.slot.path-hl { box-shadow: inset 0 0 0 1px var(--accent-2); }
+.slot.path-hl .name { color: var(--accent-2); }
+
+/* ---- replay ---- */
+.replay { display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap; }
+.replay-stage { position: relative; max-width: 100%; }
+.replay-tip {
+  position: absolute; transform: translate(-50%, -100%); pointer-events: none; white-space: nowrap;
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+  font-size: 12px; padding: 4px 8px; border-radius: 6px;
+}
+.replay canvas {
+  display: block;
+  height: min(78vh, 900px);
+  aspect-ratio: 9 / 16;
+  max-width: 100%;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  cursor: pointer;
+}
+.replay-controls { flex: 1; min-width: 260px; display: flex; flex-direction: column; gap: 12px; }
+.replay-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.replay-row input[type="range"] { flex: 1; min-width: 140px; accent-color: var(--accent); }
+.replay-time { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; }
+.replay-status { margin: 0; font-size: 13px; }
+@media (max-width: 640px) {
+  .replay-stage { width: 100%; }
+  .replay canvas { height: auto; width: 100%; }
+}
+
+/* ---- phones ---- */
+.round-tabs { display: none; }
+.next-tag { display: none; }
+.more-toggle { display: none; }
+.toolbar-more { display: contents; }
+
+@media (max-width: 700px) {
+  #app.wide { padding-left: 14px; padding-right: 14px; }
+
+  .results-row { display: block; }
+  .standings { max-width: none; } /* dividers span the full width */
+
+  /* Toolbar: Undo + Share replay stay; the rest folds behind "···". */
+  .more-toggle { display: inline-block; }
+  .toolbar-more { display: none; }
+  .toolbar.open .toolbar-more { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+
+  /* Brackets: one round at a time, picked with tabs; lines give way to
+     "→ R2" style hints on each winner. */
+  .round-tabs { display: flex; gap: 6px; overflow-x: auto; margin: 0 0 10px; padding-bottom: 4px; }
+  .round-tabs button { white-space: nowrap; }
+  .round-tabs button.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .has-tabs .bracket-lines { display: none; }
+  .has-tabs .bracket-column { display: none; }
+  .has-tabs .bracket-column.active { display: flex; flex: 1 1 auto; max-width: none; }
+  .has-tabs .bracket-column > .round-title { display: none; }
+  .has-tabs .match-cell { flex: none !important; padding: 5px 0; }
+  .next-tag { display: inline-block; color: var(--win); border-color: #35c17a66; }
+
+  /* Final 4 uses the same tabs (Semifinals / Small final / Final); drop
+     the spacer cells that line the cards up on desktop. */
+  .final4-graph .match-cell { min-height: 0; }
+  .final4-graph .match-cell:empty { display: none; }
+  .legend { display: none; }
+
+  .drop-tag { margin-right: 4px; }
+}
+
+/* ---- Brand logo: "drop. bounceback. rebattle." -------------------------- */
+/* Square full stops are a logo-only detail; the amber underline under "rebattle"
+   is drawn at reading pace: it waits ~1.1s for "drop. bounceback.", then draws
+   over ~0.75s, the time it takes to read "re-bat-tle". */
+.brand {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+  text-transform: lowercase;
+}
+.brand-h1 { font-size: clamp(24px, 4.2vw, 34px); line-height: 1.15; margin: 0; }
+.brand-h1.small { font-size: 22px; }
+.brand-lead { color: var(--muted); }
+.brand-name { color: var(--text); }
+.brand-stop {
+  display: inline-block;
+  width: 0.14em;
+  height: 0.14em;
+  margin-left: 0.06em;
+  background: currentColor;
+  vertical-align: baseline;
+}
+.brand-word {
+  background: linear-gradient(var(--accent-2), var(--accent-2)) no-repeat left bottom / 100% 0.12em;
+  padding-bottom: 0.04em;
+}
+.brand-animate .brand-word { animation: brand-draw 0.75s cubic-bezier(0.35, 0, 0.45, 1) 1.1s both; }
+@keyframes brand-draw {
+  from { background-size: 0% 0.12em; }
+  to { background-size: 100% 0.12em; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand-animate .brand-word { animation: none; }
+}
+
+/* Competition screens: name left, logo right on one row, buttons on the row below. */
+.event-top { align-items: baseline; flex-wrap: nowrap; margin-bottom: 12px; }
+.event-top .title { min-width: 0; flex-wrap: wrap; }
+.event-toolbar { margin-bottom: 20px; }
+.r-mark { display: none; height: 28px; width: auto; color: var(--text); }
+.brand-home {
+  background: none; border: 0; padding: 0; border-radius: 4px;
+  font-size: 15px; color: inherit;
+}
+.brand-home:hover { background: none; opacity: 0.85; }
+.brand-home:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 3px; }
+
+@media (max-width: 700px) {
+  .brand-home .brand { display: none; }
+  .brand-home .r-mark { display: block; }
+}
+
+/* Numbers line up in columns wherever results and places are listed. */
+.standings, .match-card, .estimate, .up-next { font-variant-numeric: tabular-nums; }
+
+/* Shuffle icon on Losers-bracket round titles and tabs: pairings there are a random draw. */
+.draw-icon { display: inline-flex; vertical-align: -2px; margin-left: 6px; color: var(--losers); cursor: help; }
+.draw-icon svg { width: 14px; height: 14px; }
+
+/* ---- Legend (bottom of the bracket screen) ---- */
+/* Wide column gap, tight sample-to-text gap, so each description clearly belongs to its sample. */
+.key-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px 64px; }
+.key-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); line-height: 1.35; }
+.key-sample { flex: none; width: 84px; display: flex; align-items: center; justify-content: flex-start; color: var(--text); }
+.key-sample .bye-tag { position: static; }
+.key-sample .drop-tag, .key-sample .result-icon { margin: 0; }
+.key-sample .draw-icon { margin: 0; }
+.key-sample .draw-icon svg { width: 18px; height: 18px; }
+.key-card { display: inline-block; width: 44px; height: 24px; border-radius: 6px; background: var(--panel); border: 1px solid var(--border); }
+.key-card.ready { border-color: var(--accent); }
+.key-line { display: inline-block; width: 40px; border-top: 2px solid var(--win); opacity: 0.75; }
+.key-line.lose { border-top: 2px dashed var(--lose); }
+.key-hover { color: var(--accent-2); font-weight: 600; box-shadow: inset 0 0 0 1px var(--accent-2); border-radius: 6px; padding: 2px 8px; font-size: 12px; }
+.key-sample .next-tag { display: inline-block; color: var(--win); border-color: #35c17a66; }
+.only-phone { display: none; }
+@media (max-width: 700px) {
+  .only-phone { display: flex; }
+  .only-desktop { display: none; }
+  .key-grid { grid-template-columns: 1fr; }
+}
+@media (hover: none) { .key-item.only-desktop:last-child { display: none; } }
+.toolbar.align-end { justify-content: flex-end; }
+@media (max-width: 700px) { .event-top .brand-home { align-self: center; } }

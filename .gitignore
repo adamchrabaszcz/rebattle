@@ -1,0 +1,8 @@
+.DS_Store
+node_modules/
+.wrangler/
+.dev.vars
+*.mp4
+*.webm
+__pycache__/
+.venv/
