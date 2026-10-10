@@ -1,0 +1,9 @@
+// Cloudflare Workers deploy: static assets only (no Worker script yet).
+// Only public/ is published; docs, tests and tools stay out of the site.
+{
+  "name": "rebattle",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./public"
+  }
+}

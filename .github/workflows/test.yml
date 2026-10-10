@@ -19,4 +19,4 @@ jobs:
       - name: Bracket engine and import checks
         run: node --test
       - name: Scripts parse
-        run: for f in js/*.js; do node --check "$f"; done
+        run: for f in public/js/*.js; do node --check "$f"; done

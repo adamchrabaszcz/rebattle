@@ -1,14 +1,14 @@
 # Architecture
 
-Static app: `index.html` loads five plain scripts in order. Each attaches one global; there is no module system yet (planned, see the README roadmap).
+Static app, all served files in `public/`: `public/index.html` loads five plain scripts in order. Each attaches one global; there is no module system yet (planned, see the README roadmap).
 
 | Script | Global | Role |
 | --- | --- | --- |
-| `js/bracket.js` | `Bracket` | Engine. Pure functions over a tournament object; no DOM, no storage |
-| `js/storage.js` | `Store` | localStorage persistence, JSON export, import validation |
-| `js/ui.js` | `UI` | Builds every screen as an HTML string; draws SVG connector lines after render |
-| `js/replay.js` | `Replay` | Canvas replay video: timeline, drawing, player, export |
-| `js/app.js` | – | Owns state, handles every click (`data-action` delegation), calls `UI.render` |
+| `public/js/bracket.js` | `Bracket` | Engine. Pure functions over a tournament object; no DOM, no storage |
+| `public/js/storage.js` | `Store` | localStorage persistence, JSON export, import validation |
+| `public/js/ui.js` | `UI` | Builds every screen as an HTML string; draws SVG connector lines after render |
+| `public/js/replay.js` | `Replay` | Canvas replay video: timeline, drawing, player, export |
+| `public/js/app.js` | – | Owns state, handles every click (`data-action` delegation), calls `UI.render` |
 
 Flow: a click → `app.js` mutates `state` (via `Bracket` for results) → `Store.upsert` → `UI.render(container, state)` re-renders the whole screen. Undo keeps up to 20 full JSON snapshots of the tournament.
 
@@ -49,3 +49,9 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 - `localStorage` keys `ruedaBattle.tournaments` and `ruedaBattle.activeTournamentId`; names predate the rebattle rename and must stay.
 - A `storage` event from another tab marks the open tournament as changed elsewhere; recording, renaming and undo are blocked until it is reloaded.
 - Import: `Store.readFile` parses and validates; `app.js` asks before replacing a tournament with the same id.
+
+## Hosting
+
+- Cloudflare Workers, static assets only: `wrangler.jsonc` publishes `public/`, so docs, tests and tools are never served.
+- Cloudflare's GitHub integration deploys `main` on every merge and builds a preview for each pull request.
+- The planned cloud saving (one Durable Object per tournament) will add a Worker script to the same project.

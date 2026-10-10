@@ -4,8 +4,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-require('../js/bracket.js');
-require('../js/storage.js');
+require('../public/js/bracket.js');
+require('../public/js/storage.js');
 const { Bracket, Store } = globalThis;
 
 const names = (n) => Array.from({ length: n }, (_, i) => 'Rider ' + (i + 1));

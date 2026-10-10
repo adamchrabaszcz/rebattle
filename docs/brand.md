@@ -13,7 +13,7 @@
 
 ## Type
 
-- **Funnel Display** for the logo, headings and big video titles; **Funnel Sans** for everything else. Bundled in `fonts/` (SIL OFL), latin + latin-ext.
+- **Funnel Display** for the logo, headings and big video titles; **Funnel Sans** for everything else. Bundled in `public/fonts/` (SIL OFL), latin + latin-ext.
 - Tabular numbers wherever places or counts line up.
 
 ## Colour
