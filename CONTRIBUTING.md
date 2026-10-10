@@ -39,15 +39,15 @@ Breaking changes (e.g. a change to the saved tournament format) get a `!` after 
 
 ```sh
 node --test                                  # engine + import tests
-for f in js/*.js; do node --check "$f"; done # every script parses
+for f in public/js/*.js; do node --check "$f"; done # every script parses
 ```
 
 ## Code conventions
 
 - No build step and no runtime dependencies. Plain scripts, readable as shipped.
-- `js/bracket.js` is pure logic: no DOM, no storage. Engine changes need a test in `tests/`.
-- Screens are built as HTML strings in `js/ui.js`; every user-supplied string goes through `escapeHtml`.
-- Interaction goes through `data-action` attributes handled in `js/app.js`; no inline event handlers.
+- `public/js/bracket.js` is pure logic: no DOM, no storage. Engine changes need a test in `tests/`.
+- Screens are built as HTML strings in `public/js/ui.js`; every user-supplied string goes through `escapeHtml`.
+- Interaction goes through `data-action` attributes handled in `public/js/app.js`; no inline event handlers.
 - Comments explain *why*, not *what*.
 - The saved-data keys (`ruedaBattle.*`) predate the rename and stay as they are.
 - Brand rules (logo, colours, fonts, wording) are in `docs/brand.md`.
