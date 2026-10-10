@@ -2,7 +2,7 @@
 
 Run from the repo root:  pip install fonttools brotli && python3 tools/make-icons.py
 Writes public/icons/favicon.svg and public/icons/touch-icon.svg, and prints the inline mark used in
-public/js/ui.js (R_MARK). The PNGs (favicon-32, apple-touch-icon, icon-512) are screenshots of
+public/js/ui/html.js (R_MARK). The PNGs (favicon-32, apple-touch-icon, icon-512) are screenshots of
 those SVGs at 32/180/512 px.
 """
 from fontTools.ttLib import TTFont

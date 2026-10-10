@@ -2,15 +2,31 @@
 
 Static app, all served files in `public/`. `public/index.html` loads one ES module, `js/app.js`, which imports the rest (with `modulepreload` hints so they download in parallel). No globals, no build step. Modules don't load over `file://`, so run it from a server.
 
-| Module | Imported as | Role |
-| --- | --- | --- |
-| `public/js/bracket.js` | `Bracket` | Engine. Pure functions over a tournament object; no DOM, no storage |
-| `public/js/storage.js` | `Store` | localStorage persistence, JSON export, import validation |
-| `public/js/ui.js` | `UI` | Builds every screen as an HTML string; draws SVG connector lines after render |
-| `public/js/replay.js` | `Replay` | Canvas replay video: timeline, drawing, player, export |
-| `public/js/app.js` | entry | Owns state, handles every click (`data-action` delegation), calls `UI.render` |
+All paths below are under `public/js/`.
 
-Flow: a click → `app.js` mutates `state` (via `Bracket` for results) → `Store.upsert` → `UI.render(container, state)` re-renders the whole screen. Views get everything through `state` (the home screen's list arrives as `state.tournaments`) and never read storage themselves, so the store can later be swapped for the cloud one. Undo keeps up to 20 full JSON snapshots of the tournament.
+| Module | Role |
+| --- | --- |
+| `app.js` | Entry. Owns state, handles every click (`data-action` delegation), calls `render` |
+| `engine/bracket.js` | Engine (`Bracket`). Pure functions over a tournament object; no DOM, no storage |
+| `engine/lb-layout.js` | Pure: Losers-bracket display order and lines, shared by the bracket view and the replay |
+| `store/local.js` | `Store`: localStorage persistence, JSON export, import validation |
+| `ui/index.js` | `render(container, state)`: picks the screen, binds tabs, hover tracing and resize |
+| `ui/html.js` | `escapeHtml`, `fmtDuration`, the logo, the "r" mark, the draw icon |
+| `ui/home.js`, `ui/setup.js` | Tournament list; setup form, time estimate, names screen |
+| `ui/bracket-screen.js` | The tournament screen: header, toolbar, rename panel, standings, legend |
+| `ui/brackets.js`, `ui/cards.js` | Winners, Losers and Final 4 columns (with phone tabs); match cards and their tags |
+| `ui/connectors.js` | Connector lines and path tracing, measured from the rendered cards |
+| `ui/replay-screen.js` | The replay screen's HTML; `replay/player.js` drives it |
+| `replay/theme.js` | Canvas size, timing constants, fonts (`FONTS_READY`), colours |
+| `replay/timeline.js` | `buildTimeline`: the scene list. Pure, tested in Node |
+| `replay/draw.js` | Canvas primitives: text, logo, tags, medals, icons |
+| `replay/rounds.js`, `replay/finale.js` | Scenes: intro, rounds, semis crossover; podium, journey, result, confetti |
+| `replay/frame.js` | `drawFrame(ctx, timeline, t)`, scene dots |
+| `replay/player.js` | Playback, scrubbing, recording and sharing |
+
+Dependencies point one way: `app.js` → `ui/`, `replay/`, `store/` → `engine/`. `engine/` imports nothing from the others.
+
+Flow: a click → `app.js` mutates `state` (via `Bracket` for results) → `Store.upsert` → `render(container, state)` re-renders the whole screen. Views get everything through `state` (the home screen's list arrives as `state.tournaments`) and never read storage themselves, so the store can later be swapped for the cloud one. Undo keeps up to 20 full JSON snapshots of the tournament.
 
 ## Data model (saved as-is, also the export format)
 
@@ -29,7 +45,7 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 - **Final 4**: semi 1 = WB 1st v LB 2nd, semi 2 = WB 2nd v LB 1st; winners ride the Grand final, losers the Small final.
 - Invariants (tested): N−1 real WB heats, N−3 real LB heats, 2N heats in total, everyone placed exactly once.
 
-## Rendering (`ui.js`)
+## Rendering (`ui/`)
 
 - HTML strings; every user string through `escapeHtml`.
 - Bracket columns share one width on desktop (`--col-w`, set by `syncColumns`). Connector lines are an SVG overlay measured from the rendered cards (`drawConnectors`), with small hops where lines cross.
@@ -37,12 +53,12 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 - Hovering a rider traces their whole path (`data-cid` on slots and edges).
 - Phones (≤700px) switch to one round at a time with tabs; lines are replaced by "→ R3" tags.
 
-## Replay video (`replay.js`)
+## Replay video (`replay/`)
 
 - `buildTimeline(tournament, focus)` makes the scene list: intro, rounds (WB R1, WB R2, then LB/WB alternating), the semis crossover, semifinals, finals, podium. With `focus`, it builds one rider's journey instead.
 - `drawFrame(ctx, timeline, t)` is a pure function of time, so playback, scrubbing and recording all give identical frames (confetti uses a seeded random).
 - 1080×1920 canvas, exported with `MediaRecorder` in real time (mp4 where supported, otherwise webm). Drawing and recording wait for the bundled fonts to load.
-- Losers rounds open with a short name shuffle ("random draw"); timing constants are at the top of the file.
+- Losers rounds open with a short name shuffle ("random draw"); timing constants are in `replay/theme.js`.
 
 ## Storage
 

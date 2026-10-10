@@ -2,8 +2,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import * as Bracket from '../public/js/bracket.js';
-import * as Store from '../public/js/storage.js';
+import * as Bracket from '../public/js/engine/bracket.js';
+import * as Store from '../public/js/store/local.js';
 
 const names = (n) => Array.from({ length: n }, (_, i) => 'Rider ' + (i + 1));
 
