@@ -6,7 +6,7 @@ import { escapeHtml } from './html.js';
 
 // ---- Bracket / live view ------------------------------------------------
 
-function slotHtml(tournament, match, slotKey) {
+function slotHtml(tournament, match, slotKey, readOnly) {
   const slot = match[slotKey];
   if (!slot.competitorId) {
     if (slot.isBye) {
@@ -20,7 +20,7 @@ function slotHtml(tournament, match, slotKey) {
   const scoreCount = match.races.filter((r) => r.winnerId === slot.competitorId).length;
   const scoreHtml = match.racesNeededToWin > 1 && !match.isBye ? `<span class="score">${scoreCount}</span>` : '';
   const btn =
-    !match.completed && !match.isBye && !match.placeholder && match.slotA.competitorId && match.slotB.competitorId
+    !readOnly && !match.completed && !match.isBye && !match.placeholder && match.slotA.competitorId && match.slotB.competitorId
       ? `<button class="small" data-action="record-winner" data-match="${match.id}" data-winner="${slot.competitorId}">Won</button>`
       : '';
   return `<div class="slot ${isWinner ? 'winner' : ''} ${isLoser ? 'loser' : ''}" data-slot="${slotKey}" data-cid="${slot.competitorId}">
@@ -124,12 +124,12 @@ function matchCard(tournament, match, opts) {
     <div class="${classes.join(' ')}" data-match-id="${match.id}">
       ${title}
       ${byeTag}${finalTag}
-      ${(opts.swapSlots ? ['slotB', 'slotA'] : ['slotA', 'slotB']).map((k) => slotHtml(tournament, match, k)).join('')}
+      ${(opts.swapSlots ? ['slotB', 'slotA'] : ['slotA', 'slotB']).map((k) => slotHtml(tournament, match, k, opts.readOnly)).join('')}
     </div>
   `;
 }
 
-function renderUpNext(tournament) {
+function renderUpNext(tournament, readOnly) {
   if (tournament.status === 'completed') return '';
   const playable = Bracket.getPlayableMatches(tournament);
   if (!playable.length) {
@@ -138,7 +138,7 @@ function renderUpNext(tournament) {
   return `
     <div class="up-next section">
       <h3>Up next (${playable.length})</h3>
-      <div class="up-next-grid">${playable.map((m) => matchCard(tournament, m, { showLabel: stageLabel(tournament, m) })).join('')}</div>
+      <div class="up-next-grid">${playable.map((m) => matchCard(tournament, m, { showLabel: stageLabel(tournament, m), readOnly })).join('')}</div>
     </div>
   `;
 }

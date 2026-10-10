@@ -60,7 +60,7 @@ function renderRenamePanel(state) {
 
 // What the marks on the bracket mean. Samples reuse the real classes so they always
 // look exactly like the bracket; items that only exist on one layout are tagged.
-function renderLegend() {
+function renderLegend(readOnly) {
   const item = (sample, label, only) =>
     `<div class="key-item${only ? ' only-' + only : ''}"><span class="key-sample">${sample}</span><span>${label}</span></div>`;
   return `
@@ -69,7 +69,7 @@ function renderLegend() {
       <div class="key-grid">
         ${item(DRAW_ICON, 'Random draw &mdash; Losers bracket pairings are drawn fresh each round')}
         ${item('<span class="bye-tag">BYE</span>', 'Bye &mdash; no opponent, the rider goes straight through')}
-        ${item('<span class="key-card ready"></span>', 'Ready to ride &mdash; pick the winner')}
+        ${item('<span class="key-card ready"></span>', readOnly ? 'Ready to ride &mdash; up next' : 'Ready to ride &mdash; pick the winner')}
         ${item('<span class="drop-tag">&darr; to LB R2</span>', 'Lost in the Winners bracket &mdash; second chance in the Losers bracket')}
         ${item('<span class="drop-tag">from WB R2</span>', 'Came down from the Winners bracket')}
         ${item('<span class="drop-tag semi-tag">&rarr; Semifinal 1</span>', 'Where each bracket&rsquo;s top two go in the Final 4')}
@@ -84,18 +84,15 @@ function renderLegend() {
   `;
 }
 
-function renderBracketScreen(state) {
+// Organisers get every action; the read-only view only gets watching the replay.
+function renderToolbar(state) {
   const t = state.tournament;
+  const replay = t.status === 'completed' ? '<button class="primary" data-action="open-replay">Share replay</button>' : '';
+  if (state.readOnly) return replay ? `<div class="toolbar event-toolbar">${replay}</div>` : '';
   return `
-    <div class="topbar event-top">
-      <div class="title"><h1>${escapeHtml(t.name)}</h1><small>${t.competitors.length} competitors &middot; ${
-    t.settings.heatFormat === 'bo3' ? 'best of 3' : 'single run'
-  } &middot; ${t.status === 'completed' ? 'completed' : 'in progress'}</small></div>
-      ${brandHome()}
-    </div>
       <div class="toolbar event-toolbar">
         <button data-action="undo" ${state.undoStack.length ? '' : 'disabled'}>Undo</button>
-        ${t.status === 'completed' ? '<button class="primary" data-action="open-replay">Share replay</button>' : ''}
+        ${replay}
         <button class="more-toggle" aria-label="More actions" data-action="toggle-more">&middot;&middot;&middot;</button>
         <div class="toolbar-more">
           <button data-action="edit-names" ${state.nameDraft ? 'disabled' : ''}>Edit names</button>
@@ -104,7 +101,20 @@ function renderBracketScreen(state) {
           <button data-action="go-home">Tournament list</button>
           <button class="danger" data-action="new-tournament">New tournament</button>
         </div>
-      </div>
+      </div>`;
+}
+
+function renderBracketScreen(state) {
+  const t = state.tournament;
+  const readOnly = !!state.readOnly;
+  return `
+    <div class="topbar event-top">
+      <div class="title"><h1>${escapeHtml(t.name)}</h1><small>${t.competitors.length} competitors &middot; ${
+    t.settings.heatFormat === 'bo3' ? 'best of 3' : 'single run'
+  } &middot; ${t.status === 'completed' ? 'completed' : 'in progress'}${readOnly ? ' &middot; <span class="view-badge">view only</span>' : ''}</small></div>
+      ${brandHome()}
+    </div>
+    ${renderToolbar(state)}
     ${
       state.externalUpdateAvailable
         ? `<div class="card" style="border-color: var(--accent-2); margin-bottom:20px;">
@@ -114,16 +124,20 @@ function renderBracketScreen(state) {
           </div>`
         : ''
     }
-    ${renderRenamePanel(state)}
+    ${readOnly ? '' : renderRenamePanel(state)}
     ${
       t.status === 'completed'
-        ? `<div class="results-row">${renderStandings(t)}${renderFinal4(t)}</div>` // side by side on desktop
-        : renderUpNext(t) + renderFinal4(t)
+        ? `<div class="results-row">${renderStandings(t)}${renderFinal4(t, readOnly)}</div>` // side by side on desktop
+        : renderUpNext(t, readOnly) + renderFinal4(t, readOnly)
     }
-    ${renderWinnersBracket(t)}
-    ${renderLosersBracket(t)}
-    ${renderLegend()}
-    <footer class="note">Auto-saved locally in this browser. Use Export to back up or move to another device.</footer>
+    ${renderWinnersBracket(t, readOnly)}
+    ${renderLosersBracket(t, readOnly)}
+    ${renderLegend(readOnly)}
+    <footer class="note">${
+      readOnly
+        ? 'View only. New results show up here as soon as they are recorded in this browser.'
+        : 'Auto-saved locally in this browser. Use Export to back up or move to another device.'
+    }</footer>
   `;
 }
 

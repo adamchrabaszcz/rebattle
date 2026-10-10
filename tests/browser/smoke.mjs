@@ -223,6 +223,71 @@ await step('40-rider bracket draws connector lines', () => js(`(async () => { ${
   return lines + ' paths';
 })()`));
 
+// ---- read-only view -------------------------------------------------------
+
+await open('?view');
+await step('?view shows the active tournament read-only', () => js(`(async () => { ${H}
+  await wait(200);
+  if (!q('.view-badge')) throw new Error('no view-only badge');
+  const offered = new Set(qa('[data-action]').map((el) => el.dataset.action));
+  for (const a of ['record-winner', 'undo', 'edit-names', 'export', 'import-file', 'new-tournament', 'toggle-more']) if (offered.has(a)) throw new Error('view offers ' + a);
+  if (!q('.up-next')) throw new Error('no Up next');
+  return [...offered].join(', ');
+})()`));
+
+await step('the view ignores organiser actions even if a button is forced in', () => js(`(async () => { ${H}
+  const before = localStorage.getItem('ruedaBattle.tournaments');
+  const card = q('.up-next .match-card');
+  const slot = card.querySelector('[data-cid]');
+  for (const html of [
+    '<button data-action="record-winner" data-match="' + card.dataset.matchId + '" data-winner="' + slot.dataset.cid + '">x</button>',
+    '<button data-action="delete-tournament" data-id="' + active().id + '">x</button>',
+    '<button data-action="new-tournament">x</button>',
+  ]) {
+    q('#app').insertAdjacentHTML('afterbegin', html);
+    q('#app > button').click(); await wait();
+    q('#app > button')?.remove();
+  }
+  if (localStorage.getItem('ruedaBattle.tournaments') !== before) throw new Error('saved data changed');
+  if (!q('.view-badge')) throw new Error('left the view');
+})()`));
+
+await step('the view follows results recorded in another tab', async () => {
+  // Runs won plus heats finished, counted on the bracket graphs (each heat appears there
+  // once; "Up next" repeats some), so it grows with every recorded run, best of 3 included.
+  const count = `[...document.querySelectorAll('.bracket-graph .match-card')].reduce((n, c) => n + c.classList.contains('completed') + [...c.querySelectorAll('.score')].reduce((k, el) => k + Number(el.textContent), 0), 0)`;
+  const before = await js(count);
+  // A second, real tab plays the organiser and records one heat.
+  const { targetId } = (await send('Target.createTarget', { url: BASE })).result;
+  const other = (await (await fetch(`http://127.0.0.1:${port}/json`)).json()).find((t) => t.id === targetId);
+  const ws2 = new WebSocket(other.webSocketDebuggerUrl);
+  await new Promise((r) => (ws2.onopen = r));
+  let id2 = 0;
+  const waiting = {};
+  ws2.onmessage = (m) => { const d = JSON.parse(m.data); if (waiting[d.id]) { waiting[d.id](d); delete waiting[d.id]; } };
+  const send2 = (method, params = {}) => new Promise((r) => { const i = ++id2; waiting[i] = r; ws2.send(JSON.stringify({ id: i, method, params })); });
+  await sleep(1200);
+  const clicked = (await send2('Runtime.evaluate', { expression: `(() => { const b = document.querySelector('[data-action=record-winner]'); if (!b) return false; b.click(); return true; })()`, returnByValue: true })).result.result.value;
+  ws2.close();
+  await send('Target.closeTarget', { targetId });
+  check(clicked, 'organiser tab had no Won button');
+  // Background tabs get the storage event with some delay, so poll for it.
+  let after = before;
+  for (let i = 0; i < 50 && after <= before; i++) {
+    await sleep(100);
+    after = await js(count);
+  }
+  check(after > before, `view did not update (${before} -> ${after})`);
+  return `progress ${before} -> ${after}`;
+});
+
+await step('the logo leaves the view for the full app', async () => {
+  await js(`document.querySelector('[data-action=go-home]').click(), 1`); // navigates away
+  await sleep(1200);
+  const r = await js(`({ search: location.search, won: !!document.querySelector('[data-action=record-winner]'), badge: !!document.querySelector('.view-badge') })`);
+  check(!r.search && r.won && !r.badge, 'still in view mode: ' + JSON.stringify(r));
+});
+
 await view(390, 844, true);
 await open();
 await step('phone: round tabs and the more-menu work', () => js(`(async () => { ${H}

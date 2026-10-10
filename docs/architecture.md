@@ -60,6 +60,13 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 - 1080×1920 canvas, exported with `MediaRecorder` in real time (mp4 where supported, otherwise webm). Drawing and recording wait for the bundled fonts to load.
 - Losers rounds open with a short name shuffle ("random draw"); timing constants are in `replay/theme.js`.
 
+## Read-only view
+
+- `state.readOnly` renders the tournament screen without anything that changes data: no Won buttons, Undo, Edit names, Export/Import, New/Delete, and no rename panel. Up next, the brackets, tracing, standings and the replay (including its video download) stay.
+- `app.js` also refuses every click whose action isn't in `VIEW_ACTIONS` (an allowlist), so a new organiser action is blocked in the view unless it is added there on purpose.
+- The view follows changes made in another tab (the `storage` event) instead of showing the "updated elsewhere" warning, since it has nothing to overwrite.
+- For now it opens with `?view` (the active tournament) or `?view=<id>`, in the same browser. Cloud saving will replace this with a public link per tournament.
+
 ## Storage
 
 - `localStorage` keys `ruedaBattle.tournaments` and `ruedaBattle.activeTournamentId`; names predate the rebattle rename and must stay.

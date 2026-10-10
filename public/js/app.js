@@ -26,7 +26,12 @@ const state = {
   nameDraft: null, // { competitorId: name } while the rename panel is open
   titleDraft: '', // tournament name being edited in the same panel
   tournaments: [], // saved list, filled for the home screen
+  readOnly: false, // view only: nothing can be recorded or edited (?view for now, the public link later)
 };
+
+// The only actions the read-only view runs. An allowlist, so anything added later
+// stays organiser-only unless it is listed here on purpose.
+const VIEW_ACTIONS = new Set(['go-home', 'open-replay', 'open-journey', 'close-replay']);
 
 function render() {
   try {
@@ -57,8 +62,8 @@ function renderCrashScreen(error) {
       <p>It was likely saved by an older version of this app and is missing data the current version expects.</p>
       <p style="font-family:monospace; font-size:12px;">${escapeHtml(error && error.message)}</p>
       <div class="toolbar" style="margin-top:16px;">
-        ${brokenId ? '<button class="danger" data-action="discard-broken-tournament">Discard this tournament</button>' : ''}
-        <button data-action="go-home-force">Back to tournament list</button>
+        ${brokenId && !state.readOnly ? '<button class="danger" data-action="discard-broken-tournament">Discard this tournament</button>' : ''}
+        <button data-action="${state.readOnly ? 'go-home' : 'go-home-force'}">Back to tournament list</button>
       </div>
     </div>
   `;
@@ -266,10 +271,18 @@ function handleReloadExternalUpdate() {
 // clobbers it. (Opening two DIFFERENT tournaments in two tabs is fine and
 // never triggers this — each saves under its own id with no conflict.)
 window.addEventListener('storage', (e) => {
-  if (e.key !== null && e.key !== 'ruedaBattle.tournaments') return; // pre-rename key, see storage.js
-  if (!state.tournament || state.screen !== 'bracket') return;
+  if (e.key !== null && e.key !== 'ruedaBattle.tournaments') return; // pre-rename key, see store/local.js
+  if (!state.tournament) return;
   const fresh = Store.getById(state.tournament.id);
   if (!fresh) return;
+  if (state.readOnly) {
+    // Nothing to overwrite here, so the view simply follows along (a running replay
+    // keeps its own copy; the bracket is current again once it's closed).
+    state.tournament = fresh;
+    if (state.screen === 'bracket') render();
+    return;
+  }
+  if (state.screen !== 'bracket') return;
   if (JSON.stringify(fresh) !== JSON.stringify(state.tournament)) {
     state.externalUpdateAvailable = true;
     render();
@@ -296,8 +309,10 @@ container.addEventListener('click', (e) => {
   const el = e.target.closest('[data-action]');
   if (!el) return;
   const action = el.dataset.action;
+  if (state.readOnly && !VIEW_ACTIONS.has(action)) return;
 
-  if (action === 'go-home') goHome();
+  if (action === 'go-home' && state.readOnly) location.href = location.pathname; // leave the view for the full app
+  else if (action === 'go-home') goHome();
   else if (action === 'go-setup') goSetup();
   else if (action === 'go-setup-back') {
     state.screen = 'setup';
@@ -349,6 +364,7 @@ container.addEventListener('input', (e) => {
 });
 
 container.addEventListener('change', (e) => {
+  if (state.readOnly) return;
   const el = e.target.closest('[data-action="import-file"]');
   if (el && el.files && el.files[0]) {
     handleImportFile(el.files[0]);
@@ -358,12 +374,22 @@ container.addEventListener('change', (e) => {
 
 // ---- init ---------------------------------------------------------------
 
-const activeId = Store.getActiveId();
-if (activeId) {
-  const t = Store.getById(activeId);
-  if (t) {
-    state.tournament = t;
-    state.screen = 'bracket';
+// ?view (the active tournament) or ?view=<id> opens it read-only, without changing
+// which tournament is active for the organiser in this browser.
+const params = new URLSearchParams(location.search);
+const viewed = params.has('view') && Store.getById(params.get('view') || Store.getActiveId());
+if (viewed) {
+  state.readOnly = true;
+  state.tournament = viewed;
+  state.screen = 'bracket';
+} else {
+  const activeId = Store.getActiveId();
+  if (activeId) {
+    const t = Store.getById(activeId);
+    if (t) {
+      state.tournament = t;
+      state.screen = 'bracket';
+    }
   }
 }
 render();
