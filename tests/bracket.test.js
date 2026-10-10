@@ -1,12 +1,9 @@
-// Bracket engine + import checks. No dependencies: run with `node --test tests/`.
-// The engine files are plain browser scripts that attach to the global object,
-// so requiring them here exposes Bracket and Store the same way the page does.
-const test = require('node:test');
-const assert = require('node:assert/strict');
+// Bracket engine + import checks. No dependencies: run with `node --test`.
+import test from 'node:test';
+import assert from 'node:assert/strict';
 
-require('../public/js/bracket.js');
-require('../public/js/storage.js');
-const { Bracket, Store } = globalThis;
+import * as Bracket from '../public/js/bracket.js';
+import * as Store from '../public/js/storage.js';
 
 const names = (n) => Array.from({ length: n }, (_, i) => 'Rider ' + (i + 1));
 
