@@ -46,8 +46,9 @@ find public/js -name '*.js' -print0 | xargs -0 -n1 node --check   # every module
 ## Code conventions
 
 - No build step and no runtime dependencies. Native ES modules, readable as shipped; the root `package.json` only marks them as modules for Node.
-- `public/js/bracket.js` is pure logic: no DOM, no storage. Engine changes need a test in `tests/`.
-- Screens are built as HTML strings in `public/js/ui.js`; every user-supplied string goes through `escapeHtml`.
+- `public/js/engine/` is pure logic: no DOM, no storage, imports nothing from `ui/`, `replay/` or `store/`. Engine changes need a test in `tests/`.
+- Screens are built as HTML strings in `public/js/ui/`; every user-supplied string goes through `escapeHtml`. Views get their data through `state` and never read storage.
+- One job per module; keep files under ~350 lines (the engine excepted). The module map is in `docs/architecture.md`.
 - Interaction goes through `data-action` attributes handled in `public/js/app.js`; no inline event handlers.
 - Comments explain *why*, not *what*.
 - The saved-data keys (`ruedaBattle.*`) predate the rename and stay as they are.

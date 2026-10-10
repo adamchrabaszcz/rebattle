@@ -1,48 +1,17 @@
 // Browser smoke test: plays through the real app in headless Chrome, under the same
 // headers (CSP included) that Cloudflare serves from public/_headers.
-// No dependencies: Node's http server + the Chrome DevTools Protocol over WebSocket.
+// No dependencies: tools/serve.mjs + the Chrome DevTools Protocol over WebSocket.
 //
 //   node tests/browser/smoke.mjs          (CHROME_PATH=... to pick a browser)
 //
 // Fails on any page error, console error, CSP violation, failed request or broken step.
-import http from 'node:http';
 import { spawn, execFileSync } from 'node:child_process';
 import { readFileSync, existsSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
-import { join, extname, normalize } from 'node:path';
+import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { createServer } from '../../tools/serve.mjs';
 
-const ROOT = new URL('../../public/', import.meta.url).pathname;
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.txt': 'text/plain' };
-
-// ---- static server with public/_headers -------------------------------------
-
-function parseHeaders() {
-  const rules = [];
-  for (const line of readFileSync(join(ROOT, '_headers'), 'utf8').split('\n')) {
-    if (!line.trim() || line.trim().startsWith('#')) continue;
-    if (!/^\s/.test(line)) rules.push({ pattern: line.trim(), headers: {} });
-    else {
-      const i = line.indexOf(':');
-      rules[rules.length - 1].headers[line.slice(0, i).trim()] = line.slice(i + 1).trim();
-    }
-  }
-  return rules;
-}
-const RULES = parseHeaders();
-const matches = (pattern, path) => (pattern.endsWith('*') ? path.startsWith(pattern.slice(0, -1)) : path === pattern);
-
-const server = http.createServer((req, res) => {
-  const path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
-  const file = normalize(join(ROOT, path === '/' ? 'index.html' : path));
-  if (!file.startsWith(ROOT) || path.startsWith('/_headers') || !existsSync(file)) {
-    res.writeHead(404).end('not found');
-    return;
-  }
-  const headers = { 'Content-Type': TYPES[extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store' };
-  for (const r of RULES) if (matches(r.pattern, path)) Object.assign(headers, r.headers);
-  headers['Cache-Control'] = 'no-store'; // always test the files on disk
-  res.writeHead(200, headers).end(readFileSync(file));
-});
+const server = createServer();
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
 const BASE = `http://127.0.0.1:${server.address().port}/`;
 
@@ -85,6 +54,7 @@ await new Promise((r) => (ws.onopen = r));
 let seq = 0;
 const pending = {};
 const problems = [];
+const requests = {};
 ws.onmessage = (m) => {
   const d = JSON.parse(m.data);
   if (pending[d.id]) { pending[d.id](d); delete pending[d.id]; }
@@ -93,6 +63,8 @@ ws.onmessage = (m) => {
   if (d.method === 'Runtime.consoleAPICalled' && p.type === 'error') problems.push('console.error: ' + p.args.map((a) => a.value ?? a.description).join(' '));
   if (d.method === 'Log.entryAdded' && (p.entry.level === 'error' || /Content Security Policy/.test(p.entry.text))) problems.push('log: ' + p.entry.text);
   if (d.method === 'Network.responseReceived' && p.response.status >= 400) problems.push(`HTTP ${p.response.status}: ${p.response.url}`);
+  if (d.method === 'Network.loadingFailed' && !p.canceled) problems.push(`request failed (${p.errorText}): ${requests[p.requestId] || p.requestId}`);
+  if (d.method === 'Network.requestWillBeSent') requests[p.requestId] = p.request.url;
 };
 const send = (method, params = {}) => new Promise((r) => { const id = ++seq; pending[id] = r; ws.send(JSON.stringify({ id, method, params })); });
 async function js(expression) {

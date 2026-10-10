@@ -12,13 +12,13 @@ Keep this file short. Detailed context lives in `docs/`; read the relevant doc b
 
 ## Commands
 
-- Run: `python3 -m http.server 8787 -d public`, open http://127.0.0.1:8787
+- Run: `node tools/serve.mjs`, open http://127.0.0.1:8787
 - Test: `node --test` and `node tests/browser/smoke.mjs` (both must pass; CI runs them on every push)
 
 ## Rules
 
 - No build step, no runtime dependencies, no framework. Native ES modules; no globals.
-- `public/js/bracket.js` stays pure logic (no DOM); cover engine changes with tests in `tests/`.
+- `public/js/engine/` stays pure logic (no DOM, imports nothing else); cover changes with tests in `tests/`.
 - Every user-supplied string goes through `escapeHtml` before it reaches HTML.
 - Clicks go through `data-action` handled in `public/js/app.js`; no inline handlers.
 - Don't rename the `ruedaBattle.*` localStorage keys (existing saved data).

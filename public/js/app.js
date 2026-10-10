@@ -1,8 +1,10 @@
 // Entry point: owns app state and handles every click (data-action delegation).
-import * as Bracket from './bracket.js';
-import * as Store from './storage.js';
-import * as UI from './ui.js';
-import * as Replay from './replay.js';
+import * as Bracket from './engine/bracket.js';
+import * as Store from './store/local.js';
+import { render as renderScreen } from './ui/index.js';
+import { brandLogo, escapeHtml } from './ui/html.js';
+import { computeEstimateHtml } from './ui/setup.js';
+import * as Replay from './replay/player.js';
 
 const container = document.getElementById('app');
 const UNDO_LIMIT = 20;
@@ -31,7 +33,7 @@ function render() {
     if (state.screen !== 'replay') Replay.unmount();
     // Views get their data through state and never read storage themselves.
     state.tournaments = state.screen === 'home' ? Store.loadAll() : [];
-    UI.render(container, state);
+    renderScreen(container, state);
     if (state.screen === 'setup') bindSetupLiveUpdates();
     if (state.screen === 'replay') Replay.mount(container, state.tournament, state.replayFocus);
   } catch (e) {
@@ -48,12 +50,12 @@ function renderCrashScreen(error) {
   const brokenId = state.tournament && state.tournament.id;
   container.innerHTML = `
     <div class="topbar">
-      <div class="title"><h1 class="brand-h1 small">${UI.brandLogo()}</h1><small>Something went wrong</small></div>
+      <div class="title"><h1 class="brand-h1 small">${brandLogo()}</h1><small>Something went wrong</small></div>
     </div>
     <div class="card">
       <h2>This tournament couldn't be displayed</h2>
       <p>It was likely saved by an older version of this app and is missing data the current version expects.</p>
-      <p style="font-family:monospace; font-size:12px;">${UI.escapeHtml(error && error.message)}</p>
+      <p style="font-family:monospace; font-size:12px;">${escapeHtml(error && error.message)}</p>
       <div class="toolbar" style="margin-top:16px;">
         ${brokenId ? '<button class="danger" data-action="discard-broken-tournament">Discard this tournament</button>' : ''}
         <button data-action="go-home-force">Back to tournament list</button>
@@ -72,7 +74,7 @@ function bindSetupLiveUpdates() {
     const n = parseInt(countEl.value, 10);
     const lap = parseFloat(lapEl.value);
     const brk = parseFloat(breakEl.value);
-    holder.innerHTML = UI.computeEstimateHtml(n, lap, brk);
+    holder.innerHTML = computeEstimateHtml(n, lap, brk);
   }
 
   [countEl, lapEl, breakEl].forEach((el) => el && el.addEventListener('input', update));
