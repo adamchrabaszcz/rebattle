@@ -55,3 +55,7 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 - Cloudflare Workers, static assets only: `wrangler.jsonc` publishes `public/`, so docs, tests and tools are never served.
 - Cloudflare's GitHub integration deploys `main` on every merge and builds a preview for each pull request.
 - The planned cloud saving (one Durable Object per tournament) will add a Worker script to the same project.
+- `public/_headers` sets the security headers and caching:
+  - **CSP:** only the site's own files. No inline scripts or `<style>` tags; `style="…"` attributes are allowed because the UI sets widths and colours with them. A new outside source (analytics, a CDN, the future API on another host) needs adding to the CSP first.
+  - **Caching:** fonts are cached for a year (rename a font file to change it), icons for a week. HTML, CSS and JS are always revalidated, so a deploy shows up at once.
+- `public/manifest.webmanifest` lets phones install the app ("Add to Home Screen") in standalone mode with the "r" icon.
