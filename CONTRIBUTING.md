@@ -38,13 +38,14 @@ Breaking changes (e.g. a change to the saved tournament format) get a `!` after 
 ## Checks
 
 ```sh
-node --test                                  # engine + import tests
-for f in public/js/*.js; do node --check "$f"; done # every script parses
+node --test                       # engine + import tests
+node tests/browser/smoke.mjs      # plays the app in headless Chrome under the real CSP
+find public/js -name '*.js' -print0 | xargs -0 -n1 node --check   # every module parses
 ```
 
 ## Code conventions
 
-- No build step and no runtime dependencies. Plain scripts, readable as shipped.
+- No build step and no runtime dependencies. Native ES modules, readable as shipped; the root `package.json` only marks them as modules for Node.
 - `public/js/bracket.js` is pure logic: no DOM, no storage. Engine changes need a test in `tests/`.
 - Screens are built as HTML strings in `public/js/ui.js`; every user-supplied string goes through `escapeHtml`.
 - Interaction goes through `data-action` attributes handled in `public/js/app.js`; no inline event handlers.

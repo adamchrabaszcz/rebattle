@@ -1,16 +1,16 @@
 # Architecture
 
-Static app, all served files in `public/`: `public/index.html` loads five plain scripts in order. Each attaches one global; there is no module system yet (planned, see the README roadmap).
+Static app, all served files in `public/`. `public/index.html` loads one ES module, `js/app.js`, which imports the rest (with `modulepreload` hints so they download in parallel). No globals, no build step. Modules don't load over `file://`, so run it from a server.
 
-| Script | Global | Role |
+| Module | Imported as | Role |
 | --- | --- | --- |
 | `public/js/bracket.js` | `Bracket` | Engine. Pure functions over a tournament object; no DOM, no storage |
 | `public/js/storage.js` | `Store` | localStorage persistence, JSON export, import validation |
 | `public/js/ui.js` | `UI` | Builds every screen as an HTML string; draws SVG connector lines after render |
 | `public/js/replay.js` | `Replay` | Canvas replay video: timeline, drawing, player, export |
-| `public/js/app.js` | – | Owns state, handles every click (`data-action` delegation), calls `UI.render` |
+| `public/js/app.js` | entry | Owns state, handles every click (`data-action` delegation), calls `UI.render` |
 
-Flow: a click → `app.js` mutates `state` (via `Bracket` for results) → `Store.upsert` → `UI.render(container, state)` re-renders the whole screen. Undo keeps up to 20 full JSON snapshots of the tournament.
+Flow: a click → `app.js` mutates `state` (via `Bracket` for results) → `Store.upsert` → `UI.render(container, state)` re-renders the whole screen. Views get everything through `state` (the home screen's list arrives as `state.tournaments`) and never read storage themselves, so the store can later be swapped for the cloud one. Undo keeps up to 20 full JSON snapshots of the tournament.
 
 ## Data model (saved as-is, also the export format)
 
