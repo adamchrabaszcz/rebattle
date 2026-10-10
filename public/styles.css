@@ -383,6 +383,7 @@ footer.note { margin-top: 40px; font-size: 12px; color: var(--muted); }
 .event-top { align-items: baseline; flex-wrap: nowrap; margin-bottom: 12px; }
 .event-top .title { min-width: 0; flex-wrap: wrap; }
 .event-toolbar { margin-bottom: 20px; }
+.view-badge { color: var(--accent); font-weight: 600; }
 .r-mark { display: none; height: 28px; width: auto; color: var(--text); }
 .brand-home {
   background: none; border: 0; padding: 0; border-radius: 4px;

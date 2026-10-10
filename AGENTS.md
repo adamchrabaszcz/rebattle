@@ -20,6 +20,6 @@ Keep this file short. Detailed context lives in `docs/`; read the relevant doc b
 - No build step, no runtime dependencies, no framework. Native ES modules; no globals.
 - `public/js/engine/` stays pure logic (no DOM, imports nothing else); cover changes with tests in `tests/`.
 - Every user-supplied string goes through `escapeHtml` before it reaches HTML.
-- Clicks go through `data-action` handled in `public/js/app.js`; no inline handlers.
+- Clicks go through `data-action` handled in `public/js/app.js`; no inline handlers. The read-only view only runs actions listed in `VIEW_ACTIONS`; add one there only if it changes no data.
 - Don't rename the `ruedaBattle.*` localStorage keys (existing saved data).
 - Conventional Commits; branch + PR, never commit straight to `main`.

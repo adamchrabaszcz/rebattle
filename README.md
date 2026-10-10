@@ -16,6 +16,7 @@ A tournament manager for head-to-head double-elimination events, built for a wak
 - Setup with a time estimate, random draw, then one tap per heat to record the winner. Undo, rename riders or the tournament at any time.
 - Live bracket view: connector lines, path highlighting on hover, drop-in markers, shared places for riders out in the same round, a legend. On phones, brackets switch to round tabs.
 - **Replay video**: a vertical (1080×1920) animated recap of the whole event, or one rider's journey, exported as a video file and shareable from a phone.
+- **View-only mode**: `?view` opens the tournament read-only and follows results as they are recorded in another tab, e.g. on a second screen at the venue. A public link for spectators comes with cloud saving.
 - Everything is saved in the browser; export/import JSON to back up or move to another device.
 
 ## Run it
@@ -79,4 +80,4 @@ Saved tournaments live in each browser per address, so data on `127.0.0.1` doesn
 1. ~~Hosting on Cloudflare with a custom domain~~ (done: rebattle.app).
 2. Cloud saving: one Durable Object per tournament (EU), organiser login via Cloudflare Access, offline-tolerant saves.
 3. A public read-only link with live updates, and a "follow me" card for riders (next heat, opponent, how long until they ride).
-4. Smaller modules and a read-only viewer mode (in progress: ES modules and the split are done).
+4. ~~Smaller modules and a read-only viewer mode~~ (done).

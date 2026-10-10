@@ -64,7 +64,7 @@ function currentTab(columns, matchesPerColumn) {
   return i >= 0 ? i : columns.length - 1;
 }
 
-function renderWinnersBracket(tournament) {
+function renderWinnersBracket(tournament, readOnly) {
   const rounds = {};
   const edges = [];
   tournament.wb.matches.forEach((m) => {
@@ -75,7 +75,7 @@ function renderWinnersBracket(tournament) {
   const roundNums = Object.keys(rounds).map(Number).sort((a, b) => a - b);
   const columns = roundNums.map((r) => ({
     title: r === tournament.bracketRounds ? 'Final' : 'Round ' + r,
-    cards: rounds[r].map((m) => matchCard(tournament, m)),
+    cards: rounds[r].map((m) => matchCard(tournament, m, { readOnly })),
   }));
   return `
     <div class="section">
@@ -85,9 +85,9 @@ function renderWinnersBracket(tournament) {
   `;
 }
 
-function renderLosersBracket(tournament) {
+function renderLosersBracket(tournament, readOnly) {
   const layout = lbLayout(tournament);
-  const card = ({ match, swap }) => matchCard(tournament, match, { swapSlots: swap });
+  const card = ({ match, swap }) => matchCard(tournament, match, { swapSlots: swap, readOnly });
 
   // A level that hasn't opened yet (still waiting on its WB round and/or the
   // previous LB level) shows the competitors already queued for it, so they
@@ -128,7 +128,7 @@ function placeholderMatch(id, stage, a, b) {
   return { id, stage, placeholder: true, slotA: slot(a), slotB: slot(b), races: [], racesNeededToWin: 1, completed: false, isBye: false };
 }
 
-function renderFinal4(tournament) {
+function renderFinal4(tournament, readOnly) {
   const { wb, lb } = tournament;
   const f4 = tournament.final4.semi1
     ? tournament.final4
@@ -157,18 +157,18 @@ function renderFinal4(tournament) {
     {
       title: 'Semifinals',
       cards: [
-        matchCard(tournament, f4.semi1, { showLabel: 'Semifinal 1' }),
-        matchCard(tournament, f4.semi2, { showLabel: 'Semifinal 2' }),
+        matchCard(tournament, f4.semi1, { showLabel: 'Semifinal 1', readOnly }),
+        matchCard(tournament, f4.semi2, { showLabel: 'Semifinal 2', readOnly }),
         empty(1),
       ],
     },
     {
       title: 'Small final',
-      cards: [empty(2), { html: matchCard(tournament, f4.smallFinal, { showLabel: 'Small Final · 3rd place' }), grow: 1 }],
+      cards: [empty(2), { html: matchCard(tournament, f4.smallFinal, { showLabel: 'Small Final · 3rd place', readOnly }), grow: 1 }],
     },
     {
       title: 'Final',
-      cards: [{ html: matchCard(tournament, f4.grandFinal, { showLabel: 'Grand Final · 1st place' }), grow: 2 }, empty(1)],
+      cards: [{ html: matchCard(tournament, f4.grandFinal, { showLabel: 'Grand Final · 1st place', readOnly }), grow: 2 }, empty(1)],
     },
   ];
 

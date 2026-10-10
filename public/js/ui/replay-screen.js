@@ -2,7 +2,7 @@ import * as Bracket from '../engine/bracket.js';
 import { brandHome, escapeHtml } from './html.js';
 
 // ---- replay ----------------------------------------------------------------
-// The canvas and its controls are driven by Replay (replay.js), mounted by
+// The canvas and its controls are driven by replay/player.js, mounted by
 // app.js after this HTML is in the DOM.
 
 function renderReplayScreen(state) {
