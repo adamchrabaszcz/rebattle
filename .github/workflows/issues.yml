@@ -1,0 +1,34 @@
+name: issues
+
+# Work that takes several pull requests is a parent issue with a sub-issue per step;
+# each pull request closes its sub-issue (Closes #n), which GitHub does by itself.
+# This closes the parent once its last sub-issue is closed (CONTRIBUTING.md).
+on:
+  issues:
+    types: [closed]
+
+permissions:
+  issues: write
+
+jobs:
+  close-parent:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close the parent issue when all its sub-issues are done
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.issue.number }}
+        run: |
+          parent=$(gh api graphql -F owner="${REPO%/*}" -F repo="${REPO#*/}" -F n="$NUMBER" -f query='
+            query($owner: String!, $repo: String!, $n: Int!) {
+              repository(owner: $owner, name: $repo) {
+                issue(number: $n) { parent { number state subIssuesSummary { total completed } } }
+              }
+            }' -q '.data.repository.issue.parent | select(. != null) | "\(.number) \(.state) \(.subIssuesSummary.completed) \(.subIssuesSummary.total)"')
+          if [ -z "$parent" ]; then echo "#$NUMBER has no parent issue."; exit 0; fi
+          read -r number state completed total <<< "$parent"
+          echo "Parent #$number: $state, $completed of $total sub-issues done."
+          if [ "$state" = "OPEN" ] && [ "$completed" = "$total" ]; then
+            gh issue close "$number" --repo "$REPO" --comment "All its sub-issues are done (the last one was #$NUMBER), so this is done too."
+          fi
