@@ -288,6 +288,21 @@ await step('the logo leaves the view for the full app', async () => {
   check(!r.search && r.won && !r.badge, 'still in view mode: ' + JSON.stringify(r));
 });
 
+// ---- addresses --------------------------------------------------------------
+
+await step('tournament links show "not found" until cloud saving, with all files loading', async () => {
+  for (const path of ['t/cable-open-x7k2', 't/cable-open-x7k2/dora', 'manage/cable-open-x7k2', 'no/such/page']) {
+    await open(path);
+    await sleep(300);
+    const r = await js(`({ title: document.querySelector('.card h2')?.textContent, brand: !!document.querySelector('.brand'), fonts: [...document.fonts].some((f) => f.status === 'loaded') })`);
+    check(r.title === 'Nothing here' && r.brand, `${path}: ${JSON.stringify(r)}`);
+  }
+  await js(`document.querySelector('[data-action=go-home]').click(), 1`);
+  await sleep(1200);
+  const home = await js(`({ path: location.pathname, app: !!document.querySelector('.brand') && !document.querySelector('.card h2')?.textContent.includes('Nothing') })`);
+  check(home.path === '/' && home.app, 'Open rebattle did not go home: ' + JSON.stringify(home));
+});
+
 await view(390, 844, true);
 await open();
 await step('phone: round tabs and the more-menu work', () => js(`(async () => { ${H}

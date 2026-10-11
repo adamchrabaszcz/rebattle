@@ -75,9 +75,11 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 
 ## Hosting
 
-- Cloudflare Workers, static assets only: `wrangler.jsonc` publishes `public/`, so docs, tests and tools are never served.
+- One Cloudflare Workers project: static assets from `public/` (docs, tests and tools are never served) plus `worker/index.js`, which runs only for `/api/*` (`run_worker_first`). For now it only answers `/api/health`; cloud saving adds the tournament API there.
+- Unknown paths get `index.html` (`not_found_handling: "single-page-application"`), and `public/js/route.js` decides the screen: `/` is the app, `/t/<code>`, `/t/<code>/<rider>` and `/manage/<code>` are tournament links (shown as "not found" until cloud saving), anything else is "not found". That's why `index.html` uses absolute paths (`/js/…`).
+- API responses set their own headers (`worker/index.js`); `_headers` only covers static files.
+- Wrangler is a pinned dev dependency (`package.json` + `package-lock.json`), so local runs, CI and Cloudflare's build use the same version.
 - Cloudflare's GitHub integration deploys `main` on every merge and builds a preview for each pull request.
-- The planned cloud saving (one Durable Object per tournament) will add a Worker script to the same project.
 - `public/_headers` sets the security headers and caching:
   - **CSP:** only the site's own files. No inline scripts or `<style>` tags; `style="…"` attributes are allowed because the UI sets widths and colours with them. A new outside source (analytics, a CDN, the future API on another host) needs adding to the CSP first.
   - **Caching:** fonts are cached for a year (rename a font file to change it), icons for a week. HTML, CSS and JS are always revalidated, so a deploy shows up at once.
