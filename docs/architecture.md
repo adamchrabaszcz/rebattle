@@ -33,8 +33,10 @@ All paths below are under `public/js/`.
 | `replay/draw.js` | Canvas primitives: text, logo, tags, medals, icons |
 | `replay/rounds.js`, `replay/finale.js` | Scenes: intro, rounds, semis crossover; podium, journey, result, confetti |
 | `replay/frame.js` | `drawFrame(ctx, timeline, t)`, scene dots |
-| `replay/player.js` | Playback, scrubbing, recording and sharing |
+| `replay/player.js` | Playback, scrubbing, making the video and sharing it |
+| `replay/encoder.js` | Makes the video frame by frame (WebCodecs + MP4 muxer), faster than real time |
 | `vendor/qrcode.js` | QR code encoder, third-party (see Public pages) |
+| `vendor/mp4-muxer.js` | MP4 muxer for the video, third-party (see Replay video); loaded only when a video is made |
 
 Dependencies point one way: `app.js` → `ui/`, `replay/`, `store/` → `engine/`. `engine/` imports nothing from the others.
 
@@ -73,7 +75,8 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 - `buildTimeline(tournament, focus, site)` makes the scene list: intro, rounds (WB R1, WB R2, then LB/WB alternating), the semis crossover, semifinals, finals, podium. With `focus`, it builds one rider's journey instead.
 - The last scene ends with the address (`site` = `{ host, code }`, the host being the page's own): "Results: rebattle.app/t/<code>" on the podium, "Dora’s journey: rebattle.app/t/<code>/<rider>" on a rider's result. A local tournament has no public page, so it shows just the host. With the address, the podium list keeps 11 rows a column to leave it room.
 - `drawFrame(ctx, timeline, t)` is a pure function of time, so playback, scrubbing and recording all give identical frames (confetti uses a seeded random).
-- 1080×1920 canvas, exported with `MediaRecorder` in real time (mp4 where supported, otherwise webm). Drawing and recording wait for the bundled fonts to load.
+- 1080×1920 canvas, 30 fps. Making the video (`replay/encoder.js`): each frame is drawn off screen at its own moment, encoded with WebCodecs `VideoEncoder` (H.264, 8 Mbit/s, a key frame every 2 s) and packed into an MP4, several times faster than real time, while the replay stays free to watch. Where the browser has no `VideoEncoder` or no H.264 config fits, or the encoder fails, it falls back to recording the canvas with `MediaRecorder` in real time (mp4 where supported, otherwise webm). Both wait for the bundled fonts to load.
+- **MP4 muxer:** `public/js/vendor/mp4-muxer.js` is `build/mp4-muxer.mjs` from `mp4-muxer` 5.2.2 by Vanilagy (MIT; the licence is `vendor/mp4-muxer.LICENSE`), unmodified (sha256 `d2c4c782f180c86ed30b1f5d9487a34a0d370bf9b4535285734ea187d38f9bb5`). It is imported only when a video is made. npm marks it superseded by Mediabunny (larger, MPL-2.0); 5.2.2 is a finished release and enough for one H.264 track. Update by replacing the file with a newer release's.
 - Making the video says what happens: the button shows the length ("Make video (1:10)"), and under it a progress bar with "Making your video: 0:23 of 1:10", then where the file went. A hidden tab pauses the recording and the replay (it would otherwise freeze or skip), and a long gap between frames slows the replay instead of skipping.
 - Losers rounds open with a short name shuffle ("random draw"); timing constants are in `replay/theme.js`.
 
