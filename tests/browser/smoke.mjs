@@ -553,7 +553,18 @@ await step('the organiser sees who can find the tournament and can list it on re
   // The share panel repeats it.
   await js(`document.querySelector('[data-action=open-share]').click(), 1`);
   check(/Listed on rebattle\.app/.test(await until(`document.querySelector('.share-panel .visibility-line')?.textContent`)), 'share panel does not say');
-  return 'unlisted -> listed';
+  // Offline, a change can't be saved: the organiser is told, and nothing changes.
+  offlineOnPurpose = true;
+  await send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+  await js(`(() => { __dialogs.length = 0; document.querySelector('[data-action=open-visibility]').click(); const r = document.querySelector('input[name=visibility][value=unlisted]'); r.checked = true; document.querySelector('[data-action=save-visibility]').click(); return 1; })()`);
+  const told = await until(`__dialogs.find((d) => d.includes("Couldn't change it"))`);
+  const kept = await js(`({ panel: !!document.querySelector('.visibility-panel'), saveEnabled: !document.querySelector('[data-action=save-visibility]').disabled })`);
+  await send('Network.emulateNetworkConditions', { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+  offlineOnPurpose = false;
+  check(kept.panel && kept.saveEnabled, 'after a failed save: ' + JSON.stringify(kept));
+  await js(`document.querySelector('[data-action=cancel-visibility]').click(), 1`);
+  check((await js(listedCodes)).includes(movedCode), 'a failed change unlisted it anyway');
+  return 'unlisted -> listed; offline: ' + told.replace(/^alert: /, '');
 });
 
 // ---- addresses --------------------------------------------------------------
