@@ -45,8 +45,32 @@ Breaking changes (e.g. a change to the saved tournament format) get a `!` after 
 ## Planned work: GitHub issues
 
 - The roadmap is the [issue list](https://github.com/adamchrabaszcz/rebattle/issues), not a section in the docs.
-- Every task starts as an issue: a feature, a fix, a docs change. If you're asked for something that has no issue yet, open one first (title in plain words, what and why in the body, label `enhancement`, `bug` or `documentation`).
+- Every task starts as an issue: a feature, a fix, a docs change. If you're asked for something that has no issue yet, open one first, in the format below.
 - The pull request for it ends its description with `Closes #<issue>`, so merging closes the issue. Every pull request closes exactly one issue; `Part of #n` closes nothing, so don't rely on it.
+
+### Issues and pull requests
+
+**Issues** use one format. The issue forms (Feature, Bug, Docs or chore; there are no blank issues) write it; when you write the body yourself (`gh issue create --body`, the API), use the same headings:
+
+```markdown
+### What and why
+What should change and why, in plain words. For a bug: what happens, what should, where, and how to see it.
+
+### Done when
+- [ ] A short checklist that says when it is finished
+
+### Blast radius
+Optional. What else it touches or could break, and who would notice (organisers, riders, viewers, saved data, the Worker, CI and releases).
+
+### Parent
+Optional. #41, when it is one step of bigger work (also add it as a sub-issue there).
+```
+
+- **Title:** plain words, no type prefix ("Video: encoding stalls in Safari").
+- **Label:** `enhancement`, `bug`, `documentation` or `chore`.
+- `.github/workflows/format.yml` checks new and edited issues. One without "What and why" or "Done when" gets the `needs-format` label and a comment, both gone once it is fixed.
+
+**Pull requests** follow `.github/pull_request_template.md`: what and why, the checks you ran, and `Closes #<issue>`. The title is a Conventional Commit (`fix: the video saves in Safari`). The `format / pull-request` check fails without either, and it is required on `main`. The rules are in `tools/format-check.mjs`, tested in `tests/format-check.test.js`.
 - **Work that takes several pull requests** is a parent issue with a **sub-issue per step** (GitHub's sub-issues: "Add sub-issue" on the parent, or `gh api -X POST repos/<owner>/<repo>/issues/<parent>/sub_issues -F sub_issue_id=<id>`). Each step's pull request closes its sub-issue, and `.github/workflows/issues.yml` closes the parent when its last sub-issue is closed. Steps that come up later become new sub-issues of the same parent.
 - After a merge, check the issues it should have closed are closed.
 - Ideas that aren't planned yet are issues too; close them as `not planned` if they're dropped.
