@@ -1,5 +1,9 @@
 # Contributing
 
+Contributions are welcome: bug reports, fixes, refactors, ideas. Start with an issue (or pick an open one), then a pull request. By contributing you agree that your work is released under the project's [MIT licence](LICENSE). Security problems go through [`SECURITY.md`](SECURITY.md), not issues.
+
+From a fork, the same rules apply; GitHub asks a maintainer to approve the checks on your first pull request.
+
 ## Workflow
 
 1. Branch from the latest `main`: `<type>/<short-topic>`, e.g. `feat/follow-me-card`, `fix/lb-final-detection`.
