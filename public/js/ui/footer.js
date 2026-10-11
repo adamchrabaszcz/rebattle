@@ -3,7 +3,7 @@
 // login (filled in place by app.js once known, data-account). One row on desktop, two
 // columns on phones.
 
-import { R_MARK } from './html.js';
+import { brandName } from './html.js';
 import { renderAccount } from './home.js';
 
 const THEMES = [
@@ -17,7 +17,7 @@ const THEMES = [
 function renderFooter(state) {
   return `
     <footer class="site-footer">
-      <a class="site-brand" href="/about">${R_MARK}<span>rebattle</span></a>
+      <a class="site-brand" href="/about" aria-label="rebattle: about">${brandName()}</a>
       <nav class="site-links" aria-label="rebattle">
         <a href="/about">About</a>
         <a href="/about#follow">Follow a competition</a>
