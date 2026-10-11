@@ -5,7 +5,7 @@
   <img alt="drop. bounceback. rebattle." src="docs/logo-light.svg" width="560">
 </picture>
 
-[![test](https://github.com/adamchrabaszcz/rebattle/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/adamchrabaszcz/rebattle/actions/workflows/test.yml) [![codecov](https://codecov.io/gh/adamchrabaszcz/rebattle/graph/badge.svg?token=PASTE_BADGE_TOKEN)](https://codecov.io/gh/adamchrabaszcz/rebattle)
+[![test](https://github.com/adamchrabaszcz/rebattle/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/adamchrabaszcz/rebattle/actions/workflows/test.yml) [![codecov](https://codecov.io/gh/adamchrabaszcz/rebattle/graph/badge.svg?token=zoGFatLHzl)](https://codecov.io/gh/adamchrabaszcz/rebattle)
 
 A tournament manager for head-to-head double-elimination events, built for a wakeboard competition but sport-agnostic. Riders who lose once drop to the Losers bracket for a second chance; the top two of each bracket cross over into a Final 4.
 
