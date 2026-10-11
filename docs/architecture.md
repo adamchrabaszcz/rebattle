@@ -62,6 +62,7 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 - Phones: a tap anywhere on a tournament list row opens it (`open-row`), and the Open buttons are hidden. Desktop keeps the Open button.
 - Bracket columns share one width on desktop (`--col-w`, set by `syncColumns`). Connector lines are an SVG overlay measured from the rendered cards (`drawConnectors`), with small hops where lines cross.
 - The Losers bracket is random, so `lbLayout` orders each column by the average position of where its riders came from (barycenter) to keep lines tidy.
+- Colours: `public/js/theme.js`, a plain script in `<head>` before the stylesheet, writes `data-theme="light"|"dark"` on `<html>` before the first paint: the footer's choice (Auto / Light / Dark, `rebattle.theme`), or the device's setting for Auto, followed live. The day colours in `styles.css` key off `[data-theme="light"]`. The footer fires `rebattle-theme` on `document` after a change. The replay video stays dark.
 - Every screen but the replay ends with the site footer (`ui/footer.js`, added by `ui/index.js`): one row on desktop, two columns of 44 px tap targets on phones; no hamburger menu (only a few links, and the logo already means home). The login part is filled in place once known (`data-account`).
 - Hovering a rider traces their whole path (`data-cid` on slots and edges).
 - Phones (≤700px) switch to one round at a time with tabs; lines are replaced by "→ R3" tags. A sideways swipe on a bracket moves to the next / previous round (`bindSwipes` in `ui/index.js`, the same path as tapping the tab, with a short slide-in); the bracket has `touch-action: pan-y` so vertical scrolling stays the browser's.
@@ -119,7 +120,7 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 
 ## Storage
 
-- `localStorage` keys `ruedaBattle.tournaments` and `ruedaBattle.activeTournamentId`; names predate the rebattle rename and must stay. `rebattle.online` holds this device's copies of online tournaments; `rebattle.activeOnline` the online tournament last opened here, when that was the last one (opening a local one clears it, and the other way round).
+- `localStorage` keys `ruedaBattle.tournaments` and `ruedaBattle.activeTournamentId`; names predate the rebattle rename and must stay. `rebattle.online` holds this device's copies of online tournaments; `rebattle.activeOnline` the online tournament last opened here, when that was the last one (opening a local one clears it, and the other way round). `rebattle.theme`: `light` or `dark` from the footer switch (none = Auto).
 - A `storage` event from another tab marks the open tournament as changed elsewhere; recording, renaming and undo are blocked until it is reloaded.
 - Import: `Store.readFile` parses and validates; `app.js` asks before replacing a tournament with the same id.
 

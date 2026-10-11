@@ -183,6 +183,25 @@ await step('colours follow the device: light by day, dark by night', async () =>
   return `${seen.light} / ${seen.dark}`;
 });
 
+await step('the footer switch picks Light or Dark over the device, remembered; Auto follows again', async () => {
+  const bg = `getComputedStyle(document.body).backgroundColor`;
+  const LIGHT = 'rgb(246, 245, 242)', DARK = 'rgb(17, 19, 24)';
+  const pick = (v) => js(`document.querySelector('[data-action=set-theme][data-theme-choice=${v}]').click(), 1`);
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'dark' }] });
+  await pick('light');
+  check((await js(bg)) === LIGHT, 'Light did not apply on a dark device');
+  check((await js(`document.querySelector('[data-theme-choice=light]').getAttribute('aria-pressed')`)) === 'true', 'Light not shown as chosen');
+  await open(); // a reload keeps it, before the app's own code runs
+  check((await js(bg)) === LIGHT && (await js(`localStorage.getItem('rebattle.theme')`)) === 'light', 'Light not remembered');
+  await pick('dark');
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'light' }] });
+  check((await js(bg)) === DARK, 'Dark did not hold on a light device');
+  await pick('auto');
+  check((await js(bg)) === LIGHT && (await js(`localStorage.getItem('rebattle.theme')`)) === null, 'Auto did not follow the device');
+  await send('Emulation.setEmulatedMedia', { features: [] });
+  return 'light, dark, auto';
+});
+
 await step('setup and random draw create an 11-rider tournament', () => js(`(async () => { ${H}
   await create('Smoke Open', 11, 'single');
   const t = active();
