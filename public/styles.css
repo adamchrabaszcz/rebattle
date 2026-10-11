@@ -152,6 +152,12 @@ label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px
   border-radius: var(--radius);
 }
 .tournament-list .item .meta { color: var(--muted); font-size: 12px; }
+/* Phones: the whole row opens the tournament (app.js, open-row), so no Open button. */
+@media (max-width: 700px) {
+  .tournament-list .open-btn { display: none; }
+  .tournament-list .item[data-action="open-row"] { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .tournament-list .item[data-action="open-row"]:active { background: var(--panel-2); }
+}
 
 .up-next { margin-bottom: 26px; }
 .up-next-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }

@@ -14,6 +14,7 @@ import { followPath, parseRoute } from './route.js';
 
 const container = document.getElementById('app');
 const UNDO_LIMIT = 20;
+const PHONE = window.matchMedia('(max-width: 700px)'); // the phone layout in styles.css
 
 function freshDraft() {
   return { name: '', competitorCount: null, lapTimeSeconds: 20, breakSeconds: 0, heatFormat: 'single', names: [], localOnly: false };
@@ -629,6 +630,11 @@ container.addEventListener('click', (e) => {
   else if (action === 'export') Store.exportToFile(state.tournament);
   else if (action === 'new-tournament') goSetup();
   else if (action === 'open-tournament') handleOpenTournament(el.dataset.id);
+  else if (action === 'open-row') {
+    if (!PHONE.matches) return; // desktop: the row's Open button
+    if (el.dataset.code) location.href = '/manage/' + el.dataset.code;
+    else handleOpenTournament(el.dataset.id);
+  }
   else if (action === 'delete-tournament') handleDeleteTournament(el.dataset.id);
   else if (action === 'move-online') handleMoveOnline(el.dataset.id);
   else if (action === 'delete-online') handleDeleteOnline(el.dataset.code);
