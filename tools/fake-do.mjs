@@ -1,6 +1,6 @@
 // In-memory stand-in for Durable Object namespaces, for tools/serve.mjs and tests.
 // Mirrors what the stores rely on: idFromName/get, one instance per name, a storage
-// with get/put/delete/deleteAll (values copied, like real storage), one request at a
+// with get/put/delete/deleteAll/list (values copied, like real storage), one request at a
 // time per object (Cloudflare's input gates), and acceptWebSocket/getWebSockets for
 // live viewers (any object with send/close; see tools/ws.mjs). Data is lost on
 // restart; `npm run dev` (wrangler) runs the real thing.
@@ -20,6 +20,9 @@ function memoryStorage() {
     },
     async deleteAll() {
       data.clear();
+    },
+    async list({ prefix = '' } = {}) {
+      return new Map([...data].filter(([k]) => k.startsWith(prefix)).map(([k, v]) => [k, structuredClone(v)]));
     },
     keys: () => [...data.keys()],
   };

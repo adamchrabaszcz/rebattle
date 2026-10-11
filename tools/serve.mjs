@@ -14,7 +14,7 @@ import http from 'node:http';
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { join, extname, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import worker, { TournamentStore, OrganiserList } from '../worker/index.js';
+import worker, { TournamentStore, OrganiserList, CompetitionIndex } from '../worker/index.js';
 import { fakeNamespace } from './fake-do.mjs';
 import { acceptWebSocket, refuseUpgrade } from './ws.mjs';
 
@@ -59,7 +59,7 @@ async function toWorker(req, res, env) {
 }
 
 // Online saving works here too, in memory (tools/fake-do.mjs), lost on restart.
-export const memoryStores = () => ({ TOURNAMENTS: fakeNamespace(TournamentStore), ORGANISERS: fakeNamespace(OrganiserList) });
+export const memoryStores = () => ({ TOURNAMENTS: fakeNamespace(TournamentStore), ORGANISERS: fakeNamespace(OrganiserList), COMPETITIONS: fakeNamespace(CompetitionIndex) });
 
 // /api/t/<code>/live: the same checks as worker/public.js, then the store gets the
 // socket directly (Node has no WebSocketPair to go through the Worker).
