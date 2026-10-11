@@ -1,8 +1,8 @@
 # rebattle
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/logo-dark.svg">
-  <img alt="drop. bounceback. rebattle." src="docs/logo-light.svg" width="560">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/brand/logos/full-on-dark.svg">
+  <img alt="drop. bounceback. rebattle." src="docs/brand/logos/full-on-light.svg" width="560">
 </picture>
 
 [![test](https://github.com/adamchrabaszcz/rebattle/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/adamchrabaszcz/rebattle/actions/workflows/test.yml) [![codecov](https://codecov.io/gh/adamchrabaszcz/rebattle/graph/badge.svg?token=zoGFatLHzl)](https://codecov.io/gh/adamchrabaszcz/rebattle)
