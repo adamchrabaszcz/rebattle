@@ -1,6 +1,9 @@
 # rebattle
 
-**drop. bounceback. rebattle.**
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/logo-dark.svg">
+  <img alt="drop. bounceback. rebattle." src="docs/logo-light.svg" width="560">
+</picture>
 
 A tournament manager for head-to-head double-elimination events, built for a wakeboard competition but sport-agnostic. Riders who lose once drop to the Losers bracket for a second chance; the top two of each bracket cross over into a Final 4.
 
