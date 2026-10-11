@@ -3,7 +3,7 @@ import * as Bracket from './engine/bracket.js';
 import * as Store from './store/local.js';
 import * as Cloud from './store/cloud.js';
 import * as Live from './store/live.js';
-import { assignSlugs, riderSlugs } from './engine/slug.js';
+import { riderSlugs } from './engine/slug.js';
 import { render as renderScreen } from './ui/index.js';
 import { brandLogo, escapeHtml } from './ui/html.js';
 import { computeEstimateHtml } from './ui/setup.js';
@@ -119,10 +119,7 @@ function snapshotUndo() {
 function saveActive() {
   if (!state.tournament) return;
   try {
-    if (state.online) {
-      assignSlugs(state.tournament); // rider links, for tournaments that went online before they existed
-      Cloud.save(state.online.code, state.tournament); // this device first, then the server
-    }
+    if (state.online) Cloud.save(state.online.code, state.tournament); // this device first, then the server
     else Store.upsert(state.tournament);
   } catch (e) {
     console.error('Save failed', e);
@@ -223,7 +220,6 @@ const reasonOf = (e) => (e && e.offline ? 'you seem to be offline' : (e && e.mes
 // tournament being moved, removed from this browser once it is safely online. A new
 // one that can't be saved online is kept in this browser instead, so nothing is lost.
 async function createOnline(tournament, localId) {
-  assignSlugs(tournament); // rider links (/t/<code>/<rider>), kept when names change
   try {
     const code = await Cloud.create(tournament);
     if (localId) Store.remove(localId);
@@ -284,7 +280,6 @@ function openOnline(code) {
       }
       if (state.screen === 'loading') state.screen = 'bracket';
       if (state.screen === 'bracket') render();
-      if (assignSlugs(state.tournament)) Cloud.save(code, state.tournament); // pin rider links before any rename
     })
     .catch((e) => {
       if (e.offline || (e.status && e.status >= 500)) {

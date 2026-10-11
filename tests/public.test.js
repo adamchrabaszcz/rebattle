@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import * as Bracket from '../public/js/engine/bracket.js';
-import { assignSlugs, riderSlugs, slugify } from '../public/js/engine/slug.js';
+import { riderSlugs } from '../public/js/engine/slug.js';
 import { riderSummary } from '../public/js/engine/rider.js';
 import { parseRoute } from '../public/js/route.js';
 import worker from '../worker/index.js';
@@ -83,28 +83,23 @@ test('viewers get the snapshot on connect, every save, and the end', async () =>
   assert.equal(b.closed, 1000);
 });
 
-test('rider links: readable, unique, and they survive renames', () => {
-  assert.equal(slugify('Dora Nowak', 24, 'rider'), 'dora-nowak');
-  assert.equal(slugify('Łukasz Żółć', 24, 'rider'), 'lukasz-zolc');
-  assert.equal(slugify('🌊🌊', 24, 'rider'), 'rider');
+test('rider links: no names, unique, and they survive renames', () => {
+  const t = tournament(['Dora Nowak', 'Dora Nowak', 'Ben', 'Cy', 'Eve', 'Finn']);
+  const slugs = riderSlugs(t);
+  const codes = Object.values(slugs);
+  assert.equal(new Set(codes).size, 6, 'unique, same names included');
+  for (const s of codes) {
+    assert.match(s, /^[a-z2-9]{6}$/);
+    assert.deepEqual(parseRoute('/t/cable-open-x7k2/' + s), { name: 'rider', code: 'cable-open-x7k2', rider: s });
+  }
+  assert.ok(!codes.some((s) => s.includes('dora')), 'no names in links');
 
-  const t = tournament(['Dora', 'dora', 'Dora!', '???', 'x'.repeat(40), 'Ben']);
-  const slugs = Object.values(riderSlugs(t));
-  assert.deepEqual(slugs, ['dora', 'dora-2', 'dora-3', 'rider', 'x'.repeat(24), 'ben']);
-  for (const s of slugs) assert.deepEqual(parseRoute('/t/cable-open-x7k2/' + s), { name: 'rider', code: 'cable-open-x7k2', rider: s });
+  const copy = JSON.parse(JSON.stringify(t)); // e.g. the copy a viewer's browser gets
+  copy.competitors[0].name = 'Dorota Nowak'; // a typo fixed later
+  assert.deepEqual(riderSlugs(copy), slugs, 'every browser gets the same links, renames change nothing');
 
-  assert.equal(assignSlugs(t), true);
-  assert.equal(assignSlugs(t), false, 'nothing left to assign');
-  t.competitors[0].name = 'Dorothy'; // a typo fixed later
-  t.competitors[1].name = 'Dora';
-  assert.equal(assignSlugs(t), false);
-  assert.deepEqual(Object.values(riderSlugs(t)), slugs, 'links stay the same');
-
-  const odd = tournament(['Ana', 'Ben', 'Cy', 'Dora']);
-  odd.competitors[0].slug = 'Bad Slug!'; // from a crafted file: replaced
-  odd.competitors[1].slug = 'cy'; // taken by a stored slug: Cy gets another
-  assignSlugs(odd);
-  assert.deepEqual(odd.competitors.map((c) => c.slug), ['ana', 'cy', 'cy-2', 'dora']);
+  const big = tournament(Array.from({ length: 64 }, (_, i) => 'Rider ' + i));
+  assert.equal(new Set(Object.values(riderSlugs(big))).size, 64);
 });
 
 test("a rider's summary: stage, heats ridden, what's next", () => {

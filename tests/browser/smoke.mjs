@@ -432,7 +432,7 @@ await step('the public page shows the tournament live, read-only, without owner 
   check(!r.won && !r.undo, 'organiser buttons on the public page: ' + JSON.stringify(r));
   check(r.riders === 6 && r.share, 'riders/share: ' + JSON.stringify(r));
   const body = await js(`fetch('/api/t/${movedCode}').then((r) => r.text())`);
-  check(!body.includes('organiser@example.com') && body.includes('"slug"'), 'public read leaks owners or has no rider links');
+  check(!body.includes('organiser@example.com'), 'public read leaks owners');
   return r.riders + ' riders';
 });
 
@@ -445,7 +445,7 @@ await step('a result recorded elsewhere appears on the public page by itself', a
 
 await step("a rider's page shows where they stand and what's next, and updates live", async () => {
   const href = await js(`document.querySelector('.rider-links a').getAttribute('href')`);
-  check(href.startsWith(`/t/${movedCode}/`) && /\/rider-[1-6]$/.test(href), 'rider link ' + href);
+  check(href.startsWith(`/t/${movedCode}/`) && /\/[a-z2-9]{6}$/.test(href), 'rider link ' + href);
   await send('Page.navigate', { url: L + href });
   await until(`document.querySelector('[data-live]')?.textContent === 'live' && !!document.querySelector('.rider-headline')`);
   const r = await js(`({ name: document.querySelector('.event-top h1').textContent, head: document.querySelector('.rider-headline').textContent, next: document.querySelector('.rider-next')?.textContent || '', heats: document.querySelectorAll('.rider-heats li').length })`);

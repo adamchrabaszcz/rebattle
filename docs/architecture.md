@@ -10,7 +10,7 @@ All paths below are under `public/js/`.
 | `engine/bracket.js` | Engine (`Bracket`). Pure functions over a tournament object; no DOM, no storage |
 | `engine/lb-layout.js` | Pure: Losers-bracket display order and lines, shared by the bracket view and the replay |
 | `engine/validate.js` | Pure: the shape and safety check for imported files and every snapshot the Worker accepts |
-| `engine/slug.js` | Pure: names to address parts (tournament codes, rider links) |
+| `engine/slug.js` | Pure: address parts: tournament codes from names, rider links from ids |
 | `engine/rider.js` | Pure: one rider's stage, heats ridden and next heat, for their page |
 | `store/local.js` | `Store`: localStorage persistence, JSON export, import validation |
 | `store/cloud.js` | Online tournaments for the organiser: the API, this device's copy, the outbox |
@@ -39,7 +39,7 @@ Flow: a click → `app.js` mutates `state` (via `Bracket` for results) → `Stor
 
 ## Data model (saved as-is, also the export format)
 
-- `tournament`: `id`, `name`, `createdAt`, `status` (`in_progress` | `completed`), `settings` (`heatFormat` `single` | `bo3`, `lapTimeSeconds`, `breakSeconds`), `competitors` `[{id, name, slug?}]` (`slug`: the rider's link, set once the tournament is online), `bracketSize`, `bracketRounds`.
+- `tournament`: `id`, `name`, `createdAt`, `status` (`in_progress` | `completed`), `settings` (`heatFormat` `single` | `bo3`, `lapTimeSeconds`, `breakSeconds`), `competitors` `[{id, name}]`, `bracketSize`, `bracketRounds`.
 - `wb.matches`, `lb.matches`, `final4.{semi1, semi2, smallFinal, grandFinal}`: matches.
 - A match: `id`, `stage` (`WB` | `LB` | `SF` | `SMALL_FINAL` | `GRAND_FINAL`), `round` (WB) or `level` (LB), `slotA`/`slotB` `{competitorId, isBye}`, `races` (one entry per run, for best of 3), `winnerId`, `loserId`, `completed`, `isBye`, `isLbFinal`.
 - Each match carries `onWinnerAdvanceTo` / `onLoserAdvanceTo` descriptors (`slot`, `lbEntrant`, `lbLevelAdvance`, `eliminated`, `wbChampion`, `wbRunnerUp`, `lbChampion`, `lbRunnerUp`, `rank1`–`rank4`). Recording a result dispatches them, so advancement is automatic.
@@ -100,7 +100,7 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 - **`/t/<code>/<rider>`:** one rider's page (`ui/rider.js`, `engine/rider.js`): where they stand (unbeaten / Losers bracket / Final 4 / out / place), their next heat and opponent (or "waiting for the draw"), the heats they rode, and "Watch my journey" at the end.
 - **API (`worker/public.js`, no login):** `GET /api/t/<code>` returns `{ code, version, updatedAt, tournament }`; `GET /api/t/<code>/live` is a WebSocket into the tournament's Durable Object, which sends the snapshot on connect and after every save, and `{ type: 'deleted' }` when it is deleted. Hibernation API, so idle viewers cost nothing; viewers can't send anything. Never the owners' emails.
 - **In the browser (`store/live.js`):** one read for the first paint, then the socket. It reconnects with backoff (and at once when a phone returns to the page); after 3 attempts that never open, it reads every 20 s instead. Versions only move forward.
-- **Rider links:** made from the name (`dora-nowak`, then `-2`, `-3` for the same name) and stored on the competitor as `slug` when the tournament goes online, so fixing a typo later doesn't break links already shared. Tournaments that went online before this get them the next time the organiser opens them; until then the page works them out the same way.
+- **Rider links:** a 6-character code worked out from the tournament and competitor ids (`/t/cable-open-x7k2/k7m2qp`, FNV-1a hash, same alphabet as codes), so no name is in an address and fixing a typo never breaks a shared link. Nothing is stored: every browser works out the same codes. Not a secret (anyone with the tournament can work them out); a clash between two riders gets `-2`.
 - **Sharing (`ui/share.js`):** the link, Copy, the phone's share sheet where there is one, a QR code (inline SVG, black on white with a quiet zone), and for the whole tournament a poster that only shows when printing (A4: name, QR code, "Follow live at …"). Both the organiser screen and the public pages have it.
 - **QR encoder:** `public/js/vendor/qrcode.js` is `dist/qrcode.mjs` from `qrcode-generator` 2.0.4 by Kazuhiko Arase (MIT, licence header kept), unmodified (sha256 `ea91d7118a5395289170da848b7c6758b996163bfbccf312591ab65a4911b7c0`). Update by replacing the file with a newer release's.
 - **Locally:** `tools/serve.mjs` answers the live feed with a minimal WebSocket (`tools/ws.mjs`) that the in-memory store gets directly.
