@@ -310,8 +310,11 @@ def fit(art, box_w, max_w, max_h, stretch=1, box_h=BOX_H):
 
 
 def avatar(art):
+    """The mark in a round crop: the letter (its top to the baseline) centred, the underline below."""
     r = 78
-    return f'<circle cx="{TILE_W / 2}" cy="{BOX_H / 2}" r="{r}" fill="#111318"/><g transform="translate({TILE_W / 2 - r} {BOX_H / 2 - r})">{fit(art, 2 * r, 2 * r * 0.4, 2 * r * 0.62, box_h=2 * r)}</g>'
+    s = min(2 * r * 0.4 / (art.x1 - art.x0), 2 * r * 0.62 / (art.y1 - art.y0))  # as fit() scales it
+    dy = (art.y1 - art.y0) * s / 2 - art.y1 * s / 2  # fit() centres the whole mark; move the letter's centre there
+    return f'<circle cx="{TILE_W / 2}" cy="{BOX_H / 2}" r="{r}" fill="#111318"/><g transform="translate({TILE_W / 2 - r} {BOX_H / 2 - r + dy:.2f})">{fit(art, 2 * r, 2 * r * 0.4, 2 * r * 0.62, box_h=2 * r)}</g>'
 
 
 def half_and_half(left, right):
@@ -322,7 +325,7 @@ DOS = [
     ('The full logo, with clear space around it', '#111318', lambda: fit(full(DARK), TILE_W, 460, 60)),
     ('The badge: where to find us, when there is no QR code', '#f6f5f2', lambda: fit(badge(LIGHT), TILE_W, 380, 70)),
     ('The name, where the sentence is too long', '#f6f5f2', lambda: fit(name(LIGHT), TILE_W, 300, 90)),
-    ('The mark as an avatar or icon', '#ffffff', lambda: avatar(mark(DARK))),
+    ('The mark as an avatar: the letter centred, the underline below', '#ffffff', lambda: avatar(mark(DARK))),
     ('One colour (white) on a photo', 'url(#photo)', lambda: fit(full(COLOURWAYS['mono-white']), TILE_W, 460, 60)),
     ('One colour (dark) for single-colour print', '#ffffff', lambda: fit(full(COLOURWAYS['mono-dark']), TILE_W, 460, 60)),
 ]
