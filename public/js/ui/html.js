@@ -25,12 +25,15 @@ function brandName() {
 // The short mark: the logo's "r" with the underline from its left edge to the bounce's tip.
 const R_MARK = logoSvg('mark', 'r-mark');
 
-// R_SHAPES: the letter and the underline in font units (y up), for drawing it elsewhere
-// with other colours (the middle of QR codes); viewBox="26 -617.2 474 861.2", scale(1 -1).
+// R_SHAPES: the mark's letter and underline in font units (y up), for drawing it elsewhere
+// with other colours (the middle of QR codes); use with scale(1 -1). The viewBox keeps a
+// little room around the mark.
+const [MX, MY, MW, MH] = LOGO.mark.box;
+const [ULX0, ULY0, ULX1, ULY1] = LOGO.mark.parts.line.match(/-?[\d.]+/g).map(Number); // M x0 y0 H x1 V y1 ...
 export const R_SHAPES = {
-  viewBox: '26 -617.2 474 861.2',
-  letter: 'M118 0V436.0009765625H36.00048828125V600H203.99951171875V482.0001220703125H245.99951171875Q269.59954833984375 544.5999755859375 321.6995544433594 575.8999633789062Q373.799560546875 607.199951171875 439.399658203125 607.199951171875H489.9996337890625V463.200927734375H431.99969482421875Q353.99945068359375 463.200927734375 317.3992004394531 419.20074462890625Q280.7989501953125 375.2005615234375 280.7989501953125 303.2001953125V0Z',
-  underline: { x: 36, y: -234, width: 454, height: 144 },
+  viewBox: `${MX - 10} ${MY - 10} ${MW + 20} ${MH + 20}`,
+  letter: LOGO.mark.parts.text,
+  underline: { x: ULX0, y: ULY0, width: ULX1 - ULX0, height: ULY1 - ULY0 },
 };
 
 // Small logo to the right of a tournament's own title; doubles as the way back to
