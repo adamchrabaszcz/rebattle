@@ -520,8 +520,8 @@ await step('share panel: link, QR code and a printable poster', async () => {
   await send('Page.navigate', { url: `${L}/t/${movedCode}` });
   await until(`!!document.querySelector('[data-action=open-share]')`);
   await js(`document.querySelector('[data-action=open-share]').click(), 1`);
-  const r = await until(`document.querySelector('.share-url') && ({ url: document.querySelector('.share-url').value, qr: document.querySelectorAll('.share-qr svg path').length, poster: !!document.querySelector('.poster') })`);
-  check(r.url === `${L}/t/${movedCode}` && r.qr === 1 && r.poster, 'share panel: ' + JSON.stringify(r));
+  const r = await until(`document.querySelector('.share-url') && ({ url: document.querySelector('.share-url').value, qr: document.querySelectorAll('.share-qr .qr > path').length, mark: !!document.querySelector('.share-qr .qr > svg path'), poster: !!document.querySelector('.poster') })`);
+  check(r.url === `${L}/t/${movedCode}` && r.qr === 1 && r.mark && r.poster, 'share panel: ' + JSON.stringify(r));
   await js(`window.print = () => {}; document.querySelector('[data-action=print-poster]').click(), 1`);
   await send('Emulation.setEmulatedMedia', { media: 'print' });
   const printed = await js(`({ poster: getComputedStyle(document.querySelector('.poster')).display, bracket: document.querySelector('.bracket-graph').getClientRects().length ? 'shown' : 'none', qr: Math.round(document.querySelector('.poster-qr').getBoundingClientRect().width), url: document.querySelector('.poster-url').textContent })`);
