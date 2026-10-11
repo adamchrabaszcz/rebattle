@@ -1,5 +1,6 @@
 // Canvas drawing primitives: text, logo, tags, medals, icons.
 
+import { EM, LOGO } from '../ui/logo-outlines.js';
 import { C, clamp01, DISPLAY, FONT, fontFor } from './theme.js';
 
 // ---- drawing helpers ------------------------------------------------------
@@ -62,36 +63,27 @@ function drawLink(ctx, link, cx, y, { size = 36, twoLines = false } = {}) {
   text(ctx, link.url, x + lw, y, { size: s, weight: 700, color: C.accent2, maxWidth: LINK_WIDTH - lw });
 }
 
-// The logo, "drop. bounceback. rebattle.", centred on cx with its baseline at y. Full
-// stops are squares (logo only); underline (0..1) is how much of the amber line under
+// The logo, "drop. bounceback. rebattle.", centred on cx with its baseline at y, from the
+// same outlines as the app (ui/logo-outlines.js: the logo's own "r", square full stops).
+// size is the font size it matches; underline (0..1) is how much of the amber line under
 // "rebattle" is drawn, so the intro can draw it at reading pace like the home screen.
+let logoPaths;
 function drawLogo(ctx, cx, y, size, underline = 1) {
+  const { box: [x0, , w], parts } = LOGO.full;
+  if (!logoPaths) logoPaths = { lead: new Path2D(parts.lead), text: new Path2D(parts.text) };
+  const [lx0, ly0, lx1, ly1] = parts.line.match(/-?[\d.]+/g).map(Number); // M x0 y0 H x1 V y1 ...
+  const k = size / EM;
   ctx.save();
-  ctx.font = `700 ${size}px ${DISPLAY}`;
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
-  if ('letterSpacing' in ctx) ctx.letterSpacing = -0.03 * size + 'px';
-  const stop = 0.14 * size;
-  const stopGap = 0.06 * size;
-  const space = ctx.measureText(' ').width;
-  const parts = [
-    { word: 'drop', color: C.muted },
-    { word: 'bounceback', color: C.muted },
-    { word: 'rebattle', color: C.text, underline: true },
-  ].map((p) => ({ ...p, w: ctx.measureText(p.word).width }));
-  const total = parts.reduce((sum, p) => sum + p.w + stopGap + stop, 0) + space * (parts.length - 1);
-  let x = cx - total / 2;
-  parts.forEach((p) => {
-    ctx.fillStyle = p.color;
-    ctx.fillText(p.word, x, y);
-    if (p.underline && underline > 0) {
-      ctx.fillStyle = C.accent2;
-      ctx.fillRect(x, y + 0.14 * size, p.w * clamp01(underline), 0.12 * size);
-      ctx.fillStyle = p.color;
-    }
-    ctx.fillRect(x + p.w + stopGap, y - stop, stop, stop);
-    x += p.w + stopGap + stop + space;
-  });
+  ctx.translate(cx - (w / 2 + x0) * k, y);
+  ctx.scale(k, -k);
+  ctx.fillStyle = C.muted;
+  ctx.fill(logoPaths.lead);
+  ctx.fillStyle = C.text;
+  ctx.fill(logoPaths.text);
+  if (underline > 0) {
+    ctx.fillStyle = C.accent2;
+    ctx.fillRect(lx0, ly0, (lx1 - lx0) * clamp01(underline), ly1 - ly0);
+  }
   ctx.restore();
 }
 
