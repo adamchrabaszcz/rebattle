@@ -1,8 +1,9 @@
 """Builds the rebattle icons from the "r" in Funnel Display Bold.
 
 Run from the repo root:  pip install fonttools brotli && python3 tools/make-icons.py
-Writes public/icons/favicon.svg and public/icons/touch-icon.svg, and prints the inline mark used in
-public/js/ui/html.js (R_MARK). The PNGs (favicon-32, apple-touch-icon, icon-512) are screenshots of
+Writes public/icons/favicon.svg and public/icons/touch-icon.svg, docs/brand/instagram/profile.svg
+(the Instagram profile picture: square, mark small enough for the round crop), and prints the inline
+mark used in public/js/ui/html.js (R_MARK). The PNGs (favicon-32, apple-touch-icon, icon-512) are screenshots of
 those SVGs at 32/180/512 px.
 """
 from fontTools.ttLib import TTFont
@@ -29,6 +30,9 @@ def svg(size=64, rounded=True, fill_frac=0.6):
             f'<rect x="{X0}" y="{-GAP-TH}" width="{X1-X0}" height="{TH}" fill="#ffb020"/></g></svg>\n')
 open('public/icons/favicon.svg','w').write(svg(64, True))
 open('public/icons/touch-icon.svg','w').write(svg(180, False, fill_frac=0.5))
+import os
+os.makedirs('docs/brand/instagram', exist_ok=True)
+open('docs/brand/instagram/profile.svg','w').write(svg(1080, False, fill_frac=0.5))
 mark=(f'<svg class="r-mark" viewBox="{X0-10:g} {-TOP-10:g} {X1-X0+20:g} {H+20:g}" aria-hidden="true">'
       f'<g transform="scale(1 -1)"><path fill="currentColor" d="{path}"/>'
       f'<rect x="{X0}" y="{-GAP-TH}" width="{X1-X0}" height="{TH}" fill="var(--accent)"/></g></svg>')
