@@ -403,6 +403,12 @@ footer.note a { color: var(--text); }
 .replay-row input[type="range"] { flex: 1; min-width: 140px; accent-color: var(--accent); }
 .replay-time { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; }
 .replay-status { margin: 0; font-size: 13px; }
+/* While the video is made: a bar and what is going on, right under the button. */
+.replay-making { display: flex; flex-direction: column; gap: 6px; margin: -8px 0 16px; font-size: 14px; color: var(--muted); }
+.replay-making[hidden] { display: none; }
+.replay-making progress { width: 100%; height: 8px; accent-color: var(--accent); }
+.replay-making progress[hidden] { display: none; }
+.replay-making b { color: var(--text); font-weight: 600; }
 @media (max-width: 640px) {
   .replay-stage { width: 100%; }
   .replay canvas { height: auto; width: 100%; }

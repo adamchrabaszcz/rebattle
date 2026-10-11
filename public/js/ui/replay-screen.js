@@ -13,9 +13,13 @@ function renderReplayScreen(state) {
       ${brandHome()}
     </div>
     <div class="toolbar event-toolbar replay-top">
-      <button class="primary" data-replay="export">Download video</button>
+      <button class="primary" data-replay="export">Make video</button>
       <button data-replay="share" hidden>Share&hellip;</button>
       <button class="replay-back" data-action="close-replay">Back to bracket</button>
+    </div>
+    <div class="replay-making" data-replay="making" role="status" hidden>
+      <progress data-replay="progress" max="1" value="0"></progress>
+      <span><b data-replay="making-time"></b> <span data-replay="making-note"></span></span>
     </div>
     <div class="replay">
       <div class="replay-stage">
