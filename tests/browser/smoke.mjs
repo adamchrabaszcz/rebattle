@@ -558,6 +558,31 @@ await step('phone: round tabs and the more-menu work', () => js(`(async () => { 
   return before + ' -> ' + after;
 })()`));
 
+await step('phone: a sideways swipe changes the round, a vertical one doesn\'t', async () => {
+  await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
+  await open(); // touch takes effect on a fresh page
+  const locate = () => js(`(() => { const g = document.querySelector('.bracket-graph.has-tabs'); g.scrollIntoView({ block: 'center' }); const r = g.getBoundingClientRect(); return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + Math.min(r.height / 2, 120)) }; })()`);
+  let where = await locate();
+  const active = `[...document.querySelector('.round-tabs').querySelectorAll('button')].findIndex((b) => b.classList.contains('active'))`;
+  const swipe = async (dx, dy) => {
+    const at = (x, y) => [{ x, y }];
+    await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: at(where.x, where.y) });
+    for (let i = 1; i <= 5; i++) await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: at(where.x + (dx * i) / 5, where.y + (dy * i) / 5) });
+    await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await sleep(250);
+  };
+  const first = await js(active);
+  await swipe(0, -120); // scrolling
+  check((await js(active)) === first, 'a vertical swipe changed the round');
+  where = await locate(); // the page scrolled
+  await swipe(first > 0 ? 140 : -140, 10);
+  const second = await js(active);
+  check(second === first + (first > 0 ? -1 : 1), `swipe: tab ${first} -> ${second}`);
+  check(await js(`document.querySelector('.bracket-graph.has-tabs .bracket-column.active').className.includes('slide-from')`), 'no slide-in');
+  await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+  return `tab ${first} -> ${second}`;
+});
+
 await step('no page errors, console errors, CSP violations or failed requests', async () => {
   await sleep(200);
   check(!problems.length, problems.join('\n      '));

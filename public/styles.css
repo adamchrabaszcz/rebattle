@@ -344,6 +344,11 @@ footer.note a { color: var(--text); }
   /* The round titles are hidden here, so the first card sits at the top of the
      scroll box, which would clip the BYE / FINAL tag floating on its edge. */
   .has-tabs .bracket-columns { padding-top: 6px; }
+  /* Sideways moves on a bracket are swipes between rounds (ui/index.js), not scrolls. */
+  .bracket-graph.has-tabs { touch-action: pan-y; }
+  /* A swipe slides the new round in from the side it came from. */
+  .has-tabs .bracket-column.slide-from-right { animation: slide-in-right 0.15s ease-out; }
+  .has-tabs .bracket-column.slide-from-left { animation: slide-in-left 0.15s ease-out; }
   .next-tag { display: inline-block; color: var(--win); border-color: #35c17a66; }
 
   /* Final 4 uses the same tabs (Semifinals / Small final / Final); drop
@@ -446,6 +451,11 @@ footer.note a { color: var(--text); }
 /* ---- Public pages: live status, riders, rider page ---- */
 .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--win); margin-right: 5px; vertical-align: 1px; animation: live-pulse 2s ease-in-out infinite; }
 @keyframes live-pulse { 50% { opacity: 0.35; } }
+@keyframes slide-in-right { from { transform: translateX(24px); opacity: 0.4; } }
+@keyframes slide-in-left { from { transform: translateX(-24px); opacity: 0.4; } }
+@media (prefers-reduced-motion: reduce) {
+  .has-tabs .bracket-column.slide-from-right, .has-tabs .bracket-column.slide-from-left { animation: none; }
+}
 @media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
 .rider-links { display: flex; flex-wrap: wrap; gap: 8px; }
 .rider-links a { color: var(--text); text-decoration: none; background: var(--panel-2); border: 1px solid var(--border); border-radius: 999px; padding: 6px 12px; font-size: 14px; }
