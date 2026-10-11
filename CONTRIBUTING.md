@@ -2,10 +2,17 @@
 
 ## Workflow
 
-1. Branch from `main`: `<type>/<short-topic>`, e.g. `feat/follow-me-card`, `fix/lb-final-detection`.
+1. Branch from the latest `main`: `<type>/<short-topic>`, e.g. `feat/follow-me-card`, `fix/lb-final-detection`.
 2. Make the change, keeping it focused on one thing.
 3. Run the checks (below) and look at the change in a browser, on desktop and phone width.
 4. Open a pull request into `main`. CI must be green before merging.
+
+### One feature or fix per pull request
+
+- Each feature, fix or docs change gets its own branch and pull request, even when several are asked for at once. A request with three things is three pull requests.
+- Keep them independent: each starts from `main`, not from another open branch, and can be merged in any order. Where two touch the same file, put their changes in different places (e.g. CSS next to the rules it extends, not all appended at the end).
+- If `main` moves and a pull request conflicts, update it from `main` (or redo it on a fresh branch) rather than piling more onto it.
+- Small means reviewable in one sitting: one behaviour, its tests and its docs.
 
 ## Commits: Conventional Commits
 

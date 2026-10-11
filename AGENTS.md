@@ -24,3 +24,4 @@ Keep this file short. Detailed context lives in `docs/`; read the relevant doc b
 - Don't rename the `ruedaBattle.*` localStorage keys (existing saved data).
 - Online tournaments: the browser sends whole snapshots with `baseVersion`; the Worker checks login, same origin, size, `validateTournament` and ownership on every write. Keep owner emails out of anything public (`/api/t/*` and the live feed).
 - Conventional Commits; branch + PR, never commit straight to `main`.
+- One feature or fix per PR, each branched from `main` and mergeable on its own; split multi-part requests (CONTRIBUTING.md).
