@@ -10,7 +10,7 @@ import { computeEstimateHtml } from './ui/setup.js';
 import { renderAccount, renderLists } from './ui/home.js';
 import { renderLive, renderSync } from './ui/bracket-screen.js';
 import * as Replay from './replay/player.js';
-import { parseRoute } from './route.js';
+import { followPath, parseRoute } from './route.js';
 
 const container = document.getElementById('app');
 const UNDO_LIMIT = 20;
@@ -43,6 +43,7 @@ const state = {
   riderId: null, // rider page: whose
   share: null, // the share panel, while open: { url, title, name, poster } (ui/share.js)
   replayFrom: 'bracket', // the screen "Back" returns to from the replay
+  hasWork: false, // intro: tournaments are saved on this device (links to the list)
 };
 
 // The only actions the read-only view runs. An allowlist, so anything added later
@@ -54,13 +55,30 @@ function render() {
     if (state.screen !== 'replay') Replay.unmount();
     // Views get their data through state and never read storage themselves.
     state.tournaments = state.screen === 'home' ? Store.loadAll() : [];
+    if (state.screen === 'intro') state.hasWork = hasWork();
     renderScreen(container, state);
+    syncAddress();
     if (state.screen === 'setup') bindSetupLiveUpdates();
-    if (state.screen === 'replay') Replay.mount(container, state.tournament, state.replayFocus);
+    if (state.screen === 'replay') {
+      const online = state.live || state.online; // the address on the video's last scene
+      Replay.mount(container, state.tournament, state.replayFocus, { host: location.host, code: online ? online.code : null });
+    }
   } catch (e) {
     console.error('Render failed', e);
     renderCrashScreen(e);
   }
+}
+
+// Tournaments saved on this device, local or online copies.
+const hasWork = () => Store.loadAll().length > 0 || Cloud.cachedList().length > 0;
+
+// The address follows the organiser's screen, so a reload lands where they were:
+// the list is /tournaments, a local tournament is / (which reopens it while it runs).
+// Public pages, online tournaments, the intro and setup keep their own address.
+function syncAddress() {
+  if (state.readOnly || state.online) return;
+  const path = state.screen === 'home' ? '/tournaments' : state.screen === 'bracket' ? '/' : null;
+  if (path && location.pathname !== path) history.replaceState(null, '', path);
 }
 
 // A tournament saved by an older version of this app (different data shape)
@@ -252,6 +270,7 @@ function handleDeleteOnline(code) {
   Cloud.remove(code)
     .then(() => {
       Cloud.forget(code);
+      if (Store.getActiveOnline() === code) Store.setActiveOnline(null);
       loadOnlineList();
     })
     .catch((e) => alert(`Couldn't delete it (${reasonOf(e)}).`));
@@ -262,7 +281,7 @@ function handleDeleteOnline(code) {
 // server moved on meanwhile.
 function openOnline(code) {
   const copy = Cloud.cached(code);
-  if (copy) Store.setActiveId(null); // shown: / goes to the list next time, not an older local one
+  if (copy) Store.setActiveOnline(code); // shown: / comes back here next time
   state.online = { code, ...Cloud.status(code) };
   state.tournament = copy && copy.tournament;
   state.screen = copy ? 'bracket' : 'loading';
@@ -272,7 +291,7 @@ function openOnline(code) {
       const now = Cloud.cached(code);
       if (now && now.pending) return Cloud.flush();
       Cloud.remember(code, version, tournament);
-      Store.setActiveId(null);
+      Store.setActiveOnline(code);
       state.online.status = 'saved';
       if (!now || JSON.stringify(now.tournament) !== JSON.stringify(tournament)) {
         state.tournament = tournament;
@@ -552,7 +571,7 @@ function handleImportFile(file) {
       Store.upsert(t);
       state.nameDraft = null;
       Store.setActiveId(t.id);
-      if (location.pathname !== '/') return void (location.href = '/'); // imported files are local tournaments
+      state.online = null; // imported files are local tournaments, also when imported on an online one's screen
       state.tournament = t;
       state.undoStack = [];
       state.screen = 'bracket';
@@ -567,9 +586,12 @@ container.addEventListener('click', (e) => {
   const action = el.dataset.action;
   if (state.readOnly && !VIEW_ACTIONS.has(action)) return;
 
-  // Away from the plain app (the read-only view, or another address): load / afresh.
-  if (action === 'go-home' && (state.readOnly || location.pathname !== '/')) location.href = '/';
+  // The logo: a viewer (and "Nothing here") goes to /, where rebattle starts for them;
+  // the organiser goes to the tournament list, loaded afresh from an online tournament.
+  if (action === 'go-home' && (state.readOnly || state.screen === 'notFound')) location.href = '/';
+  else if (action === 'go-home' && state.online) location.href = '/tournaments';
   else if (action === 'go-home') goHome();
+  else if (action === 'follow') follow();
   else if (action === 'go-setup') goSetup();
   else if (action === 'go-setup-back') {
     state.screen = 'setup';
@@ -626,6 +648,18 @@ container.addEventListener('click', (e) => {
   }
 });
 
+// "Follow a competition" on the intro: a code or a link, to its public page.
+function follow() {
+  const input = document.getElementById('f-follow');
+  const path = followPath(input.value);
+  if (path) location.href = path;
+  else document.getElementById('follow-error').textContent = input.value.trim() ? 'That doesn’t look like a competition code. It looks like cable-open-x7k2.' : 'Type the code first.';
+}
+
+container.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.id === 'f-follow') follow();
+});
+
 container.addEventListener('input', (e) => {
   const el = e.target.closest('.rename-input');
   if (el && state.nameDraft) state.nameDraft[el.dataset.cid] = el.value;
@@ -651,6 +685,10 @@ function loadOrganiser() {
       state.organiser = (me && typeof me.email === 'string' && me.email) || null;
       const el = container.querySelector('[data-account]');
       if (el) el.innerHTML = renderAccount(state.organiser);
+      if (state.organiser && state.screen === 'intro' && route.name === 'home') {
+        state.screen = 'home'; // an organiser on a new device: their online list, not the intro
+        render();
+      }
       if (state.organiser) {
         state.onlineList = null; // loading
         refreshLists();
@@ -662,16 +700,24 @@ function loadOrganiser() {
 // ---- init ---------------------------------------------------------------
 
 // /manage/<code> opens an online tournament (Access has already asked for the login);
-// /t/<code> and /t/<code>/<rider> are the public, live pages. See route.js.
+// /t/<code> and /t/<code>/<rider> are the public, live pages; /tournaments the list,
+// /about the introduction. See route.js.
+// / takes you back to the last tournament opened here while it is still running,
+// else to your list; in a browser with nothing saved it shows the introduction.
 // ?view (the active tournament) or ?view=<id> opens it read-only, without changing
 // which tournament is active for the organiser in this browser.
 const route = parseRoute(location.pathname);
 const params = new URLSearchParams(location.search);
+let redirect = null; // / going straight back to a running online tournament
 const viewed = route.name === 'home' && params.has('view') && Store.getById(params.get('view') || Store.getActiveId());
 if (route.name === 'manage') {
   openOnline(route.code);
 } else if (route.name === 'view' || route.name === 'rider') {
   openPublic(route);
+} else if (route.name === 'list') {
+  state.screen = 'home';
+} else if (route.name === 'about') {
+  state.screen = 'intro';
 } else if (route.name !== 'home') {
   state.screen = 'notFound';
 } else if (viewed) {
@@ -679,15 +725,16 @@ if (route.name === 'manage') {
   state.tournament = viewed;
   state.screen = 'bracket';
 } else {
-  const activeId = Store.getActiveId();
-  if (activeId) {
-    const t = Store.getById(activeId);
-    if (t) {
-      state.tournament = t;
-      state.screen = 'bracket';
-    }
-  }
+  const running = (t) => t && t.status === 'in_progress';
+  const online = Store.getActiveOnline();
+  const local = Store.getById(Store.getActiveId());
+  if (online && running((Cloud.cached(online) || {}).tournament)) redirect = '/manage/' + online;
+  else if (running(local)) {
+    state.tournament = local;
+    state.screen = 'bracket';
+  } else state.screen = hasWork() ? 'home' : 'intro';
 }
-if (!['manage', 'view', 'rider'].includes(route.name)) render(); // the others render themselves
-if ((route.name === 'home' && !state.readOnly) || route.name === 'manage') loadOrganiser();
+if (redirect) location.replace(redirect);
+else if (!['manage', 'view', 'rider'].includes(route.name)) render(); // the others render themselves
+if (['home', 'list', 'about', 'manage'].includes(route.name) && !state.readOnly && !redirect) loadOrganiser();
 Cloud.flush(); // anything left unsent from last time

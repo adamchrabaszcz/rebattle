@@ -2,13 +2,16 @@
 
 import * as Bracket from '../engine/bracket.js';
 import { lbLayout } from '../engine/lb-layout.js';
+import { riderSlugs } from '../engine/slug.js';
 import { C, DRAW_EXTRA, TARGET_SECONDS } from './theme.js';
 
 // ---- timeline -------------------------------------------------------------
 
 // focus: competitor id for a single rider's journey (only their heats, then
 // their result), or null for the whole competition.
-function buildTimeline(t, focus) {
+// site: { host, code } to put the tournament's public address on the last scene
+// (code null for a local tournament: then just the host).
+function buildTimeline(t, focus, site) {
   const k = t.bracketRounds;
   const wbRounds = {};
   t.wb.matches.forEach((m) => (wbRounds[m.round] = wbRounds[m.round] || []).push({ match: m }));
@@ -73,14 +76,14 @@ function buildTimeline(t, focus) {
       };
 
   const scenes = focus
-    ? journeyScenes(t, focus, rounds.filter(Boolean).concat([semis, finals]))
+    ? journeyScenes(t, focus, rounds.filter(Boolean).concat([semis, finals]), site)
     : [{ type: 'intro', fixed: 3.5 }] // logo (underline done at 1.85s), then name, field and format
         .concat(rounds.filter(Boolean))
         .concat([
           { type: 'qualify', kicker: 'Final 4', color: C.accent2, title: 'The semis', fixed: 3.0 },
           semis,
           finals,
-          { type: 'podium', fixed: 5.8 }, // confetti is fully faded ~0.25s before the end
+          { type: 'podium', fixed: 5.8, link: siteLink(site, 'Results:', site && site.code && '/t/' + site.code) }, // confetti is fully faded ~0.25s before the end
         ]);
 
   // Fixed scenes keep their length; the remaining budget is shared between
@@ -102,7 +105,7 @@ function buildTimeline(t, focus) {
 
 // One rider's path: every heat they rode (in running order), one per
 // scene, then a result card.
-function journeyScenes(t, focus, heatScenes) {
+function journeyScenes(t, focus, heatScenes, site) {
   const rode = (item) => item.match.slotA.competitorId === focus || item.match.slotB.competitorId === focus;
   const mine = heatScenes
     .map((s) => {
@@ -136,10 +139,18 @@ function journeyScenes(t, focus, heatScenes) {
         stats: `${ridden.length} heat${ridden.length === 1 ? '' : 's'} · ${wins} win${wins === 1 ? '' : 's'} · ${ridden.length - wins} loss${
           ridden.length - wins === 1 ? '' : 'es'
         }`,
+        link: siteLink(site, `${name(t, focus).split(/\s+/)[0]}’s journey:`, site && site.code && `/t/${site.code}/${riderSlugs(t)[focus]}`),
       },
     ]);
 }
 
 const name = (t, id) => Bracket.getName(t, id) || 'TBD';
+
+// The address shown at the end of the video: { label, url }, or null without a site.
+// A local tournament has no public page, so it gets just the host, unlabelled.
+function siteLink(site, label, path) {
+  if (!site || !site.host) return null;
+  return path ? { label, url: site.host + path } : { label: '', url: site.host };
+}
 
 export { name, buildTimeline };

@@ -387,7 +387,7 @@ await step('a change from another device: "use the other version" and "keep mine
 });
 
 await step('a local tournament can be moved online', async () => {
-  await send('Page.navigate', { url: L + '/' });
+  await send('Page.navigate', { url: L + '/tournaments' });
   await until(`!!document.querySelector('[data-action=go-setup]')`);
   await js(`(async () => { ${H} await create('Local First', 6, 'single', true); return 1; })()`);
   await until(`location.pathname === '/' && !!document.querySelector('[data-action=record-winner]')`);
@@ -395,7 +395,7 @@ await step('a local tournament can be moved online', async () => {
   await until(`!!document.querySelector('[data-action=move-online]')`);
   await js(`document.querySelector('[data-action=move-online]').click(), 1`);
   const moved = await until(`location.pathname.startsWith('/manage/local-first-') && ${sync} === 'saved online' && location.pathname`);
-  await send('Page.navigate', { url: L + '/' });
+  await send('Page.navigate', { url: L + '/tournaments' });
   await until(`document.querySelectorAll('[data-lists] a[href^="/manage/"]').length === 2`);
   check(!(await js(`!!document.querySelector('[data-action=move-online]')`)), 'still listed in this browser');
   movedCode = moved.split('/')[2];
@@ -497,8 +497,52 @@ await step('unknown tournaments, riders and paths show "not found", with all fil
   expected.delete(404);
   await js(`document.querySelector('[data-action=go-home]').click(), 1`);
   await sleep(1200);
-  const home = await js(`({ path: location.pathname, app: !!document.querySelector('.brand') && !document.querySelector('.card h2')?.textContent.includes('Nothing') })`);
-  check(home.path === '/' && home.app, 'Open rebattle did not go home: ' + JSON.stringify(home));
+  // This browser has tournaments but none running: / shows the list (at /tournaments).
+  const home = await js(`({ path: location.pathname, list: !!document.querySelector('[data-lists]') })`);
+  check(home.path === '/tournaments' && home.list, 'Open rebattle did not go to the list: ' + JSON.stringify(home));
+});
+
+// ---- introduction and returning visitors --------------------------------------
+
+await step('/about: Follow takes a code or a pasted link, and rejects anything else', async () => {
+  await send('Page.navigate', { url: L + '/about' });
+  await until(`!!document.querySelector('#f-follow')`);
+  const type = (v) => js(`(() => { const i = document.querySelector('#f-follow'); i.value = ${JSON.stringify(v)}; document.querySelector('[data-action=follow]').click(); return document.querySelector('#follow-error')?.textContent || ''; })()`);
+  check(/doesn’t look like/.test(await type('not a code!')), 'bad code accepted');
+  await type('  ' + movedCode.toUpperCase() + ' ');
+  await until(`location.pathname === '/t/${movedCode}' && document.querySelector('[data-live]')?.textContent === 'live'`);
+  const rider = await js(`document.querySelector('.rider-links a').getAttribute('href')`);
+  await send('Page.navigate', { url: L + '/about' });
+  await until(`!!document.querySelector('#f-follow')`);
+  const pasted = JSON.stringify('https://rebattle.app' + rider + '?ref=poster'); // a link from another device
+  await js(`(() => { const i = document.querySelector('#f-follow'); i.value = ${pasted}; i.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); return 1; })()`);
+  await until(`location.pathname === ${JSON.stringify(rider)} && !!document.querySelector('.rider-headline')`);
+  return rider;
+});
+
+await step('a logged-in organiser goes back to their running online tournament from /', async () => {
+  await send('Page.navigate', { url: L + '/tournaments' });
+  await until(`!!document.querySelector('[data-action=go-setup]')`);
+  await js(`(async () => { ${H} await create('Still Running', 5, 'single'); return 1; })()`);
+  const running = await until(`location.pathname.startsWith('/manage/still-running-') && ${sync} === 'saved online' && location.pathname`);
+  await send('Page.navigate', { url: L + '/' });
+  await until(`location.pathname === ${JSON.stringify(running)} && !!document.querySelector('[data-action=record-winner]')`);
+  await js(`document.querySelector('[data-action=go-home]').click(), 1`); // the logo: the list, not back again
+  await until(`location.pathname === '/tournaments' && !!document.querySelector('[data-lists]')`);
+  return running;
+});
+
+await step('a new visitor gets the introduction at /, and can start a tournament from it', async () => {
+  await send('Page.navigate', { url: BASE });
+  await sleep(500);
+  const kept = await js(`JSON.stringify(Object.fromEntries(Object.entries(localStorage)))`);
+  await js(`localStorage.clear(), 1`);
+  await send('Page.navigate', { url: BASE });
+  await until(`!!document.querySelector('#f-follow') && !!document.querySelector('.intro-steps') && location.pathname === '/'`);
+  check(!(await js(`!!document.querySelector('a[href="/tournaments"]')`)), 'a new visitor is offered "Your tournaments"');
+  await js(`document.querySelector('[data-action=go-setup]').click(), 1`);
+  await until(`!!document.querySelector('#f-name')`);
+  await js(`(() => { localStorage.clear(); const o = ${kept}; for (const k in o) localStorage.setItem(k, o[k]); return 1; })()`);
 });
 
 await view(390, 844, true);

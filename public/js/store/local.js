@@ -6,6 +6,9 @@ import { validateTournament } from '../engine/validate.js';
 // Keys predate the rebattle rename; kept so tournaments already saved in browsers still load.
 const KEY_TOURNAMENTS = 'ruedaBattle.tournaments';
 const KEY_ACTIVE_ID = 'ruedaBattle.activeTournamentId';
+// The online tournament last opened on this device (its code), when that was the last
+// one opened: / takes you back to it. Opening a local one clears it, and vice versa.
+const KEY_ACTIVE_ONLINE = 'rebattle.activeOnline';
 
 function loadAll() {
   try {
@@ -26,8 +29,21 @@ function getActiveId() {
 }
 
 function setActiveId(id) {
-  if (id) localStorage.setItem(KEY_ACTIVE_ID, id);
-  else localStorage.removeItem(KEY_ACTIVE_ID);
+  if (id) {
+    localStorage.setItem(KEY_ACTIVE_ID, id);
+    localStorage.removeItem(KEY_ACTIVE_ONLINE);
+  } else localStorage.removeItem(KEY_ACTIVE_ID);
+}
+
+function getActiveOnline() {
+  return localStorage.getItem(KEY_ACTIVE_ONLINE);
+}
+
+function setActiveOnline(code) {
+  if (code) {
+    localStorage.setItem(KEY_ACTIVE_ONLINE, code);
+    localStorage.removeItem(KEY_ACTIVE_ID);
+  } else localStorage.removeItem(KEY_ACTIVE_ONLINE);
 }
 
 function upsert(tournament) {
@@ -84,4 +100,4 @@ function readFile(file) {
   });
 }
 
-export { loadAll, saveAll, getActiveId, setActiveId, upsert, remove, getById, exportToFile, readFile, validateTournament };
+export { loadAll, saveAll, getActiveId, setActiveId, getActiveOnline, setActiveOnline, upsert, remove, getById, exportToFile, readFile, validateTournament };

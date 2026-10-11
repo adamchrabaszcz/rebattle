@@ -6,7 +6,8 @@ import assert from 'node:assert/strict';
 import * as Bracket from '../public/js/engine/bracket.js';
 import { riderSlugs } from '../public/js/engine/slug.js';
 import { riderSummary } from '../public/js/engine/rider.js';
-import { parseRoute } from '../public/js/route.js';
+import { followPath, parseRoute } from '../public/js/route.js';
+import { buildTimeline } from '../public/js/replay/timeline.js';
 import worker from '../worker/index.js';
 import { memoryStores } from '../tools/serve.mjs';
 
@@ -144,4 +145,27 @@ test('a viewer that sends anything is disconnected', async () => {
   await env.TOURNAMENTS.get(env.TOURNAMENTS.idFromName(code)).connect(v);
   store.webSocketMessage(v, 'hello');
   assert.equal(v.closed, 1008);
+});
+
+test('addresses: the introduction, the list, and Follow a competition', () => {
+  assert.deepEqual(parseRoute('/about'), { name: 'about' });
+  assert.deepEqual(parseRoute('/tournaments'), { name: 'list' });
+  assert.deepEqual(parseRoute('/about/x'), { name: 'notFound' });
+  assert.equal(followPath('cable-open-x7k2'), '/t/cable-open-x7k2');
+  assert.equal(followPath('  Cable-Open-X7K2 '), '/t/cable-open-x7k2', 'typed from a poster');
+  assert.equal(followPath('https://rebattle.app/t/cable-open-x7k2'), '/t/cable-open-x7k2');
+  assert.equal(followPath('rebattle.app/t/cable-open-x7k2/k7m2qp?ref=qr#top'), '/t/cable-open-x7k2/k7m2qp');
+  for (const bad of ['', '   ', 'not a code!', '/t/', 'https://evil.example/x', '-dash-', '<script>']) assert.equal(followPath(bad), null, bad);
+});
+
+test('the video ends with the address: results on the podium, a rider\'s page on their journey', () => {
+  const t = tournament(['Dora Nowak', 'Ben', 'Cy', 'Eve', 'Finn']);
+  while (Bracket.getPlayableMatches(t).length) playOne(t);
+  const last = (tl) => tl.scenes.at(-1);
+  const site = { host: 'rebattle.app', code: 'cable-open-x7k2' };
+  assert.deepEqual(last(buildTimeline(t, null, site)).link, { label: 'Results:', url: 'rebattle.app/t/cable-open-x7k2' });
+  const dora = t.competitors[0].id;
+  assert.deepEqual(last(buildTimeline(t, dora, site)).link, { label: 'Dora’s journey:', url: 'rebattle.app/t/cable-open-x7k2/' + riderSlugs(t)[dora] });
+  assert.deepEqual(last(buildTimeline(t, dora, { host: 'rebattle.app', code: null })).link, { label: '', url: 'rebattle.app' }, 'local: no public page');
+  assert.equal(last(buildTimeline(t, null)).link, null, 'no site: nothing drawn');
 });

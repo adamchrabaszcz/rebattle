@@ -1,7 +1,7 @@
 // Closing scenes: podium, a rider's journey and result, confetti.
 
 import * as Bracket from '../engine/bracket.js';
-import { drawMedal, easeBack, fitName, roundRect, text, withAlpha, wrapLines } from './draw.js';
+import { drawLink, drawMedal, easeBack, fitName, roundRect, text, withAlpha, wrapLines } from './draw.js';
 import { drawHeader } from './rounds.js';
 import { C, clamp01, ease, FONT, W } from './theme.js';
 import { name } from './timeline.js';
@@ -87,6 +87,7 @@ function drawResult(ctx, tl, scene, local) {
       .forEach((l, i) => text(ctx, l, W / 2, 1080 + i * 58, { size: 44, color: C.text, align: 'center' }));
     text(ctx, scene.stats, W / 2, 1300, { size: 38, color: C.muted, align: 'center' });
   });
+  if (scene.link) withAlpha(ctx, ease((reveal - 1.1) / 0.4), () => drawLink(ctx, scene.link, W / 2, 1480, { size: 40, twoLines: true }));
   if (scene.place <= 3) drawConfetti(ctx, reveal - 0.2, W / 2, 680);
 }
 
@@ -95,7 +96,7 @@ function ordinal(n) {
   return n + (v >= 11 && v <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
 }
 
-function drawPodium(ctx, tl, local) {
+function drawPodium(ctx, tl, scene, local) {
   const t = tl.tournament;
   drawHeader(ctx, tl, { kicker: 'Final standings', color: C.accent2, title: 'Podium' });
   const base = 1080;
@@ -149,7 +150,7 @@ function drawPodium(ctx, tl, local) {
 
   // Everyone else, in two columns.
   const rest = Bracket.getPlacings(t).slice(3);
-  const perCol = Math.min(12, Math.ceil(rest.length / 2)); // balance the two columns
+  const perCol = Math.min(scene.link ? 11 : 12, Math.ceil(rest.length / 2)); // balance the two columns; leave room for the link
   // One size for the whole list, small enough for the longest name to fit (not below 24px).
   ctx.font = `400 30px ${FONT}`;
   const longest = Math.max(1, ...rest.map(({ id }) => ctx.measureText(name(t, id)).width));
@@ -170,6 +171,8 @@ function drawPodium(ctx, tl, local) {
       text(ctx, `+ ${rest.length - perCol * 2} more`, W / 2, 1180 + perCol * 46 + 10, { size: 28, color: C.muted, align: 'center' })
     );
   }
+
+  if (scene.link) withAlpha(ctx, ease((local - winnerAt - 1.3) / 0.4), () => drawLink(ctx, scene.link, W / 2, 1755, { size: 34 }));
 
   drawConfetti(ctx, local - winnerAt, spots[2].x, base - spots[2].h - 150);
 }

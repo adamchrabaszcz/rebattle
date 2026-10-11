@@ -35,6 +35,33 @@ function text(ctx, str, x, y, { size = 40, weight = 400, color = C.text, align =
   ctx.fillText(s, x, y);
 }
 
+// The address at the end of the video: a muted label and the address in the accent
+// colour, on one line (centred as a whole) or two. Shrinks to fit the width.
+const LINK_WIDTH = 960; // canvas width minus margins
+function drawLink(ctx, link, cx, y, { size = 36, twoLines = false } = {}) {
+  const label = link.label && !twoLines ? link.label + ' ' : link.label;
+  const measure = (str, s, weight) => {
+    ctx.font = `${weight} ${s}px ${fontFor(s)}`;
+    return ctx.measureText(str).width;
+  };
+  let s = size;
+  let lw;
+  let uw;
+  for (; s > 22; s -= 1) {
+    lw = label ? measure(label, s, 400) : 0;
+    uw = measure(link.url, s, 700);
+    if ((twoLines ? Math.max(lw, uw) : lw + uw) <= LINK_WIDTH) break;
+  }
+  if (twoLines) {
+    if (label) text(ctx, label, cx, y, { size: s, color: C.muted, align: 'center' });
+    text(ctx, link.url, cx, label ? y + s * 1.35 : y, { size: s, weight: 700, color: C.accent2, align: 'center', maxWidth: LINK_WIDTH });
+    return;
+  }
+  const x = cx - (lw + uw) / 2;
+  if (label) text(ctx, label, x, y, { size: s, color: C.muted });
+  text(ctx, link.url, x + lw, y, { size: s, weight: 700, color: C.accent2, maxWidth: LINK_WIDTH - lw });
+}
+
 // The logo, "drop. bounceback. rebattle.", centred on cx with its baseline at y. Full
 // stops are squares (logo only); underline (0..1) is how much of the amber line under
 // "rebattle" is drawn, so the intro can draw it at reading pace like the home screen.
@@ -235,4 +262,4 @@ function fitName(ctx, str, maxWidth, size, minSize, weight) {
   return { size: minSize, lines: splits.length ? splits[Math.floor(splits.length / 2)] : [String(str)] };
 }
 
-export { text, withAlpha, roundRect, drawLogo, wrapLines, outcomeTag, tagWidth, drawTag, drawShuffleIcon, drawMedal, easeBack, fitName };
+export { text, withAlpha, roundRect, drawLink, drawLogo, wrapLines, outcomeTag, tagWidth, drawTag, drawShuffleIcon, drawMedal, easeBack, fitName };
