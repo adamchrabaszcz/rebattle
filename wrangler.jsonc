@@ -14,8 +14,9 @@
   // domain is public and the AUD tag only identifies this app. Locally, .dev.vars can
   // set DEV_ORGANISER_EMAIL instead (see worker/auth.js).
   "vars": {
-    "ACCESS_TEAM_DOMAIN": "",
-    "ACCESS_AUD": ""
+    // Changing the team name in Zero Trust changes this domain (and the token issuer).
+    "ACCESS_TEAM_DOMAIN": "https://silent-paper-2aa5.cloudflareaccess.com",
+    "ACCESS_AUD": "efaef521e782085d4fcfddd0db011ece190fa12519c5e1e1fff24158159939fa"
   },
   // Pull requests get a preview URL (`npx wrangler preview`); settings are inherited.
   "previews": {}
