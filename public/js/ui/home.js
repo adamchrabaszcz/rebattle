@@ -1,4 +1,6 @@
 // Home screen: online tournaments (when logged in) and the ones saved in this browser.
+// On phones a tap anywhere on a row opens it (open-row in app.js) and the Open
+// buttons are hidden; on desktop the Open button does.
 // The lists sit in their own element: the app fills in the online part (and the
 // "Move online" buttons) once it knows who is logged in, without restarting the logo
 // animation.
@@ -43,13 +45,13 @@ function renderOnline(state) {
         const pending = (state.onlinePending || []).includes(e.code) ? ' &middot; <span class="sync-pending">changes waiting to upload</span>' : '';
         const meta = e.competitors != null ? `${e.competitors} competitors &middot; ${statusText(e.status)} &middot; updated ${when(e.updatedAt)}` : statusText(e.status);
         return `
-      <div class="item">
+      <div class="item" data-action="open-row" data-code="${code}">
         <div>
           <div><strong>${escapeHtml(e.name)}</strong></div>
           <div class="meta">${meta}${pending} &middot; <span class="code">${code}</span></div>
         </div>
         <div class="toolbar">
-          <a class="btn" href="/manage/${code}">Open</a>
+          <a class="btn open-btn" href="/manage/${code}">Open</a>
           <button class="danger small" data-action="delete-online" data-code="${code}">Delete</button>
         </div>
       </div>`;
@@ -70,13 +72,13 @@ function renderLocal(state, loggedIn) {
     ? `<div class="tournament-list">${all
         .map(
           (t) => `
-      <div class="item">
+      <div class="item" data-action="open-row" data-id="${t.id}">
         <div>
           <div><strong>${escapeHtml(t.name)}</strong></div>
           <div class="meta">${t.competitors.length} competitors &middot; ${statusText(t.status)} &middot; ${when(t.createdAt)}</div>
         </div>
         <div class="toolbar">
-          <button data-action="open-tournament" data-id="${t.id}">Open</button>
+          <button class="open-btn" data-action="open-tournament" data-id="${t.id}">Open</button>
           ${loggedIn ? `<button class="small" data-action="move-online" data-id="${t.id}">Move online</button>` : ''}
           <button class="danger small" data-action="delete-tournament" data-id="${t.id}">Delete</button>
         </div>

@@ -558,6 +558,47 @@ await step('phone: round tabs and the more-menu work', () => js(`(async () => { 
   return before + ' -> ' + after;
 })()`));
 
+await step('phone: a sideways swipe changes the round, a vertical one doesn\'t', async () => {
+  await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
+  await open(); // touch takes effect on a fresh page
+  const locate = () => js(`(() => { const g = document.querySelector('.bracket-graph.has-tabs'); g.scrollIntoView({ block: 'center' }); const r = g.getBoundingClientRect(); return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + Math.min(r.height / 2, 120)) }; })()`);
+  let where = await locate();
+  const active = `[...document.querySelector('.round-tabs').querySelectorAll('button')].findIndex((b) => b.classList.contains('active'))`;
+  const swipe = async (dx, dy) => {
+    const at = (x, y) => [{ x, y }];
+    await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: at(where.x, where.y) });
+    for (let i = 1; i <= 5; i++) await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: at(where.x + (dx * i) / 5, where.y + (dy * i) / 5) });
+    await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await sleep(250);
+  };
+  const first = await js(active);
+  await swipe(0, -120); // scrolling
+  check((await js(active)) === first, 'a vertical swipe changed the round');
+  where = await locate(); // the page scrolled
+  await swipe(first > 0 ? 140 : -140, 10);
+  const second = await js(active);
+  check(second === first + (first > 0 ? -1 : 1), `swipe: tab ${first} -> ${second}`);
+  check(await js(`document.querySelector('.bracket-graph.has-tabs .bracket-column.active').className.includes('slide-from')`), 'no slide-in');
+  await send('Emulation.setTouchEmulationEnabled', { enabled: false });
+  return `tab ${first} -> ${second}`;
+});
+
+await step('phone: tapping a list row opens it, its Delete button doesn\'t', async () => {
+  await open('tournaments');
+  await until(`!!document.querySelector('[data-action=open-row]')`);
+  const r = await js(`(async () => { ${H}
+    if (qa('.open-btn').some((b) => b.offsetParent)) throw new Error('Open buttons shown on a phone');
+    window.confirm = () => false; // Delete asks first; answer no
+    q('[data-action=open-row] [data-action=delete-tournament]').click(); await wait();
+    if (!q('[data-lists]')) throw new Error('Delete opened the tournament');
+    const name = q('[data-action=open-row] strong').textContent;
+    q('[data-action=open-row] .meta').click(); await wait();
+    return { name, title: q('.event-top h1')?.textContent, path: location.pathname };
+  })()`);
+  check(r.title === r.name && r.path === '/', 'row did not open: ' + JSON.stringify(r));
+  return r.name;
+});
+
 await step('no page errors, console errors, CSP violations or failed requests', async () => {
   await sleep(200);
   check(!problems.length, problems.join('\n      '));
