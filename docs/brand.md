@@ -36,3 +36,17 @@ In the video, blue `#4f8cff` marks the Winners bracket (opposite violet for Lose
 - "Winners bracket" / "Losers bracket"; short forms WB / LB.
 - Final 4 origins: **WB 1st, WB 2nd, LB 1st, LB 2nd**.
 - "Random draw" for Losers-bracket pairings; "Bye" for no opponent; "Out" for eliminated.
+
+## Instagram: @rebattle.app
+
+- **Profile picture:** `docs/brand/instagram/profile.png` (1080×1080; the "r" mark on the dark background, small enough to sit inside the round crop and still read at 44 px). Rebuild the SVG with `tools/make-icons.py`; the PNG is a 1080 px screenshot of it.
+- **Name:** rebattle
+- **Bio** (120 of 150 characters):
+
+  ```
+  drop. bounceback. rebattle.
+  Double-elimination brackets, run from your phone.
+  Live results · rider pages · replay videos
+  ```
+- **Link:** https://rebattle.app
+- **Content:** the replay videos are made for Reels and Stories (1080×1920); a rider's journey video is a ready-made post for that rider to share.
