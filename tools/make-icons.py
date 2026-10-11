@@ -17,10 +17,14 @@ X, Y, W, H = mark['box']  # font units, y down: the letter's top at Y, the under
 paths = ''.join(f'<path fill="{"#ffb020" if role == "line" else "#eceef2"}" d="{d}"/>' for role, d in mark['parts'].items())
 
 
-def svg(size=64, rounded=True, fill_frac=0.6):
-    """The mark centred on the dark background, fill_frac of the size tall."""
+def svg(size=64, rounded=True, fill_frac=0.6, centre_letter=False):
+    """The mark centred on the dark background, fill_frac of the size tall. centre_letter: the
+    letter (its top to the baseline) in the middle and the underline below it, for round crops,
+    where the eye takes the letter as the centre; otherwise the whole mark is centred."""
     s = size * fill_frac / H
     tx, ty = size / 2 - (X + W / 2) * s, (size - H * s) / 2 - Y * s
+    if centre_letter:
+        ty = size / 2 - Y / 2 * s
     rect = f'<rect width="{size}" height="{size}" rx="{size * 0.22 if rounded else 0:g}" fill="#111318"/>'
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {size} {size}">{rect}'
             f'<g transform="translate({tx:.3f} {ty:.3f}) scale({s:.5f} {-s:.5f})">{paths}</g></svg>\n')
@@ -29,4 +33,4 @@ def svg(size=64, rounded=True, fill_frac=0.6):
 open('public/icons/favicon.svg', 'w').write(svg(64, True))
 open('public/icons/touch-icon.svg', 'w').write(svg(180, False, fill_frac=0.5))
 os.makedirs('docs/brand/instagram', exist_ok=True)
-open('docs/brand/instagram/profile.svg', 'w').write(svg(1080, False, fill_frac=0.5))
+open('docs/brand/instagram/profile.svg', 'w').write(svg(1080, False, fill_frac=0.5, centre_letter=True))
