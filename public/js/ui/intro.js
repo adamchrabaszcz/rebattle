@@ -21,7 +21,7 @@ function renderIntro(state) {
       <p class="intro-big">Head-to-head competitions where one bad run doesn&rsquo;t end your day.</p>
       <p>rebattle runs a double-elimination bracket from the organiser&rsquo;s phone, and gives everyone else a live page, a page for each rider and a replay video to share.</p>
     </section>
-    <div class="card intro-follow">
+    <div class="card intro-follow" id="follow">
       <h2>Follow a competition</h2>
       <p>Type the code from the poster, or paste the link you were sent.</p>
       <div class="follow-row">
@@ -30,7 +30,7 @@ function renderIntro(state) {
       </div>
       <p class="field-error" id="follow-error" role="alert"></p>
     </div>
-    <section class="section">
+    <section class="section intro-how">
       <h2>How it works</h2>
       <ol class="intro-steps">
         ${STEPS.map(([kind, title, text], i) => `<li class="step-${kind}"><span class="step-num">${i + 1}</span><div><strong>${title}</strong><p>${text}</p></div></li>`).join('')}

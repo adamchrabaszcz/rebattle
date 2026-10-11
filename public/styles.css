@@ -527,3 +527,23 @@ footer.note a { color: var(--text); }
 .step-lb .step-num { background: var(--losers); }
 .step-f4 .step-num { background: var(--accent); }
 .card .btn + .btn, .card button + .btn { margin-left: 8px; }
+/* Desktop: the intro spans the page (same width as the header): the lead, then
+   Follow and For organisers side by side, then the three steps in a row. Placed
+   by grid so the HTML keeps its phone order (lead, Follow, steps, organisers). */
+@media (min-width: 701px) {
+  #app.intro-page { display: grid; grid-template-columns: 1fr 1fr; column-gap: 20px; align-items: start; }
+  #app.intro-page > * { grid-column: 1 / -1; }
+  #app.intro-page > .topbar { grid-row: 1; }
+  #app.intro-page > .intro-lead { grid-row: 2; }
+  #app.intro-page > .intro-follow { grid-row: 3; grid-column: 1; }
+  #app.intro-page > .intro-organisers { grid-row: 3; grid-column: 2; }
+  #app.intro-page > .intro-how { grid-row: 4; margin-top: 8px; }
+  #app.intro-page .intro-follow, #app.intro-page .intro-organisers { max-width: none; height: calc(100% - 24px); }
+  #app.intro-page .intro-lead { max-width: 760px; }
+  #app.intro-page .intro-big { font-size: 34px; }
+  #app.intro-page .intro-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: none; }
+  #app.intro-page .intro-steps li { flex-direction: column; gap: 10px; border-bottom: 0; border-top: 3px solid var(--border); padding-top: 14px; }
+  #app.intro-page .intro-steps li.step-wb { border-top-color: var(--winners); }
+  #app.intro-page .intro-steps li.step-lb { border-top-color: var(--losers); }
+  #app.intro-page .intro-steps li.step-f4 { border-top-color: var(--accent); }
+}
