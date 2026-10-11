@@ -114,3 +114,10 @@ test('running competitions come first, then finished ones, newest first; paged',
   const post = await worker.fetch(new Request(BASE + '/api/competitions', { method: 'POST' }), memoryStores());
   assert.equal(post.status, 405);
 });
+
+test('the index refuses an operation it does not know', async () => {
+  const { COMPETITIONS } = memoryStores();
+  const index = COMPETITIONS.get(COMPETITIONS.idFromName('all'));
+  const res = await index.fetch('https://index/drop-everything', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  assert.equal(res.status, 400);
+});
