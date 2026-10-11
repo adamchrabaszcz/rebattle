@@ -30,6 +30,47 @@ function bindTabs(container) {
   });
 }
 
+// Phones: a sideways swipe on a bracket moves to the next / previous round, like its
+// tab. Only a clearly sideways move counts, so scrolling never changes rounds.
+const SWIPE_MIN = 50; // px
+let swipeBound = false;
+function bindSwipes(container) {
+  if (swipeBound) return;
+  swipeBound = true;
+  let start = null;
+  container.addEventListener(
+    'touchstart',
+    (e) => {
+      const graph = e.target.closest('.bracket-graph.has-tabs');
+      start = graph && e.touches.length === 1 ? { graph, x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
+    },
+    { passive: true }
+  );
+  container.addEventListener(
+    'touchend',
+    (e) => {
+      if (!start) return;
+      const { graph, x, y } = start;
+      start = null;
+      const dx = e.changedTouches[0].clientX - x;
+      const dy = e.changedTouches[0].clientY - y;
+      if (Math.abs(dx) < SWIPE_MIN || Math.abs(dx) < 1.5 * Math.abs(dy)) return;
+      const bar = graph.previousElementSibling;
+      if (!bar || !bar.offsetParent) return; // tabs hidden: the desktop layout shows every round
+      const tabs = [...bar.querySelectorAll('[data-tab-graph]')];
+      const next = tabs.findIndex((b) => b.classList.contains('active')) + (dx < 0 ? 1 : -1);
+      if (next < 0 || next >= tabs.length) return;
+      tabs[next].click(); // the same path as tapping the tab
+      tabs[next].scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      const col = graph.querySelector('.bracket-column.active');
+      col.classList.remove('slide-from-left', 'slide-from-right');
+      void col.offsetWidth; // restart the animation on a quick second swipe
+      col.classList.add(dx < 0 ? 'slide-from-right' : 'slide-from-left');
+    },
+    { passive: true }
+  );
+}
+
 let traceBound = false;
 function bindTracing(container) {
   if (traceBound) return;
@@ -66,6 +107,7 @@ function render(container, state) {
   lastContainer = container;
   bindTracing(container);
   bindTabs(container);
+  bindSwipes(container);
   container.classList.toggle('wide', state.screen === 'bracket');
   if (state.screen === 'home') container.innerHTML = renderHome(state);
   else if (state.screen === 'intro') container.innerHTML = renderIntro(state);
