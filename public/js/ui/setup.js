@@ -102,7 +102,7 @@ function renderNames(state) {
       <p>Names will be randomly drawn into the bracket, including random byes if ${n} isn't a power of two.</p>
       <div class="name-grid">${inputs}</div>
       <button class="primary" data-action="names-draw">Draw bracket</button>
-      <span id="names-error" style="color:#e35b5b; margin-left:12px;"></span>
+      <span id="names-error" class="inline-error"></span>
     </div>
   `;
 }
