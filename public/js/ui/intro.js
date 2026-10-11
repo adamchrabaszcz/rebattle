@@ -2,7 +2,6 @@
 // is, following a competition by its code, how the format works, and how to start.
 
 import { brandLogo } from './html.js';
-import { renderAccount } from './home.js';
 
 const STEPS = [
   ['wb', 'Winners bracket', 'Everyone starts here. Win and you move on. Lose once and you drop to the Losers bracket: no one is out after one bad run.'],
@@ -41,7 +40,6 @@ function renderIntro(state) {
       <p>Set up a bracket in a minute, record each heat with one tap, keep going when the venue wifi drops. Without an account it&rsquo;s saved in this browser. Organisers with an account save online and get the live link, the QR poster and rider pages.</p>
       <div class="toolbar"><button class="primary" data-action="go-setup">Start a tournament</button></div>
     </div>
-    <footer class="note account" data-account>${renderAccount(state.organiser)}</footer>
   `;
 }
 

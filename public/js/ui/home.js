@@ -18,8 +18,6 @@ function renderHome(state) {
       </div>
     </div>
     <div data-lists>${renderLists(state)}</div>
-    <footer class="note account" data-account>${renderAccount(state.organiser)}</footer>
-    <footer class="note"><a href="/about">What is rebattle?</a></footer>
   `;
 }
 
