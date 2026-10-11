@@ -65,7 +65,7 @@ node tools/coverage.mjs coverage    # table, coverage/lcov.info
 
 ## Deploy
 
-Live at **https://rebattle.app** on Cloudflare Workers: static assets from `public/` plus a small Worker for `/api/*` (`wrangler.jsonc`). Cloudflare builds from GitHub: every merge to `main` goes live, and pull requests get a preview URL. There is no build step; the deploy command is `npx wrangler deploy`, using the pinned Wrangler from `package-lock.json`.
+Live at **https://rebattle.app** on Cloudflare Workers: static assets from `public/` plus a small Worker for `/api/*` (`wrangler.jsonc`). Cloudflare builds from GitHub: every merge to `main` goes live, and pull requests get a preview URL. There is no build step; the deploy command is `npx wrangler deploy`, using the pinned Wrangler from `package-lock.json`. Once CI passes on `main`, a merge that ships a change also gets a version tag and a [GitHub release](https://github.com/adamchrabaszcz/rebattle/releases) (`.github/workflows/release.yml`): the version comes from the Conventional Commits since the last release.
 
 Saved tournaments live in each browser per address, so data on `127.0.0.1` doesn't show up on rebattle.app; move it with Export/Import JSON.
 

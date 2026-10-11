@@ -1,0 +1,40 @@
+name: release
+
+# Every merge to main deploys (Cloudflare builds main). Once CI has passed on it, this
+# tags the commit and publishes a GitHub release if the merge shipped a change
+# (tools/release.mjs reads the Conventional Commits since the last tag), so what's
+# live has a version and release notes.
+on:
+  workflow_run:
+    workflows: [test]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Tag and release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          version=$(node tools/release.mjs)
+          if [ -z "$version" ]; then echo "Nothing to release (docs, ci, chore… only)."; exit 0; fi
+          gh release create "v$version" --target "$SHA" --title "v$version" --generate-notes
+          echo "Released v$version" >> "$GITHUB_STEP_SUMMARY"

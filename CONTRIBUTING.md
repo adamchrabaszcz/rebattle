@@ -49,6 +49,10 @@ Breaking changes (e.g. a change to the saved tournament format) get a `!` after 
 - The pull request for it ends its description with `Closes #<issue>`, so merging closes the issue.
 - Ideas that aren't planned yet are issues too; close them as `not planned` if they're dropped.
 
+## Releases
+
+Every merge to `main` deploys. After CI passes there, `.github/workflows/release.yml` tags the commit and publishes a GitHub release with the merged pull requests as notes, if the merge shipped something. The version follows the commit types since the last release (`tools/release.mjs`): a breaking change (`feat!:` or a `BREAKING CHANGE:` footer) → major, `feat` → minor, `fix` / `perf` → patch. `docs`, `ci`, `chore`, `test`, `refactor`, `style` and `build` make no release. So the commit type matters: it decides the version.
+
 ## Checks
 
 ```sh
