@@ -53,9 +53,11 @@ function drawJourneyIntro(ctx, tl, local) {
   const t = tl.tournament;
   withAlpha(ctx, ease(local / 0.6), () => {
     text(ctx, 'RIDER JOURNEY', W / 2, 600, { size: 40, weight: 800, color: C.accent2, align: 'center', spacing: 8 });
-    const lines = wrapLines(ctx, name(t, tl.focus), W - 160, 128, 800).slice(0, 2);
-    lines.forEach((l, i) => text(ctx, l, W / 2, 740 + i * 140, { size: 128, weight: 800, align: 'center' }));
-    const y = 740 + lines.length * 140;
+    // Big, on one or two lines; long names get smaller instead of running off the sides.
+    const fit = fitName(ctx, name(t, tl.focus), W - 160, 128, 64, 800);
+    const lineH = fit.size * 1.1;
+    fit.lines.forEach((l, i) => text(ctx, l, W / 2, 740 + i * lineH, { size: fit.size, weight: 800, align: 'center', maxWidth: W - 160 }));
+    const y = 740 + fit.lines.length * lineH;
     text(ctx, t.name, W / 2, y + 10, { size: 44, color: C.muted, align: 'center', maxWidth: W - 160 });
     text(ctx, `${t.competitors.length} riders · ${new Date(t.createdAt).toLocaleDateString()}`, W / 2, y + 80, {
       size: 36,

@@ -1,7 +1,7 @@
 // Scenes for the rounds: the intro, every heat card, the semis crossover.
 
 import { drawLogo, drawShuffleIcon, drawTag, outcomeTag, roundRect, tagWidth, text, withAlpha, wrapLines } from './draw.js';
-import { C, DRAW_EXTRA, ease, FADE, FONT, SHUFFLE, W } from './theme.js';
+import { C, DRAW_EXTRA, ease, FADE, FONT, fontFor, SHUFFLE, W } from './theme.js';
 import { name } from './timeline.js';
 
 // One heat card. p = resolve progress (0 = undecided, 1 = result shown).
@@ -104,7 +104,11 @@ function drawHeader(ctx, tl, scene, local = 99) {
   text(ctx, tl.tournament.name, W / 2, 120, { size: 34, color: C.muted, align: 'center', maxWidth: W - 160 });
   if (scene.draw) drawKickerWithDraw(ctx, scene, local);
   else text(ctx, scene.kicker.toUpperCase(), W / 2, 210, { size: 40, weight: 800, color: scene.color, align: 'center', spacing: 6 });
-  text(ctx, scene.title, W / 2, 300, { size: 92, weight: 800, align: 'center', maxWidth: W - 120 });
+  // A long title (a rider's name on their result) shrinks before it is cut short.
+  ctx.font = `800 92px ${fontFor(92)}`;
+  const wide = ctx.measureText(scene.title).width;
+  const size = wide > W - 120 ? Math.max(56, Math.floor((92 * (W - 120)) / wide)) : 92;
+  text(ctx, scene.title, W / 2, 300, { size, weight: 800, align: 'center', maxWidth: W - 120 });
   if (scene.sub) text(ctx, scene.sub, W / 2, 378, { size: 32, color: C.muted, align: 'center', maxWidth: W - 120 });
 }
 
