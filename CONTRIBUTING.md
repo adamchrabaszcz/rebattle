@@ -46,7 +46,9 @@ Breaking changes (e.g. a change to the saved tournament format) get a `!` after 
 
 - The roadmap is the [issue list](https://github.com/adamchrabaszcz/rebattle/issues), not a section in the docs.
 - Every task starts as an issue: a feature, a fix, a docs change. If you're asked for something that has no issue yet, open one first (title in plain words, what and why in the body, label `enhancement`, `bug` or `documentation`).
-- The pull request for it ends its description with `Closes #<issue>`, so merging closes the issue.
+- The pull request for it ends its description with `Closes #<issue>`, so merging closes the issue. Every pull request closes exactly one issue; `Part of #n` closes nothing, so don't rely on it.
+- **Work that takes several pull requests** is a parent issue with a **sub-issue per step** (GitHub's sub-issues: "Add sub-issue" on the parent, or `gh api -X POST repos/<owner>/<repo>/issues/<parent>/sub_issues -F sub_issue_id=<id>`). Each step's pull request closes its sub-issue, and `.github/workflows/issues.yml` closes the parent when its last sub-issue is closed. Steps that come up later become new sub-issues of the same parent.
+- After a merge, check the issues it should have closed are closed.
 - Ideas that aren't planned yet are issues too; close them as `not planned` if they're dropped.
 
 ## Releases
