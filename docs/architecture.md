@@ -59,9 +59,9 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 ## Rendering (`ui/`)
 
 - HTML strings; every user string through `escapeHtml`.
-- Every screen but the replay ends with the site footer (`ui/footer.js`, added by `ui/index.js`): one row on desktop, two columns of 44 px tap targets on phones; no hamburger menu (only a few links, and the logo already means home). The login part is filled in place once known (`data-account`).
 - Bracket columns share one width on desktop (`--col-w`, set by `syncColumns`). Connector lines are an SVG overlay measured from the rendered cards (`drawConnectors`), with small hops where lines cross.
 - The Losers bracket is random, so `lbLayout` orders each column by the average position of where its riders came from (barycenter) to keep lines tidy.
+- Every screen but the replay ends with the site footer (`ui/footer.js`, added by `ui/index.js`): one row on desktop, two columns of 44 px tap targets on phones; no hamburger menu (only a few links, and the logo already means home). The login part is filled in place once known (`data-account`).
 - Hovering a rider traces their whole path (`data-cid` on slots and edges).
 - Phones (≤700px) switch to one round at a time with tabs; lines are replaced by "→ R3" tags.
 
