@@ -280,6 +280,43 @@ await step('replay video draws on the canvas', () => js(`(async () => { ${H}
   return cv.width + 'x' + cv.height;
 })()`));
 
+// Making the video in real time: the button says how long it takes, the progress and the
+// note show under it, a hidden tab pauses it, and it ends with the saved file. On the
+// shortest video, the last rider's journey (~10 s).
+await step('making the video in real time says what it is doing', () => js(`(async () => { ${H}
+  const encoder = window.VideoEncoder;
+  window.VideoEncoder = undefined; // record in real time, also where frame-by-frame encoding exists
+  const setHidden = (hidden) => {
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => hidden });
+    document.dispatchEvent(new Event('visibilitychange'));
+  };
+  try {
+    q('[data-action=open-replay]').click(); await wait(800);
+    const focus = q('[data-replay=focus]');
+    focus.value = focus.options[focus.options.length - 1].value;
+    focus.dispatchEvent(new Event('change', { bubbles: true })); await wait(100);
+    const label = q('[data-replay=export]').textContent;
+    if (!/^Make video \\(\\d+:\\d\\d\\)$/.test(label)) throw new Error('button: ' + label);
+    q('[data-replay=export]').click(); await wait(600);
+    const making = () => q('[data-replay=making]').textContent;
+    if (!/Making your video: 0:0\\d of .+plays once to record it/.test(making()) || !q('[data-replay=play]').disabled) throw new Error('not recording: ' + making());
+    if (!(q('[data-replay=progress]').value > 0)) throw new Error('no progress');
+    setHidden(true);
+    if (!/Paused: come back to this tab/.test(making())) throw new Error('hidden tab not paused: ' + making());
+    setHidden(false);
+    if (!/plays once to record it/.test(making())) throw new Error('not resumed: ' + making());
+    const start = Date.now();
+    while (!/Video saved/.test(making()) && Date.now() - start < 60000) await wait(200);
+    if (!/Video saved: .+_journey\\.(mp4|webm)/.test(making())) throw new Error('not saved: ' + making());
+    if (q('[data-replay=export]').textContent !== label || q('[data-replay=play]').disabled) throw new Error('controls not back');
+    q('[data-action=close-replay]').click(); await wait();
+    return label + ', paused while hidden, saved after ' + ((Date.now() - start) / 1000).toFixed(0) + ' s';
+  } finally {
+    delete document.hidden;
+    window.VideoEncoder = encoder;
+  }
+})()`));
+
 await step('40-rider bracket draws connector lines', () => js(`(async () => { ${H}
   q('[data-action=go-home]').click(); await wait();
   await create('Big Field', 40, 'bo3');

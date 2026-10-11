@@ -30,7 +30,10 @@ function mount(container, tournament, focus, site) {
     last: null,
     recorder: null,
     file: null,
-    el: { focus: q('focus'), subtitle: q('subtitle'), tip: q('tip'), play: q('play'), restart: q('restart'), scrub: q('scrub'), time: q('time'), export: q('export'), share: q('share'), status: q('status') },
+    el: {
+      focus: q('focus'), subtitle: q('subtitle'), tip: q('tip'), play: q('play'), restart: q('restart'), scrub: q('scrub'), time: q('time'),
+      export: q('export'), share: q('share'), status: q('status'), making: q('making'), progress: q('progress'), makingTime: q('making-time'), makingNote: q('making-note'),
+    },
   };
   const p = player;
   p.el.scrub.max = String(Math.round(p.tl.total * 1000));
@@ -50,6 +53,7 @@ function mount(container, tournament, focus, site) {
   });
   p.canvas.addEventListener('mouseleave', () => (p.el.tip.hidden = true));
   document.addEventListener('keydown', onKey);
+  document.addEventListener('visibilitychange', onVisibility);
   p.el.scrub.addEventListener('pointerdown', () => (p.scrubbing = true));
   p.el.scrub.addEventListener('change', () => (p.scrubbing = false));
   p.el.restart.addEventListener('click', () => {
@@ -77,6 +81,7 @@ function setFocus(focus) {
   p.el.scrub.max = String(Math.round(p.tl.total * 1000));
   p.file = null;
   p.el.share.hidden = true;
+  p.el.making.hidden = true;
   p.el.status.textContent = '';
   updateSubtitle();
   seek(0);
@@ -86,11 +91,14 @@ function setFocus(focus) {
 function updateSubtitle() {
   const p = player;
   p.el.subtitle.textContent = p.tl.focus ? `${name(p.tl.tournament, p.tl.focus)}'s journey` : 'Replay';
+  // The button says what it does and how long it takes: the video is made by playing it once.
+  p.el.export.textContent = `Make video (${fmt(p.tl.total)})`;
 }
 
 function unmount() {
   if (!player) return;
   document.removeEventListener('keydown', onKey);
+  document.removeEventListener('visibilitychange', onVisibility);
   cancelAnimationFrame(player.raf);
   if (player.recorder && player.recorder.state !== 'inactive') {
     player.recorder.onstop = null;
@@ -107,7 +115,28 @@ function draw() {
   setText(p.el.time, `${fmt(p.t)} / ${fmt(p.tl.total)}`);
   setText(p.el.play, p.playing ? 'Pause' : 'Play');
   if (!p.scrubbing) p.el.scrub.value = String(Math.round(p.t * 1000));
+  if (p.recorder) {
+    p.el.progress.value = p.t / p.tl.total;
+    setText(p.el.makingTime, `Making your video: ${fmt(p.t)} of ${fmt(p.tl.total)}.`);
+  }
 }
+
+// The recording only sees what is drawn, and a hidden tab stops drawing: pause both
+// while the tab is hidden, so the video doesn't freeze or skip, and carry on after.
+function onVisibility() {
+  const p = player;
+  if (!p || !p.recorder || p.recorder.state === 'inactive') return;
+  if (document.hidden) {
+    p.recorder.pause();
+    pause();
+  } else {
+    p.recorder.resume();
+    play();
+  }
+  setText(p.el.makingNote, document.hidden ? 'Paused: come back to this tab to finish it.' : MAKING_NOTE);
+}
+
+const MAKING_NOTE = 'It plays once to record it, so keep this tab open.';
 
 function setText(el, value) {
   if (el.textContent !== value) el.textContent = value;
@@ -152,7 +181,9 @@ function onKey(e) {
 function tick(now) {
   const p = player;
   if (!p || !p.playing) return;
-  if (p.last != null) p.t = Math.min(p.tl.total, p.t + (now - p.last) / 1000);
+  // While recording, a long gap between frames (a busy phone) slows the replay down
+  // instead of skipping a stretch of it.
+  if (p.last != null) p.t = Math.min(p.tl.total, p.t + Math.min((now - p.last) / 1000, p.recorder ? 0.1 : Infinity));
   p.last = now;
   if (p.t >= p.tl.total) {
     p.playing = false;
@@ -222,13 +253,22 @@ function exportVideo() {
     setTimeout(() => URL.revokeObjectURL(url), 10000);
     p.recorder = null;
     setControlsDisabled(false);
+    // Said where the progress was, next to the button (on phones the status line is below the video).
+    p.el.progress.hidden = true;
+    p.el.makingTime.textContent = 'Video saved:';
+    p.el.makingNote.textContent = `${p.file.name}, in your downloads.`;
+    updateSubtitle();
     p.el.status.textContent = `Saved ${p.file.name}`;
     if (navigator.canShare && navigator.canShare({ files: [p.file] })) p.el.share.hidden = false;
   };
   p.recorder = rec;
   setControlsDisabled(true);
-  p.el.status.textContent = 'Recording… keep this tab visible until it finishes.';
-  p.el.focus.disabled = true;
+  p.el.export.textContent = 'Making video…';
+  p.el.makingNote.textContent = MAKING_NOTE;
+  p.el.progress.hidden = false;
+  p.el.making.hidden = false;
+  p.el.status.textContent = '';
+  p.el.share.hidden = true;
   pause();
   seek(0);
   rec.start(250);
