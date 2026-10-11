@@ -27,6 +27,8 @@
 | `--lose` | `#e35b5b` red | out (lost twice) only |
 | `--bg` / `--panel` / `--panel-2` | `#111318` / `#181b22` / `#20232c` | neutral dark greys, slightly warm |
 
+**Day colours** (light theme, `@media (prefers-color-scheme: light)` in `public/styles.css`): warm off-white page `#f6f5f2`, white cards, borders `#dcd9d1`, text `#15171c`, muted `#5f636d`. Amber stays `#ffb020` where it is a fill (buttons, the logo underline, ready heats); as text or a thin line it is `#8f5c00` / `#8a5a00`. Green `#17713f`, violet `#6a45d1`, red `#c23737`. Every text colour is at least 4.5:1 on white cards (WCAG AA). Finished heats fade less than in the dark theme (`--fade-*`), so their text stays readable. The replay video stays dark in both themes: it is a file people post, so it looks the same whatever device made it.
+
 In the video, blue `#4f8cff` marks the Winners bracket (opposite violet for Losers); the app uses it (`--winners`) only for the intro's Winners bracket step.
 
 ## Wording

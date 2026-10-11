@@ -170,6 +170,19 @@ await step('home screen renders the logo with the bundled fonts', async () => {
   check(r.fonts.some((f) => /Funnel/.test(f)), 'Funnel fonts not loaded');
 });
 
+await step('colours follow the device: light by day, dark by night', async () => {
+  const bg = `getComputedStyle(document.body).backgroundColor`;
+  const seen = {};
+  for (const scheme of ['light', 'dark']) {
+    await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: scheme }] });
+    await sleep(100);
+    seen[scheme] = await js(bg);
+  }
+  await send('Emulation.setEmulatedMedia', { features: [] });
+  check(seen.light === 'rgb(246, 245, 242)' && seen.dark === 'rgb(17, 19, 24)', JSON.stringify(seen));
+  return `${seen.light} / ${seen.dark}`;
+});
+
 await step('setup and random draw create an 11-rider tournament', () => js(`(async () => { ${H}
   await create('Smoke Open', 11, 'single');
   const t = active();
