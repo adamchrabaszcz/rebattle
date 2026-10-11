@@ -56,7 +56,7 @@ function render() {
     if (state.screen !== 'replay') Replay.unmount();
     // Views get their data through state and never read storage themselves.
     state.tournaments = state.screen === 'home' ? Store.loadAll() : [];
-    if (state.screen === 'intro') state.hasWork = hasWork();
+    state.hasWork = hasWork(); // the footer's "Your tournaments", the intro's button
     renderScreen(container, state);
     syncAddress();
     if (state.screen === 'setup') bindSetupLiveUpdates();

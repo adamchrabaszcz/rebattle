@@ -283,6 +283,28 @@ label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px
 footer.note { margin-top: 40px; font-size: 12px; color: var(--muted); }
 footer.note a { color: var(--text); }
 
+/* Site footer (ui/footer.js): one row on desktop, two columns on phones. */
+.site-footer {
+  display: flex; align-items: center; gap: 12px 28px; flex-wrap: wrap;
+  margin-top: 48px; padding: 18px 0 4px; border-top: 1px solid var(--border);
+  font-size: 14px; color: var(--muted);
+}
+.site-footer a { color: var(--text); text-decoration: none; }
+.site-footer a:hover { color: var(--accent); }
+.site-brand { display: inline-flex; align-items: flex-end; gap: 6px; font-family: var(--font-display); font-weight: 700; }
+.site-brand .r-mark { display: inline-block; height: 20px; }
+.site-links { display: flex; gap: 8px 24px; flex-wrap: wrap; }
+.site-account { margin-left: auto; }
+.site-account a { text-decoration: underline; }
+@media (max-width: 700px) {
+  .site-footer { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+  .site-brand { grid-column: 1 / -1; padding: 6px 0 8px; }
+  .site-links { display: contents; }
+  .site-links a { display: flex; align-items: center; min-height: 44px; }
+  .site-account { grid-column: 1 / -1; margin: 8px 0 0; }
+  .site-account a { display: inline-flex; align-items: center; min-height: 44px; }
+}
+
 /* ---- path tracing (hover a competitor) ---- */
 .match-card, .edge, .standings li { transition: opacity 0.12s; }
 #app.tracing .match-card { opacity: 0.3; }

@@ -483,6 +483,21 @@ await step('the organiser screen offers Share and the public link', async () => 
   await until(`!!document.querySelector('[data-action=open-share]') && !!document.querySelector('footer a[href="/t/${movedCode}"]')`);
 });
 
+await step('the site footer is on the list and the public page, but not on the replay', async () => {
+  const footer = `(() => { const f = document.querySelector('.site-footer'); return f ? [...f.querySelectorAll('a')].map((a) => a.getAttribute('href')).join(' ') : null; })()`;
+  const seen = {};
+  for (const path of ['/tournaments', `/t/${movedCode}`]) {
+    await send('Page.navigate', { url: L + path });
+    seen[path] = await until(footer);
+    check(/\/about /.test(seen[path] + ' ') && seen[path].includes('/about#follow'), path + ': ' + seen[path]);
+  }
+  check(seen['/tournaments'].includes('/tournaments') && seen['/tournaments'].includes('/cdn-cgi/access/logout'), 'list footer: ' + seen['/tournaments']);
+  await js(`document.querySelector('[data-action=open-replay]').click(), 1`);
+  await until(`!!document.querySelector('#replay-canvas')`);
+  check((await js(footer)) === null, 'footer on the replay');
+  return seen['/tournaments'];
+});
+
 // ---- addresses --------------------------------------------------------------
 
 await step('unknown tournaments, riders and paths show "not found", with all files loading', async () => {

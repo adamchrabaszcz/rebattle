@@ -4,6 +4,7 @@
 import { renderBracketScreen } from './bracket-screen.js';
 import { tabState } from './brackets.js';
 import { drawConnectors, tracePath } from './connectors.js';
+import { renderFooter } from './footer.js';
 import { renderHome } from './home.js';
 import { renderIntro } from './intro.js';
 import { renderReplayScreen } from './replay-screen.js';
@@ -110,16 +111,12 @@ function render(container, state) {
   bindTabs(container);
   bindSwipes(container);
   container.classList.toggle('wide', state.screen === 'bracket');
-  if (state.screen === 'home') container.innerHTML = renderHome(state);
-  else if (state.screen === 'intro') container.innerHTML = renderIntro(state);
-  else if (state.screen === 'setup') container.innerHTML = renderSetup(state);
-  else if (state.screen === 'names') container.innerHTML = renderNames(state);
-  else if (state.screen === 'replay') container.innerHTML = renderReplayScreen(state);
-  else if (state.screen === 'notFound') container.innerHTML = renderNotFound(state);
-  else if (state.screen === 'loading') container.innerHTML = renderLoading();
-  else if (state.screen === 'rider') container.innerHTML = renderRiderScreen(state);
+  // Every screen but the replay ends with the site footer.
+  const footer = state.screen === 'replay' ? '' : renderFooter(state);
+  const screens = { home: renderHome, intro: renderIntro, setup: renderSetup, names: renderNames, replay: renderReplayScreen, notFound: renderNotFound, loading: renderLoading, rider: renderRiderScreen };
+  if (screens[state.screen]) container.innerHTML = screens[state.screen](state) + footer;
   else if (state.screen === 'bracket') {
-    container.innerHTML = renderBracketScreen(state);
+    container.innerHTML = renderBracketScreen(state) + footer;
     drawConnectors(container);
     if (traceCid) tracePath(container, traceCid);
     // Redraw once web fonts settle, since they can shift card positions.

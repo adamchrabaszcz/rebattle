@@ -45,4 +45,4 @@ const DRAW_ICON =
   '<path d="M1.5 4.5h2.5c3 0 4.5 7 7.5 7h1.5M1.5 11.5h2.5c3 0 4.5-7 7.5-7h1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
   '<path d="M12.5 2.2l3 2.3-3 2.3zM12.5 9.2l3 2.3-3 2.3z" fill="currentColor"/></svg></span>';
 
-export { brandLogo, escapeHtml, fmtDuration, DRAW_ICON, brandHome };
+export { brandLogo, escapeHtml, fmtDuration, DRAW_ICON, brandHome, R_MARK };
