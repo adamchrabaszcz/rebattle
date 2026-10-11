@@ -13,9 +13,20 @@ const BITRATE = 8000000;
 // H.264 profiles that fit 1080x1920 (level 4.0 and up), best first.
 const CODECS = ['avc1.640028', 'avc1.4d0028', 'avc1.42e028', 'avc1.640032', 'avc1.42e032'];
 
+const STALL_MS = 5000; // no frame accepted, or no finish, for this long: give up and record in real time
+
+// Only in Chromium-based browsers (Chrome, Edge, …): Safari's encoder takes the setup and then
+// stalls, and every browser on iPhone and iPad is Safari underneath (Chrome there says CriOS).
 function canEncode() {
-  return typeof VideoEncoder === 'function' && typeof VideoFrame === 'function';
+  const ua = typeof navigator === 'undefined' ? '' : navigator.userAgent;
+  return typeof VideoEncoder === 'function' && typeof VideoFrame === 'function' && /Chrome\/|Chromium\//.test(ua);
 }
+
+const stalled = (what) => new Error(`video encoder stalled (${what})`);
+const withTimeout = (promise, what) => {
+  promise.catch(() => {}); // if it fails after we gave up (the encoder is closed then), nobody is waiting
+  return Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(stalled(what)), STALL_MS))]);
+};
 
 async function pickConfig() {
   for (const codec of CODECS) {
@@ -35,7 +46,7 @@ const nextTask = () => new Promise((r) => setTimeout(r, 0));
 // records in real time). onProgress(0..1) after every few frames; cancelled() stops it.
 async function encodeVideo(tl, { onProgress = () => {}, cancelled = () => false } = {}) {
   if (!canEncode()) return null;
-  const config = await pickConfig();
+  const config = await withTimeout(pickConfig(), 'setup');
   if (!config) return null;
   const { Muxer, ArrayBufferTarget } = await import('../vendor/mp4-muxer.js');
   const muxer = new Muxer({ target: new ArrayBufferTarget(), video: { codec: 'avc', width: W, height: H, frameRate: FPS }, fastStart: 'in-memory' });
@@ -55,14 +66,20 @@ async function encodeVideo(tl, { onProgress = () => {}, cancelled = () => false 
       const frame = new VideoFrame(canvas, { timestamp: Math.round((i * 1e6) / FPS), duration: Math.round(1e6 / FPS) });
       encoder.encode(frame, { keyFrame: i % (FPS * 2) === 0 });
       frame.close();
-      // Let the encoder catch up, and the page breathe, so the progress shows.
-      while (encoder.encodeQueueSize > 6) await nextTask();
+      // Let the encoder catch up, and the page breathe, so the progress shows. An encoder
+      // that stops taking frames would wait here forever: give up after STALL_MS.
+      const waitSince = Date.now();
+      while (encoder.encodeQueueSize > 6) {
+        if (failure) throw failure;
+        if (Date.now() - waitSince > STALL_MS) throw stalled('queue');
+        await nextTask();
+      }
       if (i % 5 === 0) {
         onProgress(i / frames);
         await nextTask();
       }
     }
-    await encoder.flush();
+    await withTimeout(encoder.flush(), 'finish');
     if (failure) throw failure;
     muxer.finalize();
     onProgress(1);

@@ -333,23 +333,38 @@ await step('making the replay video frame by frame saves it', () => js(`(async (
   return (typeof VideoEncoder === 'function' ? 'frame by frame' : 'in real time') + ', ' + ((Date.now() - start) / 1000).toFixed(1) + ' s';
 })()`));
 
-// Where the browser can't encode (no H.264 setting fits, or the encoder fails) it records
-// in real time instead (the step above follows one to the end); leaving the screen cancels
-// it here. Without MediaRecorder either, it says so.
+// Where the browser can't encode (no H.264 setting fits, the encoder fails, or it stalls:
+// stops taking frames or never finishes) it records in real time instead (the step above
+// follows one to the end); leaving the screen cancels it here. Without MediaRecorder
+// either, it says so. The stalls take the encoder's 5 s patience each.
 await step('without a usable encoder the video is recorded in real time', () => js(`(async () => { ${H}
   const encoder = window.VideoEncoder, recorder = window.MediaRecorder;
   const make = async () => {
     q('[data-action=open-replay]').click(); await wait(800);
-    q('[data-replay=export]').click(); await wait(600);
-    const text = q('[data-replay=making]').hidden ? q('[data-replay=status]').textContent : q('[data-replay=making]').textContent;
-    const locked = q('[data-replay=play]').disabled;
+    q('[data-replay=export]').click();
+    const text = () => (q('[data-replay=making]').hidden ? q('[data-replay=status]').textContent : q('[data-replay=making]').textContent);
+    const start = Date.now();
+    do await wait(200); while (!/plays once to record it|not supported/.test(text()) && Date.now() - start < 20000);
+    const r = { text: text(), locked: q('[data-replay=play]').disabled };
     q('[data-action=close-replay]').click(); await wait();
-    return { text, locked };
+    return r;
+  };
+  // An encoder that takes the setup and then stalls, like Safari's.
+  const stalling = (queue, finish) => class {
+    static async isConfigSupported() { return { supported: true }; }
+    constructor() { this.state = 'unconfigured'; }
+    configure() { this.state = 'configured'; }
+    get encodeQueueSize() { return queue; }
+    encode() {}
+    flush() { return finish ? Promise.resolve() : new Promise(() => {}); }
+    close() { this.state = 'closed'; }
   };
   try {
     const fallbacks = {
       'no H.264 setting': class { static async isConfigSupported() { return { supported: false }; } },
       'the encoder fails': class { static async isConfigSupported() { return { supported: true }; } constructor() { throw new Error('no encoder'); } },
+      'it stops taking frames': stalling(99, true),
+      'it never finishes': stalling(0, false),
     };
     for (const [why, fake] of Object.entries(fallbacks)) {
       window.VideoEncoder = fake;
@@ -360,7 +375,7 @@ await step('without a usable encoder the video is recorded in real time', () => 
     window.MediaRecorder = undefined;
     const r = await make();
     if (!/not supported/.test(r.text)) throw new Error('no recorder: ' + r.text);
-    return 'records when no H.264 setting fits or the encoder fails; says when it cannot';
+    return 'records when no H.264 setting fits, the encoder fails or stalls; says when it cannot';
   } finally {
     window.VideoEncoder = encoder;
     window.MediaRecorder = recorder;
