@@ -40,7 +40,7 @@ function setTheme(choice) {
 }
 
 function freshDraft() {
-  return { name: '', competitorCount: null, lapTimeSeconds: 20, breakSeconds: 0, heatFormat: 'single', names: [], localOnly: false };
+  return { name: '', competitorCount: null, lapTimeSeconds: 20, breakSeconds: 0, heatFormat: 'single', names: [], localOnly: false, listed: false };
 }
 
 function defaultTournamentName() {
@@ -65,7 +65,8 @@ const state = {
   notFoundReason: null, // 'offline' when an online tournament can't be loaded and isn't on this device
   live: null, // public page (/t/<code>, rider pages): { code, status } (store/live.js)
   riderId: null, // rider page: whose
-  share: null, // the share panel, while open: { url, title, name, poster } (ui/share.js)
+  share: null, // the share panel, while open: { url, title, name, poster, listed } (ui/share.js)
+  visibilityPanel: false, // organiser screen: the "who can find it" options are open
   replayFrom: 'bracket', // the screen "Back" returns to from the replay
   hasWork: false, // intro: tournaments are saved on this device (links to the list)
   competitions: null, // /competitions: { items, total, loading, error } (ui/competitions.js)
@@ -87,6 +88,7 @@ function render() {
     syncAddress();
     if (state.screen === 'intro' && state.introCompetitions === null) loadIntroCompetitions();
     if (state.screen === 'setup') bindSetupLiveUpdates();
+    if (state.visibilityPanel) bindOptionGroups();
     if (state.screen === 'replay') {
       const online = state.live || state.online; // the address on the video's last scene
       Replay.mount(container, state.tournament, state.replayFocus, { host: location.host, code: online ? online.code : null });
@@ -146,10 +148,19 @@ function bindSetupLiveUpdates() {
 
   [countEl, lapEl, breakEl].forEach((el) => el && el.addEventListener('input', update));
 
-  container.querySelectorAll('input[name="heatFormat"]').forEach((radio) => {
+  bindOptionGroups();
+
+  // Who can find it only matters for a tournament saved online.
+  const local = document.getElementById('f-local');
+  const visibility = document.getElementById('f-visibility');
+  if (local && visibility) local.addEventListener('change', () => (visibility.hidden = local.checked));
+}
+
+// Option cards (heat format, visibility): the checked one in each group is highlighted.
+function bindOptionGroups() {
+  container.querySelectorAll('.format-option input[type="radio"]').forEach((radio) => {
     radio.addEventListener('change', () => {
-      container.querySelectorAll('.format-option').forEach((opt) => opt.classList.remove('selected'));
-      radio.closest('.format-option').classList.add('selected');
+      container.querySelectorAll(`.format-option input[name="${radio.name}"]`).forEach((r) => r.closest('.format-option').classList.toggle('selected', r.checked));
     });
   });
 }
@@ -192,6 +203,7 @@ function handleSetupNext() {
   const brk = parseFloat(document.getElementById('f-break').value) || 0;
   const format = (container.querySelector('input[name="heatFormat"]:checked') || {}).value || 'single';
   const localOnly = !!(document.getElementById('f-local') || {}).checked;
+  const listed = (container.querySelector('input[name="visibility"]:checked') || {}).value === 'listed';
 
   if (!count || count < 4) {
     alert('Enter at least 4 competitors.');
@@ -205,7 +217,7 @@ function handleSetupNext() {
   const prevNames = state.draft.names || [];
   const names = Array.from({ length: count }, (_, i) => prevNames[i] || '');
 
-  state.draft = { name, competitorCount: count, lapTimeSeconds: lap, breakSeconds: brk, heatFormat: format, names, localOnly };
+  state.draft = { name, competitorCount: count, lapTimeSeconds: lap, breakSeconds: brk, heatFormat: format, names, localOnly, listed };
   state.screen = 'names';
   render();
 }
@@ -240,7 +252,7 @@ function handleNamesDraw(button) {
   if (state.organiser && !state.draft.localOnly) {
     button.disabled = true;
     button.textContent = 'Saving online…';
-    createOnline(tournament);
+    createOnline(tournament, null, state.draft.listed);
     return;
   }
   Store.upsert(tournament);
@@ -265,9 +277,9 @@ const reasonOf = (e) => (e && e.offline ? 'you seem to be offline' : (e && e.mes
 // Saves a tournament online and opens it at /manage/<code>. localId: it was a local
 // tournament being moved, removed from this browser once it is safely online. A new
 // one that can't be saved online is kept in this browser instead, so nothing is lost.
-async function createOnline(tournament, localId) {
+async function createOnline(tournament, localId, listed = false) {
   try {
-    const code = await Cloud.create(tournament);
+    const code = await Cloud.create(tournament, listed);
     if (localId) Store.remove(localId);
     Store.setActiveId(null);
     location.href = '/manage/' + code;
@@ -289,7 +301,7 @@ async function createOnline(tournament, localId) {
 function handleMoveOnline(id) {
   const t = Store.getById(id);
   if (!t) return;
-  if (!confirm(`Move "${t.name}" online? It will be saved to your account and removed from this browser's list.`)) return;
+  if (!confirm(`Move "${t.name}" online? It will be saved to your account and removed from this browser's list. It starts unlisted: only people with its link can follow it. You can list it on rebattle.app from its screen.`)) return;
   createOnline(t, id);
 }
 
@@ -315,7 +327,8 @@ function openOnline(code) {
   state.screen = copy ? 'bracket' : 'loading';
   render();
   Cloud.load(code)
-    .then(({ version, tournament }) => {
+    .then(({ version, tournament, listed }) => {
+      state.online.listed = !!listed; // who can find it (shown on the organiser screen)
       const now = Cloud.cached(code);
       if (now && now.pending) return Cloud.flush();
       Cloud.remember(code, version, tournament);
@@ -443,8 +456,27 @@ function openShare(what) {
   if (what === 'rider') {
     const name = Bracket.getName(t, state.riderId);
     state.share = { url: base + '/' + riderSlugs(t)[state.riderId], title: `Share ${name}'s page`, name };
-  } else state.share = { url: base, title: 'Share this tournament', name: t.name, poster: true };
+  } else state.share = { url: base, title: 'Share this tournament', name: t.name, poster: true, listed: state.online ? state.online.listed : undefined };
   render();
+}
+
+// Organiser: listed on rebattle.app or unlisted (worker/manage.js keeps the public list in step).
+function saveVisibility(button) {
+  const listed = (container.querySelector('input[name="visibility"]:checked') || {}).value === 'listed';
+  const code = state.online.code;
+  button.disabled = true;
+  Cloud.setVisibility(code, listed)
+    .then((res) => {
+      if (!state.online || state.online.code !== code) return;
+      state.online.listed = res.listed;
+      state.visibilityPanel = false;
+      if (state.share) state.share.listed = res.listed;
+      render();
+    })
+    .catch((e) => {
+      button.disabled = false;
+      alert(`Couldn't change it (${reasonOf(e)}).`);
+    });
 }
 
 function copyLink(button) {
@@ -682,7 +714,15 @@ container.addEventListener('click', (e) => {
   } else if (action === 'close-replay') {
     state.screen = state.replayFrom;
     render();
-  } else if (action === 'open-share') openShare(el.dataset.share);
+  } else if (action === 'open-visibility') {
+    state.visibilityPanel = true;
+    state.share = null;
+    render();
+  } else if (action === 'cancel-visibility') {
+    state.visibilityPanel = false;
+    render();
+  } else if (action === 'save-visibility') saveVisibility(el);
+  else if (action === 'open-share') openShare(el.dataset.share);
   else if (action === 'close-share') {
     state.share = null;
     render();

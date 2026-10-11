@@ -185,6 +185,11 @@ label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px
 .format-option input { display: none; }
 .format-option .label { font-weight: 600; margin-bottom: 4px; }
 .format-option .sub { font-size: 12px; color: var(--muted); }
+.visibility-options .format-option { flex: 1 1 240px; max-width: 360px; }
+.visibility-line { margin: -8px 0 20px; font-size: 13px; color: var(--muted); }
+.visibility-line .visibility-state { color: var(--text); font-weight: 600; }
+.visibility-line button { margin-left: 6px; }
+.share-side .visibility-line { margin: 10px 0 0; }
 
 .name-grid {
   display: grid;
