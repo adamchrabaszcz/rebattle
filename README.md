@@ -18,6 +18,7 @@ A tournament manager for head-to-head double-elimination events, built for a wak
 - **Replay video**: a vertical (1080×1920) animated recap of the whole event, or one rider's journey, exported as a video file and shareable from a phone.
 - **View-only mode**: `?view` opens the tournament read-only and follows results as they are recorded in another tab, e.g. on a second screen at the venue. A public link for spectators comes with cloud saving.
 - Everything is saved in the browser; export/import JSON to back up or move to another device.
+- Organiser login (Cloudflare Access, approved emails only), the groundwork for saving tournaments online.
 
 ## Run it
 

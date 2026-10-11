@@ -11,8 +11,11 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createServer } from '../../tools/serve.mjs';
 
-const server = createServer();
+const server = createServer({ env: {} });
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
+// A second server where the local stand-in login says an organiser is logged in.
+const loggedIn = createServer({ env: { DEV_ORGANISER_EMAIL: 'organiser@example.com' } });
+await new Promise((r) => loggedIn.listen(0, '127.0.0.1', r));
 const BASE = `http://127.0.0.1:${server.address().port}/`;
 
 // ---- Chrome over CDP --------------------------------------------------------
@@ -34,6 +37,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function cleanup() {
   chrome.kill();
   server.close();
+  loggedIn.close();
   try { rmSync(profile, { recursive: true, force: true }); } catch {}
 }
 process.on('exit', cleanup);
@@ -286,6 +290,22 @@ await step('the logo leaves the view for the full app', async () => {
   await sleep(1200);
   const r = await js(`({ search: location.search, won: !!document.querySelector('[data-action=record-winner]'), badge: !!document.querySelector('.view-badge') })`);
   check(!r.search && r.won && !r.badge, 'still in view mode: ' + JSON.stringify(r));
+});
+
+// ---- organiser login ------------------------------------------------------------
+
+await step('home shows the organiser login line, logged out and logged in', async () => {
+  await open();
+  await sleep(500);
+  await js(`document.querySelector('[data-action=go-home]')?.click(), 1`); // the app reopens the last tournament
+  await sleep(200);
+  const out = await js(`(() => { const a = document.querySelector('[data-account] a'); return a ? a.getAttribute('href') + ' ' + a.textContent : document.querySelector('[data-account]')?.textContent; })()`);
+  check(out === '/api/manage/login Organiser log in', 'logged out: ' + out);
+  await send('Page.navigate', { url: `http://127.0.0.1:${loggedIn.address().port}/` });
+  await sleep(1200);
+  const inn = await js(`document.querySelector('[data-account]')?.textContent`);
+  check(/Logged in as organiser@example\.com/.test(inn) && /Log out/.test(inn), 'logged in: ' + inn);
+  return inn.replace(/\s+/g, ' ');
 });
 
 // ---- addresses --------------------------------------------------------------
