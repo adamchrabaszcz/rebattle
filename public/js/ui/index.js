@@ -63,6 +63,7 @@ if (typeof window !== 'undefined') {
 // ---- top-level dispatch --------------------------------------------------
 
 function render(container, state) {
+  container.classList.toggle('intro-page', state.screen === 'intro'); // its desktop grid (styles.css)
   lastContainer = container;
   bindTracing(container);
   bindTabs(container);

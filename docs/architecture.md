@@ -100,7 +100,7 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 
 - **`/`** takes you back to the last tournament opened on this device if it is still running (a local one, or an online one: then `/manage/<code>`). Otherwise it shows the list, or the introduction in a browser with nothing saved. An organiser logged in on a new device gets their list instead of the introduction once the login is known.
 - **The address follows the screen** (`syncAddress` in `app.js`): the list is `/tournaments`, a local tournament `/`, so a reload lands where you were. The logo goes to the list (`/tournaments`); on public pages and "Nothing here" it goes to `/`.
-- **`/about`**: the introduction for everyone, linked from the list and "Nothing here". "Follow a competition" takes a typed code or a pasted link (`followPath` in `route.js`) to the public page.
+- **`/about`**: the introduction for everyone, linked from the list and "Nothing here". On desktop it spans the page: the lead, Follow and For organisers side by side, the three steps in a row (CSS grid on `#app.intro-page`, so the HTML keeps the phone order). "Follow a competition" takes a typed code or a pasted link (`followPath` in `route.js`) to the public page.
 
 ## Public pages
 
