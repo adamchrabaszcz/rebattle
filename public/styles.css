@@ -350,7 +350,7 @@ footer.note a { color: var(--text); }
 .site-footer a { color: var(--text); text-decoration: none; }
 .site-footer a:hover { color: var(--accent-text); }
 .site-brand { font-size: 20px; line-height: 1.2; }
-.site-brand:hover .brand-name { color: var(--text); opacity: 0.85; }
+.site-brand:hover .brand { opacity: 0.85; }
 .site-links { display: flex; gap: 8px 24px; flex-wrap: wrap; }
 .site-account { margin-left: auto; }
 .theme-switch { display: inline-flex; align-items: center; gap: 4px; }
@@ -458,36 +458,25 @@ footer.note a { color: var(--text); }
 /* Square full stops are a logo-only detail; the amber underline under "rebattle"
    is drawn at reading pace: it waits ~1.1s for "drop. bounceback.", then draws
    over ~0.75s, the time it takes to read "re-bat-tle". */
-.brand {
-  font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  white-space: nowrap;
-  text-transform: lowercase;
-}
+/* Outlines (ui/logo-outlines.js), sized in em like text: --h is the height and --below
+   how far the underline reaches below the baseline, both in em. */
+.brand { white-space: nowrap; }
+.logo { display: inline-block; height: calc(var(--h) * 1em); width: auto; vertical-align: calc(var(--below) * -1em); }
 .brand-h1 { font-size: clamp(24px, 4.2vw, 34px); line-height: 1.15; margin: 0; }
 .brand-h1.small { font-size: 22px; }
-.brand-lead { color: var(--muted); }
-.brand-name { color: var(--text); }
-.brand-stop {
-  display: inline-block;
-  width: 0.14em;
-  height: 0.14em;
-  margin-left: 0.06em;
-  background: currentColor;
-  vertical-align: baseline;
+.logo-lead { fill: var(--muted); }
+.logo-text { fill: var(--text); }
+.logo-line { fill: var(--accent); } /* bright amber in both themes */
+.brand-animate .logo-line {
+  transform-box: fill-box; transform-origin: left;
+  animation: brand-draw 0.75s cubic-bezier(0.35, 0, 0.45, 1) 1.1s both;
 }
-.brand-word {
-  background: linear-gradient(var(--accent), var(--accent)) no-repeat left bottom / 100% 0.12em; /* bright amber in both themes */
-  padding-bottom: 0.04em;
-}
-.brand-animate .brand-word { animation: brand-draw 0.75s cubic-bezier(0.35, 0, 0.45, 1) 1.1s both; }
 @keyframes brand-draw {
-  from { background-size: 0% 0.12em; }
-  to { background-size: 100% 0.12em; }
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .brand-animate .brand-word { animation: none; }
+  .brand-animate .logo-line { animation: none; }
 }
 
 /* Competition screens: name left, logo right on one row, buttons on the row below. */
@@ -495,7 +484,7 @@ footer.note a { color: var(--text); }
 .event-top .title { min-width: 0; flex-wrap: wrap; }
 .event-toolbar { margin-bottom: 20px; }
 .view-badge { color: var(--accent-text); font-weight: 600; }
-.r-mark { display: none; height: 28px; width: auto; color: var(--text); }
+.r-mark { display: none; height: 28px; width: auto; }
 .brand-home {
   background: none; border: 0; padding: 0; border-radius: 4px;
   font-size: 15px; color: inherit;
@@ -506,9 +495,8 @@ footer.note a { color: var(--text); }
 @media (max-width: 700px) {
   .brand-home .brand { display: none; }
   /* Inline, so the header lines it up by baseline with the name's first line; the
-     negative margin puts the bottom of the letter (not of the underline below it,
-     234 of the mark's 861 units) on that baseline. */
-  .brand-home .r-mark { display: inline-block; margin-bottom: calc(-28px * 234 / 861); }
+     negative margin puts the baseline (not the underline below it) on that baseline. */
+  .brand-home .r-mark { display: inline-block; margin-bottom: calc(-28px * var(--below) / var(--h)); }
 }
 
 /* Numbers line up in columns wherever results and places are listed. */
@@ -587,8 +575,8 @@ footer.note a { color: var(--text); }
     height: 100vh; overflow: hidden; padding: 12mm; color: #000; text-align: center; gap: 8mm;
   }
   .poster-brand { font-size: 22pt; }
-  .poster-brand .brand-lead { color: #666; }
-  .poster-brand .brand-name { color: #000; }
+  .poster-brand .logo-lead { fill: #666; }
+  .poster-brand .logo-text { fill: #000; }
   .poster-name { font-family: var(--font-display); font-size: 34pt; font-weight: 650; line-height: 1.1; }
   .poster-qr { width: 120mm; }
   .poster-follow { font-size: 18pt; color: #444; }
