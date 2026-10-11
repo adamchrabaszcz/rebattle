@@ -7,6 +7,7 @@ import { drawConnectors, tracePath } from './connectors.js';
 import { renderFooter } from './footer.js';
 import { renderHome } from './home.js';
 import { renderIntro } from './intro.js';
+import { renderCompetitions } from './competitions.js';
 import { renderReplayScreen } from './replay-screen.js';
 import { renderRiderScreen } from './rider.js';
 import { renderLoading, renderNotFound } from './not-found.js';
@@ -113,7 +114,7 @@ function render(container, state) {
   container.classList.toggle('wide', state.screen === 'bracket');
   // Every screen but the replay ends with the site footer.
   const footer = state.screen === 'replay' ? '' : renderFooter(state);
-  const screens = { home: renderHome, intro: renderIntro, setup: renderSetup, names: renderNames, replay: renderReplayScreen, notFound: renderNotFound, loading: renderLoading, rider: renderRiderScreen };
+  const screens = { home: renderHome, intro: renderIntro, competitions: renderCompetitions, setup: renderSetup, names: renderNames, replay: renderReplayScreen, notFound: renderNotFound, loading: renderLoading, rider: renderRiderScreen };
   if (screens[state.screen]) container.innerHTML = screens[state.screen](state) + footer;
   else if (state.screen === 'bracket') {
     container.innerHTML = renderBracketScreen(state) + footer;

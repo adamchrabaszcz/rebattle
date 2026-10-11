@@ -49,7 +49,7 @@ test('anyone can read an online tournament, without the owners', async () => {
   const text = await res.text();
   assert.ok(!text.includes('ada@example.com'), 'no owner emails');
   const body = JSON.parse(text);
-  assert.deepEqual([body.code, body.version, body.tournament.id], [code, 1, t.id]);
+  assert.deepEqual([body.code, body.version, body.tournament.id, body.listed], [code, 1, t.id, false]);
   assert.equal(res.headers.get('Cache-Control'), 'no-store');
 
   assert.equal((await anyone('/api/t/nope-zzzz')).status, 404);
@@ -150,6 +150,7 @@ test('a viewer that sends anything is disconnected', async () => {
 test('addresses: the introduction, the list, and Follow a competition', () => {
   assert.deepEqual(parseRoute('/about'), { name: 'about' });
   assert.deepEqual(parseRoute('/tournaments'), { name: 'list' });
+  assert.deepEqual(parseRoute('/competitions'), { name: 'competitions' });
   assert.deepEqual(parseRoute('/about/x'), { name: 'notFound' });
   assert.equal(followPath('cable-open-x7k2'), '/t/cable-open-x7k2');
   assert.equal(followPath('  Cable-Open-X7K2 '), '/t/cable-open-x7k2', 'typed from a poster');
