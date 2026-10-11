@@ -317,6 +317,56 @@ await step('making the video in real time says what it is doing', () => js(`(asy
   }
 })()`));
 
+// Making the video frame by frame, where the browser can encode: progress, then the saved
+// file, in seconds rather than the video's length.
+await step('making the replay video frame by frame saves it', () => js(`(async () => { ${H}
+  q('[data-action=open-replay]').click(); await wait(800);
+  q('[data-replay=export]').click();
+  let value = 0;
+  for (let i = 0; i < 100 && !(value > 0); i++) { await wait(50); value = q('[data-replay=progress]').value; }
+  if (q('[data-replay=making]').hidden || !(value > 0)) throw new Error('no progress: ' + q('[data-replay=making]').textContent);
+  const start = Date.now();
+  while (!q('[data-replay=progress]').hidden && Date.now() - start < 90000) await wait(100);
+  const text = q('[data-replay=making]').textContent;
+  if (!/Video saved: .+_replay\\.(mp4|webm)/.test(text)) throw new Error('not saved: ' + text);
+  q('[data-action=close-replay]').click(); await wait();
+  return (typeof VideoEncoder === 'function' ? 'frame by frame' : 'in real time') + ', ' + ((Date.now() - start) / 1000).toFixed(1) + ' s';
+})()`));
+
+// Where the browser can't encode (no H.264 setting fits, or the encoder fails) it records
+// in real time instead (the step above follows one to the end); leaving the screen cancels
+// it here. Without MediaRecorder either, it says so.
+await step('without a usable encoder the video is recorded in real time', () => js(`(async () => { ${H}
+  const encoder = window.VideoEncoder, recorder = window.MediaRecorder;
+  const make = async () => {
+    q('[data-action=open-replay]').click(); await wait(800);
+    q('[data-replay=export]').click(); await wait(600);
+    const text = q('[data-replay=making]').hidden ? q('[data-replay=status]').textContent : q('[data-replay=making]').textContent;
+    const locked = q('[data-replay=play]').disabled;
+    q('[data-action=close-replay]').click(); await wait();
+    return { text, locked };
+  };
+  try {
+    const fallbacks = {
+      'no H.264 setting': class { static async isConfigSupported() { return { supported: false }; } },
+      'the encoder fails': class { static async isConfigSupported() { return { supported: true }; } constructor() { throw new Error('no encoder'); } },
+    };
+    for (const [why, fake] of Object.entries(fallbacks)) {
+      window.VideoEncoder = fake;
+      const r = await make();
+      if (!/plays once to record it/.test(r.text) || !r.locked) throw new Error(why + ': not recording: ' + r.text);
+    }
+    window.VideoEncoder = undefined;
+    window.MediaRecorder = undefined;
+    const r = await make();
+    if (!/not supported/.test(r.text)) throw new Error('no recorder: ' + r.text);
+    return 'records when no H.264 setting fits or the encoder fails; says when it cannot';
+  } finally {
+    window.VideoEncoder = encoder;
+    window.MediaRecorder = recorder;
+  }
+})()`));
+
 await step('40-rider bracket draws connector lines', () => js(`(async () => { ${H}
   q('[data-action=go-home]').click(); await wait();
   await create('Big Field', 40, 'bo3');
