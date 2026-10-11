@@ -9,6 +9,7 @@
   - "bounceback" is one word in the logo only; in sentences it's "bounce back".
   - Amber underline under the whole word "rebattle". Where it animates (home screen, video intro) it waits while "drop. bounceback." is read (~1.1s), then draws left to right over ~0.75s.
 - Short mark / icon: Funnel Display Bold "r" with the amber underline starting exactly at the letter's left ink edge. Rebuild with `tools/make-icons.py`.
+- Logo as an image (README): `docs/logo-dark.svg` / `docs/logo-light.svg`, the same sentence drawn as outlines from the bundled font. Rebuild with `tools/make-logo.py`.
 - Competition screens: competition name on the left, logo on the right (the short mark on phones).
 
 ## Type
