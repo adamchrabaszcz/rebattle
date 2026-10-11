@@ -4,6 +4,7 @@
 
 import { qrcode } from '../vendor/qrcode.js';
 import { brandLogo, escapeHtml } from './html.js';
+import { renderVisibilityLine } from './visibility.js';
 
 // The QR code as inline SVG: dark modules on white with the standard 4-module quiet
 // zone, so phone cameras read it on any background. Medium error correction.
@@ -37,6 +38,7 @@ function renderShare(state) {
             <button data-action="close-share">Close</button>
           </div>
           <p class="note">Anyone with the link can follow along. No account needed. Scan the code with a phone camera to open it.</p>
+          ${s.listed === undefined ? '' : `<p class="visibility-line">${renderVisibilityLine(s.listed)}</p>`}
         </div>
       </div>
       ${s.poster ? renderPoster(s) : ''}

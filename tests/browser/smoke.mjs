@@ -383,6 +383,9 @@ await step('logged in, a new tournament is saved online by default', async () =>
   await send('Page.navigate', { url: L + '/' });
   await until(`document.querySelector('[data-lists]')?.textContent.includes('No online tournaments yet')`);
   await js(`(async () => { ${H} q('[data-action=go-setup]').click(); await wait(); return !!q('#f-local') && !q('#f-local').checked; })()`).then((ok) => check(ok, 'no unticked "keep in this browser" option'));
+  // Who can find it: offered with both options explained, unlisted unless chosen; gone for a local one.
+  const vis = await js(`(async () => { ${H} const before = { shown: !q('#f-visibility').hidden, checked: q('input[name=visibility]:checked').value, explained: qa('#f-visibility .sub').length }; q('#f-local').click(); await wait(); const hidden = q('#f-visibility').hidden; q('#f-local').click(); return { ...before, hidden }; })()`);
+  check(vis.shown && vis.checked === 'unlisted' && vis.explained === 2 && vis.hidden, 'visibility choice at setup: ' + JSON.stringify(vis));
   await js(`(async () => { ${H} q('[data-action=go-home]').click(); await wait(); await create('Online Open', 9, 'single'); return 1; })()`);
   code = await until(`location.pathname.startsWith('/manage/') && document.querySelector('[data-action=record-winner]') && location.pathname.split('/')[2]`);
   check(/^online-open-[a-z2-9]{4}$/.test(code), 'code ' + code);
@@ -532,6 +535,25 @@ await step('share panel: link, QR code and a printable poster', async () => {
 await step('the organiser screen offers Share and the public link', async () => {
   await send('Page.navigate', { url: `${L}/manage/${movedCode}` });
   await until(`!!document.querySelector('[data-action=open-share]') && !!document.querySelector('footer a[href="/t/${movedCode}"]')`);
+});
+
+await step('the organiser sees who can find the tournament and can list it on rebattle.app', async () => {
+  const listedCodes = `fetch('/api/competitions').then((r) => r.json()).then((d) => d.competitions.map((c) => c.code))`;
+  // Moved online, so unlisted: the screen says so and explains it.
+  const line = await until(`document.querySelector('.visibility-line')?.textContent`);
+  check(/Unlisted/.test(line) && /only people with the link/.test(line), 'visibility line: ' + line);
+  check(!(await js(listedCodes)).includes(movedCode), 'listed before choosing to');
+  await js(`document.querySelector('[data-action=open-visibility]').click(), 1`);
+  await until(`!!document.querySelector('.visibility-panel')`);
+  await js(`(() => { const r = document.querySelector('input[name=visibility][value=listed]'); r.checked = true; r.dispatchEvent(new Event('change', { bubbles: true })); document.querySelector('[data-action=save-visibility]').click(); return 1; })()`);
+  await until(`!document.querySelector('.visibility-panel') && /Listed on rebattle\\.app/.test(document.querySelector('.visibility-line')?.textContent || '')`);
+  check((await js(listedCodes)).includes(movedCode), 'not on the public list after listing');
+  await send('Page.reload');
+  await until(`/Listed on rebattle\\.app/.test(document.querySelector('.visibility-line')?.textContent || '')`);
+  // The share panel repeats it.
+  await js(`document.querySelector('[data-action=open-share]').click(), 1`);
+  check(/Listed on rebattle\.app/.test(await until(`document.querySelector('.share-panel .visibility-line')?.textContent`)), 'share panel does not say');
+  return 'unlisted -> listed';
 });
 
 // ---- addresses --------------------------------------------------------------

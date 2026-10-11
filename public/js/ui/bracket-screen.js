@@ -6,6 +6,7 @@ import { renderUpNext } from './cards.js';
 import { riderSlugs } from '../engine/slug.js';
 import { brandHome, DRAW_ICON, escapeHtml } from './html.js';
 import { renderShare } from './share.js';
+import { renderVisibilityLine, renderVisibilityOptions } from './visibility.js';
 
 function renderStandings(tournament) {
   if (tournament.status !== 'completed') return '';
@@ -146,6 +147,21 @@ function renderRiders(state) {
     </section>`;
 }
 
+// Organiser, online tournament: who can find it, and the way to change it.
+function renderVisibility(state) {
+  if (!state.online || state.readOnly || state.online.listed === undefined) return '';
+  if (!state.visibilityPanel) return `<p class="visibility-line">${renderVisibilityLine(state.online.listed)}</p>`;
+  return `
+    <div class="card section visibility-panel">
+      <h2>Who can find this tournament</h2>
+      ${renderVisibilityOptions(state.online.listed)}
+      <div class="toolbar" style="margin-top:12px;">
+        <button class="primary" data-action="save-visibility">Save</button>
+        <button data-action="cancel-visibility">Cancel</button>
+      </div>
+    </div>`;
+}
+
 // Another device saved this tournament since this one last did. Nothing is lost
 // either way: the other version is in the banner, this one stays on this device.
 function renderConflict(state) {
@@ -173,6 +189,7 @@ function renderBracketScreen(state) {
       ${brandHome()}
     </div>
     ${renderToolbar(state)}
+    ${renderVisibility(state)}
     ${renderShare(state)}
     ${
       state.externalUpdateAvailable
