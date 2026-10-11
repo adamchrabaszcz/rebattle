@@ -55,7 +55,7 @@ function renderRenamePanel(state) {
       <div class="name-grid">${inputs}</div>
       <button class="primary" data-action="save-names">Save changes</button>
       <button data-action="cancel-names">Cancel</button>
-      <span id="rename-error" style="color:#e35b5b; margin-left:12px;"></span>
+      <span id="rename-error" class="inline-error"></span>
     </div>
   `;
 }
