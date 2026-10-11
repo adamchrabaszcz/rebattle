@@ -1,5 +1,6 @@
 // In-app player: playback, scrubbing, scene dots, recording and sharing the video.
 
+import { canEncode, encodeVideo } from './encoder.js';
 import { DOT_Y, dotAt, dotLayout, drawFrame } from './frame.js';
 import { FONTS_READY, fontsLoaded, H, W } from './theme.js';
 import { buildTimeline, name } from './timeline.js';
@@ -29,6 +30,7 @@ function mount(container, tournament, focus, site) {
     raf: null,
     last: null,
     recorder: null,
+    encoding: false,
     file: null,
     el: {
       focus: q('focus'), subtitle: q('subtitle'), tip: q('tip'), play: q('play'), restart: q('restart'), scrub: q('scrub'), time: q('time'),
@@ -115,10 +117,7 @@ function draw() {
   setText(p.el.time, `${fmt(p.t)} / ${fmt(p.tl.total)}`);
   setText(p.el.play, p.playing ? 'Pause' : 'Play');
   if (!p.scrubbing) p.el.scrub.value = String(Math.round(p.t * 1000));
-  if (p.recorder) {
-    p.el.progress.value = p.t / p.tl.total;
-    setText(p.el.makingTime, `Making your video: ${fmt(p.t)} of ${fmt(p.tl.total)}.`);
-  }
+  if (p.recorder) showProgress(p, p.t);
 }
 
 // The recording only sees what is drawn, and a hidden tab stops drawing: pause both
@@ -137,6 +136,7 @@ function onVisibility() {
 }
 
 const MAKING_NOTE = 'It plays once to record it, so keep this tab open.';
+const FAST_NOTE = 'Made on this device, frame by frame: you can keep watching meanwhile.';
 
 function setText(el, value) {
   if (el.textContent !== value) el.textContent = value;
@@ -218,16 +218,39 @@ function seek(sec) {
   draw();
 }
 
-// Records the canvas in real time while the replay plays once from the start.
-function exportVideo() {
+// Makes the video: frame by frame where the browser can encode it (replay/encoder.js,
+// faster than real time, and the replay stays free to watch), otherwise by recording
+// the canvas in real time while the replay plays once from the start.
+async function exportVideo() {
   const p = player;
-  if (!p || p.recorder) return;
+  if (!p || p.recorder || p.encoding) return;
   if (!fontsLoaded) {
-    // Recording before the fonts arrive would bake fallback text into the first frames.
+    // Drawing before the fonts arrive would bake fallback text into the first frames.
     FONTS_READY.then(() => player === p && exportVideo());
     return;
   }
+  if (canEncode()) {
+    p.encoding = true;
+    p.el.export.disabled = p.el.focus.disabled = true;
+    showMaking(p, FAST_NOTE);
+    let blob = null;
+    try {
+      blob = await encodeVideo(p.tl, { onProgress: (f) => player === p && showProgress(p, f * p.tl.total), cancelled: () => player !== p });
+    } catch {
+      blob = null; // the encoder gave up: record in real time instead
+    }
+    if (player !== p) return;
+    p.encoding = false;
+    p.el.export.disabled = p.el.focus.disabled = false;
+    if (blob) return saveVideo(p, blob);
+  }
+  recordVideo(p);
+}
+
+function recordVideo(p) {
   if (!globalThis.MediaRecorder || !p.canvas.captureStream) {
+    p.el.making.hidden = true;
+    updateSubtitle();
     p.el.status.textContent = 'Video export is not supported in this browser.';
     return;
   }
@@ -237,42 +260,55 @@ function exportVideo() {
   const chunks = [];
   rec.ondataavailable = (e) => e.data && e.data.size && chunks.push(e.data);
   rec.onstop = () => {
-    const type = rec.mimeType || mimeType || 'video/webm';
-    const ext = type.includes('mp4') ? 'mp4' : 'webm';
-    const base = (p.tl.tournament.name || 'rebattle') + (p.tl.focus ? '_' + name(p.tl.tournament, p.tl.focus) + '_journey' : '_replay');
-    const safe = base.replace(/[^a-z0-9_-]+/gi, '_');
-    const blob = new Blob(chunks, { type });
-    p.file = new File([blob], `${safe}.${ext}`, { type });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = p.file.name;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 10000);
     p.recorder = null;
     setControlsDisabled(false);
-    // Said where the progress was, next to the button (on phones the status line is below the video).
-    p.el.progress.hidden = true;
-    p.el.makingTime.textContent = 'Video saved:';
-    p.el.makingNote.textContent = `${p.file.name}, in your downloads.`;
-    updateSubtitle();
-    p.el.status.textContent = `Saved ${p.file.name}`;
-    if (navigator.canShare && navigator.canShare({ files: [p.file] })) p.el.share.hidden = false;
+    saveVideo(p, new Blob(chunks, { type: rec.mimeType || mimeType || 'video/webm' }));
   };
   p.recorder = rec;
   setControlsDisabled(true);
-  p.el.export.textContent = 'Making video…';
-  p.el.makingNote.textContent = MAKING_NOTE;
-  p.el.progress.hidden = false;
-  p.el.making.hidden = false;
-  p.el.status.textContent = '';
-  p.el.share.hidden = true;
+  showMaking(p, MAKING_NOTE);
   pause();
   seek(0);
   rec.start(250);
   play();
+}
+
+function showMaking(p, note) {
+  p.el.export.textContent = 'Making video…';
+  p.el.makingNote.textContent = note;
+  p.el.progress.hidden = false;
+  p.el.making.hidden = false;
+  p.el.status.textContent = '';
+  p.el.share.hidden = true;
+  showProgress(p, 0);
+}
+
+function showProgress(p, t) {
+  p.el.progress.value = t / p.tl.total;
+  setText(p.el.makingTime, `Making your video: ${fmt(t)} of ${fmt(p.tl.total)}.`);
+}
+
+// Downloads the finished video and offers Share where the phone can share files.
+function saveVideo(p, blob) {
+  const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
+  const base = (p.tl.tournament.name || 'rebattle') + (p.tl.focus ? '_' + name(p.tl.tournament, p.tl.focus) + '_journey' : '_replay');
+  const safe = base.replace(/[^a-z0-9_-]+/gi, '_');
+  p.file = new File([blob], `${safe}.${ext}`, { type: blob.type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = p.file.name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  // Said where the progress was, next to the button (on phones the status line is below the video).
+  p.el.progress.hidden = true;
+  p.el.makingTime.textContent = 'Video saved:';
+  p.el.makingNote.textContent = `${p.file.name}, in your downloads.`;
+  updateSubtitle();
+  p.el.status.textContent = `Saved ${p.file.name}`;
+  if (navigator.canShare && navigator.canShare({ files: [p.file] })) p.el.share.hidden = false;
 }
 
 function setControlsDisabled(disabled) {
