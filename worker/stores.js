@@ -1,4 +1,4 @@
-// The two Durable Objects behind cloud saving. Only the Worker talks to them (never
+// The Durable Objects behind cloud saving and the public list. Only the Worker talks to them (never
 // the browser), with small JSON requests; the Worker has already checked the login.
 // Written as plain classes with fetch() (no `cloudflare:workers` import), so the same
 // code runs in Node tests against an in-memory stand-in (tools/fake-do.mjs).
@@ -29,7 +29,7 @@ export class TournamentStore {
     if (op === 'create') {
       if (meta) return reply({ error: 'taken' }, 409);
       const now = Date.now();
-      const created = { code: body.code, owners: [body.email], version: 1, createdAt: now, updatedAt: now };
+      const created = { code: body.code, owners: [body.email], version: 1, createdAt: now, updatedAt: now, listed: body.listed === true };
       await this.storage.put({ meta: created, snapshot: body.tournament, 'v:1': body.tournament });
       return reply({ version: 1, updatedAt: now }, 201);
     }
@@ -42,7 +42,7 @@ export class TournamentStore {
       return new Response(null, { status: 101, webSocket: client });
     }
     if (op === 'read') {
-      return reply({ code: meta.code, version: meta.version, owners: meta.owners, updatedAt: meta.updatedAt, tournament: await this.storage.get('snapshot') });
+      return reply({ code: meta.code, version: meta.version, owners: meta.owners, updatedAt: meta.updatedAt, listed: !!meta.listed, tournament: await this.storage.get('snapshot') });
     }
     if (op === 'save') {
       if (!isOwner()) return reply({ error: 'not yours' }, 403);
@@ -54,7 +54,14 @@ export class TournamentStore {
       await this.storage.put({ meta: { ...meta, version, updatedAt }, snapshot: body.tournament, ['v:' + version]: body.tournament });
       if (version > HISTORY) await this.storage.delete('v:' + (version - HISTORY));
       this.broadcast(snapshotMessage(version, updatedAt, body.tournament));
-      return reply({ version, updatedAt });
+      return reply({ version, updatedAt, listed: !!meta.listed });
+    }
+    // Listed on rebattle.app or not: the organiser's setting, kept here next to the
+    // owners rather than in the snapshot, so no save or import can change it.
+    if (op === 'visibility') {
+      if (!isOwner()) return reply({ error: 'not yours' }, 403);
+      await this.storage.put('meta', { ...meta, listed: body.listed === true });
+      return reply({ listed: body.listed === true, version: meta.version, updatedAt: meta.updatedAt, tournament: await this.storage.get('snapshot') });
     }
     if (op === 'remove') {
       if (!isOwner()) return reply({ error: 'not yours' }, 403);
@@ -123,5 +130,37 @@ export class OrganiserList {
     else return reply({ error: 'unknown operation' }, 400);
     await this.storage.put('entries', entries);
     return reply({ ok: true });
+  }
+}
+
+// One for the whole site: the listed competitions for /competitions and the intro, a
+// small summary each (see worker/listing.js), under its own key. The Worker updates it
+// after a listed tournament is saved, listed or unlisted, or deleted.
+export class CompetitionIndex {
+  constructor(state) {
+    this.storage = state.storage;
+  }
+
+  async fetch(request) {
+    const op = new URL(request.url).pathname.slice(1);
+    const body = request.method === 'GET' ? {} : await request.json();
+    if (op === 'put') {
+      await this.storage.put('c:' + body.code, body);
+      return reply({ ok: true });
+    }
+    if (op === 'delete') {
+      await this.storage.delete('c:' + body.code);
+      return reply({ ok: true });
+    }
+    if (op === 'list') {
+      // Running ones first (most recently updated), then finished, newest first.
+      const all = [...(await this.storage.list({ prefix: 'c:' })).values()];
+      const rank = (c) => (c.status === 'completed' ? 1 : 0);
+      all.sort((a, b) => rank(a) - rank(b) || b.updatedAt - a.updatedAt);
+      const offset = Math.max(0, body.offset | 0);
+      const limit = Math.min(50, Math.max(1, body.limit | 0 || 30));
+      return reply({ total: all.length, competitions: all.slice(offset, offset + limit) });
+    }
+    return reply({ error: 'unknown operation' }, 400);
   }
 }

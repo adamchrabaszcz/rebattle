@@ -118,6 +118,12 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 - **Locally:** `tools/serve.mjs` answers the live feed with a minimal WebSocket (`tools/ws.mjs`) that the in-memory store gets directly.
 - **CSP:** `connect-src 'self'` covers the same-origin socket. A browser that doesn't apply `'self'` to WebSockets falls back to reading every 20 s.
 
+## Public list of competitions
+
+- **Visibility is the organiser's setting:** `listed` (shown on rebattle.app) or not (the default: only people with the link). It's kept in the tournament's Durable Object next to its owners (`meta.listed`), not in the snapshot, so no save or import can change it. Changed with `PUT /api/manage/t/<code>/visibility { listed }` (owner, same origin), or set at creation (`POST /api/manage/tournaments { tournament, listed }`).
+- **The index:** one more Durable Object, `CompetitionIndex` (a single instance, binding `COMPETITIONS`). It holds a summary per listed competition (`worker/listing.js`: code, name, dates, riders count, status, whether a heat has been ridden, the winner's name once finished; never owners). `worker/manage.js` keeps it in step after every create, save, visibility change and delete.
+- **`GET /api/competitions?offset&limit`** (public): running competitions first (most recently updated), then finished ones, newest first; at most 50 per page. Finished ones stay listed until the organiser unlists or deletes them.
+
 ## Storage
 
 - `localStorage` keys `ruedaBattle.tournaments` and `ruedaBattle.activeTournamentId`; names predate the rebattle rename and must stay. `rebattle.online` holds this device's copies of online tournaments; `rebattle.activeOnline` the online tournament last opened here, when that was the last one (opening a local one clears it, and the other way round). `rebattle.theme`: `light` or `dark` from the footer switch (none = Auto).
