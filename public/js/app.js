@@ -16,6 +16,28 @@ const container = document.getElementById('app');
 const UNDO_LIMIT = 20;
 const PHONE = window.matchMedia('(max-width: 700px)'); // the phone layout in styles.css
 
+// The colour choice, kept on this device: 'light' / 'dark', or none for Auto.
+function readTheme() {
+  try {
+    const t = localStorage.getItem('rebattle.theme');
+    return t === 'light' || t === 'dark' ? t : 'auto';
+  } catch {
+    return 'auto';
+  }
+}
+
+function setTheme(choice) {
+  try {
+    if (choice === 'light' || choice === 'dark') localStorage.setItem('rebattle.theme', choice);
+    else localStorage.removeItem('rebattle.theme');
+  } catch {
+    // storage blocked: the choice lasts until the page is closed
+  }
+  state.theme = choice;
+  document.dispatchEvent(new Event('rebattle-theme')); // js/theme.js re-applies
+  container.querySelectorAll('[data-action="set-theme"]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.themeChoice === choice)));
+}
+
 function freshDraft() {
   return { name: '', competitorCount: null, lapTimeSeconds: 20, breakSeconds: 0, heatFormat: 'single', names: [], localOnly: false };
 }
@@ -45,11 +67,12 @@ const state = {
   share: null, // the share panel, while open: { url, title, name, poster } (ui/share.js)
   replayFrom: 'bracket', // the screen "Back" returns to from the replay
   hasWork: false, // intro: tournaments are saved on this device (links to the list)
+  theme: readTheme(), // the footer's Auto / Light / Dark (js/theme.js applies it)
 };
 
 // The only actions the read-only view runs. An allowlist, so anything added later
 // stays organiser-only unless it is listed here on purpose.
-const VIEW_ACTIONS = new Set(['go-home', 'open-replay', 'open-journey', 'close-replay', 'open-share', 'close-share', 'copy-link', 'native-share', 'print-poster']);
+const VIEW_ACTIONS = new Set(['go-home', 'open-replay', 'open-journey', 'close-replay', 'open-share', 'close-share', 'copy-link', 'native-share', 'print-poster', 'set-theme']);
 
 function render() {
   try {
@@ -593,6 +616,7 @@ container.addEventListener('click', (e) => {
   else if (action === 'go-home' && state.online) location.href = '/tournaments';
   else if (action === 'go-home') goHome();
   else if (action === 'follow') follow();
+  else if (action === 'set-theme') setTheme(el.dataset.themeChoice);
   else if (action === 'go-setup') goSetup();
   else if (action === 'go-setup-back') {
     state.screen = 'setup';

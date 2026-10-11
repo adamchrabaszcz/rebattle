@@ -38,41 +38,40 @@
   font-family: var(--font-text);
 }
 
-/* Day colours: warm off-white, white cards; the same roles as above, each text colour
+/* Day colours (data-theme="light", set by js/theme.js from the footer's choice or the
+   device's setting): warm off-white, white cards; the same roles as above, each text colour
    at least 4.5:1 on white cards (WCAG AA). Amber stays bright where it is a fill (buttons,
    the logo underline) and turns deeper where it is text or a thin line. The replay video
    keeps its own dark palette (replay/theme.js). */
-@media (prefers-color-scheme: light) {
-  :root {
-    color-scheme: light;
-    --bg: #f6f5f2;
-    --panel: #ffffff;
-    --panel-2: #efede8;
-    --border: #dcd9d1;
-    --text: #15171c;
-    --muted: #5f636d;
-    --accent: #ffb020;
-    --accent-hover: #ffc24d;
-    --on-accent: #1d1503;
-    --accent-2: #8f5c00;
-    --accent-text: #8a5a00;
-    --losers: #6a45d1;
-    --winners: #285fc8;
-    --win: #17713f;
-    --lose: #c23737;
-    --hover: #e8e5de;
-    --edge: #c4c0b6;
-    --gold: #8a6000;
-    --accent-tint: #ffb02029;
-    --accent-line: #8f5c0066;
-    --win-tint: #17713f1f;
-    --win-line: #17713f66;
-    --losers-line: #6a45d166;
-    --lose-tint: #c237371a;
-    --fade-done: 0.85;
-    --fade-loser: 0.75;
-    --fade-bye: 0.7;
-  }
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f6f5f2;
+  --panel: #ffffff;
+  --panel-2: #efede8;
+  --border: #dcd9d1;
+  --text: #15171c;
+  --muted: #5f636d;
+  --accent: #ffb020;
+  --accent-hover: #ffc24d;
+  --on-accent: #1d1503;
+  --accent-2: #8f5c00;
+  --accent-text: #8a5a00;
+  --losers: #6a45d1;
+  --winners: #285fc8;
+  --win: #17713f;
+  --lose: #c23737;
+  --hover: #e8e5de;
+  --edge: #c4c0b6;
+  --gold: #8a6000;
+  --accent-tint: #ffb02029;
+  --accent-line: #8f5c0066;
+  --win-tint: #17713f1f;
+  --win-line: #17713f66;
+  --losers-line: #6a45d166;
+  --lose-tint: #c237371a;
+  --fade-done: 0.85;
+  --fade-loser: 0.75;
+  --fade-bye: 0.7;
 }
 
 * { box-sizing: border-box; }
@@ -349,12 +348,18 @@ footer.note a { color: var(--text); }
 .site-brand .r-mark { display: inline-block; height: 20px; }
 .site-links { display: flex; gap: 8px 24px; flex-wrap: wrap; }
 .site-account { margin-left: auto; }
+.theme-switch { display: inline-flex; align-items: center; gap: 4px; }
+.theme-switch span { margin-right: 4px; }
+.theme-switch button { padding: 4px 10px; }
+.theme-switch button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .site-account a { text-decoration: underline; }
 @media (max-width: 700px) {
   .site-footer { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
   .site-brand { grid-column: 1 / -1; padding: 6px 0 8px; }
   .site-links { display: contents; }
   .site-links a { display: flex; align-items: center; min-height: 44px; }
+  .theme-switch { grid-column: 1 / -1; margin-top: 8px; }
+  .theme-switch button { min-height: 44px; flex: 1; }
   .site-account { grid-column: 1 / -1; margin: 8px 0 0; }
   .site-account a { display: inline-flex; align-items: center; min-height: 44px; }
 }
