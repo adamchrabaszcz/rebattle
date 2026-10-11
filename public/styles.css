@@ -341,6 +341,9 @@ footer.note a { color: var(--text); }
   .has-tabs .bracket-column.active { display: flex; flex: 1 1 auto; max-width: none; }
   .has-tabs .bracket-column > .round-title { display: none; }
   .has-tabs .match-cell { flex: none !important; padding: 5px 0; }
+  /* The round titles are hidden here, so the first card sits at the top of the
+     scroll box, which would clip the BYE / FINAL tag floating on its edge. */
+  .has-tabs .bracket-columns { padding-top: 6px; }
   .next-tag { display: inline-block; color: var(--win); border-color: #35c17a66; }
 
   /* Final 4 uses the same tabs (Semifinals / Small final / Final); drop
@@ -403,7 +406,10 @@ footer.note a { color: var(--text); }
 
 @media (max-width: 700px) {
   .brand-home .brand { display: none; }
-  .brand-home .r-mark { display: block; }
+  /* Inline, so the header lines it up by baseline with the name's first line; the
+     negative margin puts the bottom of the letter (not of the underline below it,
+     234 of the mark's 861 units) on that baseline. */
+  .brand-home .r-mark { display: inline-block; margin-bottom: calc(-28px * 234 / 861); }
 }
 
 /* Numbers line up in columns wherever results and places are listed. */
@@ -436,7 +442,6 @@ footer.note a { color: var(--text); }
 }
 @media (hover: none) { .key-item.only-desktop:last-child { display: none; } }
 .toolbar.align-end { justify-content: flex-end; }
-@media (max-width: 700px) { .event-top .brand-home { align-self: center; } }
 
 /* ---- Public pages: live status, riders, rider page ---- */
 .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--win); margin-right: 5px; vertical-align: 1px; animation: live-pulse 2s ease-in-out infinite; }
