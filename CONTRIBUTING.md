@@ -53,7 +53,7 @@ DEV_ORGANISER_EMAIL=you@example.com node tools/serve.mjs
 # or for npm run dev: put DEV_ORGANISER_EMAIL=you@example.com in .dev.vars (git-ignored)
 ```
 
-It only works on `127.0.0.1` and `localhost`.
+It only works on `127.0.0.1` and `localhost`. Online tournaments then work too: in memory with `tools/serve.mjs` (gone when it stops), or with the real Durable Objects under `npm run dev` (kept in `.wrangler/`).
 
 ## Code conventions
 

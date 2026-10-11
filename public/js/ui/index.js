@@ -6,7 +6,7 @@ import { tabState } from './brackets.js';
 import { drawConnectors, tracePath } from './connectors.js';
 import { renderHome } from './home.js';
 import { renderReplayScreen } from './replay-screen.js';
-import { renderNotFound } from './not-found.js';
+import { renderLoading, renderNotFound } from './not-found.js';
 import { renderNames, renderSetup } from './setup.js';
 
 // Module-level so the highlight is re-applied after a re-render (e.g. after
@@ -70,6 +70,7 @@ function render(container, state) {
   else if (state.screen === 'names') container.innerHTML = renderNames(state);
   else if (state.screen === 'replay') container.innerHTML = renderReplayScreen(state);
   else if (state.screen === 'notFound') container.innerHTML = renderNotFound(state);
+  else if (state.screen === 'loading') container.innerHTML = renderLoading();
   else if (state.screen === 'bracket') {
     container.innerHTML = renderBracketScreen(state);
     drawConnectors(container);

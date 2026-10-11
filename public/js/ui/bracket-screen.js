@@ -104,6 +104,29 @@ function renderToolbar(state) {
       </div>`;
 }
 
+// Where an online tournament's changes are: shown next to the status and updated in
+// place by the app (data-sync) as saves go out.
+function renderSync(online) {
+  const s = online.status;
+  if (s === 'saving') return 'saving&hellip;';
+  if (s === 'offline') return '<span class="sync-offline">offline, changes waiting</span>';
+  if (s === 'conflict') return '<span class="sync-conflict">changed on another device</span>';
+  if (s === 'error') return `<span class="sync-error">not saved online: ${escapeHtml(online.detail || 'error')}</span>`;
+  return 'saved online';
+}
+
+// Another device saved this tournament since this one last did. Nothing is lost
+// either way: the other version is in the banner, this one stays on this device.
+function renderConflict(state) {
+  if (!state.online || state.online.status !== 'conflict') return '';
+  return `<div class="card" style="border-color: var(--lose); margin-bottom:20px;">
+            <strong>This tournament was changed on another device.</strong>
+            <p style="margin:6px 0 10px;">Your latest changes here weren&rsquo;t saved online. Use the other device&rsquo;s version, or keep yours and replace it.</p>
+            <button class="primary" data-action="sync-use-theirs">Use the other version</button>
+            <button data-action="sync-keep-mine">Keep mine</button>
+          </div>`;
+}
+
 function renderBracketScreen(state) {
   const t = state.tournament;
   const readOnly = !!state.readOnly;
@@ -111,7 +134,9 @@ function renderBracketScreen(state) {
     <div class="topbar event-top">
       <div class="title"><h1>${escapeHtml(t.name)}</h1><small>${t.competitors.length} competitors &middot; ${
     t.settings.heatFormat === 'bo3' ? 'best of 3' : 'single run'
-  } &middot; ${t.status === 'completed' ? 'completed' : 'in progress'}${readOnly ? ' &middot; <span class="view-badge">view only</span>' : ''}</small></div>
+  } &middot; ${t.status === 'completed' ? 'completed' : 'in progress'}${readOnly ? ' &middot; <span class="view-badge">view only</span>' : ''}${
+    state.online ? ` &middot; <span data-sync>${renderSync(state.online)}</span>` : ''
+  }</small></div>
       ${brandHome()}
     </div>
     ${renderToolbar(state)}
@@ -124,6 +149,7 @@ function renderBracketScreen(state) {
           </div>`
         : ''
     }
+    ${renderConflict(state)}
     ${readOnly ? '' : renderRenamePanel(state)}
     ${
       t.status === 'completed'
@@ -136,9 +162,11 @@ function renderBracketScreen(state) {
     <footer class="note">${
       readOnly
         ? 'View only. New results show up here as soon as they are recorded in this browser.'
+        : state.online
+        ? `Saved online as <span class="code">${escapeHtml(state.online.code)}</span>, and on this device so it keeps working offline.`
         : 'Auto-saved locally in this browser. Use Export to back up or move to another device.'
     }</footer>
   `;
 }
 
-export { renderBracketScreen };
+export { renderBracketScreen, renderSync };

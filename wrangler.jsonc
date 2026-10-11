@@ -18,6 +18,15 @@
     "ACCESS_TEAM_DOMAIN": "https://silent-paper-2aa5.cloudflareaccess.com",
     "ACCESS_AUD": "efaef521e782085d4fcfddd0db011ece190fa12519c5e1e1fff24158159939fa"
   },
+  // Cloud saving: one TournamentStore per tournament (by code), one OrganiserList per
+  // organiser (by email); worker/stores.js. Previews get their own, separate storage.
+  "durable_objects": {
+    "bindings": [
+      { "name": "TOURNAMENTS", "class_name": "TournamentStore" },
+      { "name": "ORGANISERS", "class_name": "OrganiserList" }
+    ]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["TournamentStore", "OrganiserList"] }],
   // Pull requests get a preview URL (`npx wrangler preview`); settings are inherited.
   "previews": {}
 }

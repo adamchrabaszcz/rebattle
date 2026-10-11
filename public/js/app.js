@@ -1,10 +1,12 @@
 // Entry point: owns app state and handles every click (data-action delegation).
 import * as Bracket from './engine/bracket.js';
 import * as Store from './store/local.js';
+import * as Cloud from './store/cloud.js';
 import { render as renderScreen } from './ui/index.js';
 import { brandLogo, escapeHtml } from './ui/html.js';
 import { computeEstimateHtml } from './ui/setup.js';
-import { renderAccount } from './ui/home.js';
+import { renderAccount, renderLists } from './ui/home.js';
+import { renderSync } from './ui/bracket-screen.js';
 import * as Replay from './replay/player.js';
 import { parseRoute } from './route.js';
 
@@ -12,7 +14,7 @@ const container = document.getElementById('app');
 const UNDO_LIMIT = 20;
 
 function freshDraft() {
-  return { name: '', competitorCount: null, lapTimeSeconds: 20, breakSeconds: 0, heatFormat: 'single', names: [] };
+  return { name: '', competitorCount: null, lapTimeSeconds: 20, breakSeconds: 0, heatFormat: 'single', names: [], localOnly: false };
 }
 
 function defaultTournamentName() {
@@ -30,6 +32,11 @@ const state = {
   tournaments: [], // saved list, filled for the home screen
   readOnly: false, // view only: nothing can be recorded or edited (?view for now, the public link later)
   organiser: undefined, // logged-in organiser's email, null if not logged in, undefined until known
+  online: null, // the open tournament, if it is an online one: { code, status, detail } (store/cloud.js)
+  onlineList: undefined, // home: the organiser's online tournaments (null while loading)
+  onlineFromDevice: false, // home: the server was unreachable, the list shows this device's copies
+  onlinePending: [], // home: codes with changes not uploaded yet
+  notFoundReason: null, // 'offline' when an online tournament can't be loaded and isn't on this device
 };
 
 // The only actions the read-only view runs. An allowlist, so anything added later
@@ -106,7 +113,8 @@ function snapshotUndo() {
 function saveActive() {
   if (!state.tournament) return;
   try {
-    Store.upsert(state.tournament);
+    if (state.online) Cloud.save(state.online.code, state.tournament); // this device first, then the server
+    else Store.upsert(state.tournament);
   } catch (e) {
     console.error('Save failed', e);
     alert('Could not save in this browser (storage full or blocked). The change is shown but NOT saved: use Export JSON now to keep a backup.');
@@ -116,6 +124,7 @@ function saveActive() {
 function goHome() {
   state.screen = 'home';
   render();
+  loadOnlineList();
 }
 
 function goSetup() {
@@ -130,6 +139,7 @@ function handleSetupNext() {
   const lap = parseFloat(document.getElementById('f-lap').value);
   const brk = parseFloat(document.getElementById('f-break').value) || 0;
   const format = (container.querySelector('input[name="heatFormat"]:checked') || {}).value || 'single';
+  const localOnly = !!(document.getElementById('f-local') || {}).checked;
 
   if (!count || count < 4) {
     alert('Enter at least 4 competitors.');
@@ -143,12 +153,12 @@ function handleSetupNext() {
   const prevNames = state.draft.names || [];
   const names = Array.from({ length: count }, (_, i) => prevNames[i] || '');
 
-  state.draft = { name, competitorCount: count, lapTimeSeconds: lap, breakSeconds: brk, heatFormat: format, names };
+  state.draft = { name, competitorCount: count, lapTimeSeconds: lap, breakSeconds: brk, heatFormat: format, names, localOnly };
   state.screen = 'names';
   render();
 }
 
-function handleNamesDraw() {
+function handleNamesDraw(button) {
   const inputs = Array.from(container.querySelectorAll('.name-input'));
   const names = inputs.map((inp) => inp.value.trim());
   const errorEl = document.getElementById('names-error');
@@ -174,6 +184,13 @@ function handleNamesDraw() {
     return;
   }
 
+  // Logged in: online by default, unless "Keep in this browser only" was ticked.
+  if (state.organiser && !state.draft.localOnly) {
+    button.disabled = true;
+    button.textContent = 'Saving online…';
+    createOnline(tournament);
+    return;
+  }
   Store.upsert(tournament);
   Store.setActiveId(tournament.id);
   state.tournament = tournament;
@@ -182,7 +199,160 @@ function handleNamesDraw() {
   render();
 }
 
+// While two devices disagree, changes wait until the organiser picks a version.
+function waitingForConflict() {
+  if (!state.online || state.online.status !== 'conflict') return false;
+  alert('This tournament was changed on another device. Choose a version in the banner above first.');
+  return true;
+}
+
+// ---- online tournaments ---------------------------------------------------
+
+const reasonOf = (e) => (e && e.offline ? 'you seem to be offline' : (e && e.message) || 'unknown error');
+
+// Saves a tournament online and opens it at /manage/<code>. localId: it was a local
+// tournament being moved, removed from this browser once it is safely online. A new
+// one that can't be saved online is kept in this browser instead, so nothing is lost.
+async function createOnline(tournament, localId) {
+  try {
+    const code = await Cloud.create(tournament);
+    if (localId) Store.remove(localId);
+    Store.setActiveId(null);
+    location.href = '/manage/' + code;
+  } catch (e) {
+    if (localId) {
+      alert(`Couldn't move it online (${reasonOf(e)}). It's still saved in this browser.`);
+      return;
+    }
+    Store.upsert(tournament);
+    Store.setActiveId(tournament.id);
+    state.tournament = tournament;
+    state.undoStack = [];
+    state.screen = 'bracket';
+    render();
+    alert(`Couldn't save it online (${reasonOf(e)}), so it's saved in this browser. Use "Move online" from the tournament list later.`);
+  }
+}
+
+function handleMoveOnline(id) {
+  const t = Store.getById(id);
+  if (!t) return;
+  if (!confirm(`Move "${t.name}" online? It will be saved to your account and removed from this browser's list.`)) return;
+  createOnline(t, id);
+}
+
+function handleDeleteOnline(code) {
+  if (!confirm('Delete this online tournament? This cannot be undone.')) return;
+  Cloud.remove(code)
+    .then(() => {
+      Cloud.forget(code);
+      loadOnlineList();
+    })
+    .catch((e) => alert(`Couldn't delete it (${reasonOf(e)}).`));
+}
+
+// /manage/<code>: show this device's copy at once if there is one, then the server's.
+// Unsent changes here win the race: they are sent, and a conflict shows if the
+// server moved on meanwhile.
+function openOnline(code) {
+  const copy = Cloud.cached(code);
+  if (copy) Store.setActiveId(null); // shown: / goes to the list next time, not an older local one
+  state.online = { code, ...Cloud.status(code) };
+  state.tournament = copy && copy.tournament;
+  state.screen = copy ? 'bracket' : 'loading';
+  render();
+  Cloud.load(code)
+    .then(({ version, tournament }) => {
+      const now = Cloud.cached(code);
+      if (now && now.pending) return Cloud.flush();
+      Cloud.remember(code, version, tournament);
+      Store.setActiveId(null);
+      state.online.status = 'saved';
+      if (!now || JSON.stringify(now.tournament) !== JSON.stringify(tournament)) {
+        state.tournament = tournament;
+        state.undoStack = [];
+      }
+      if (state.screen === 'loading') state.screen = 'bracket';
+      if (state.screen === 'bracket') render();
+    })
+    .catch((e) => {
+      if (e.offline || (e.status && e.status >= 500)) {
+        if (!Cloud.cached(code)) {
+          state.notFoundReason = 'offline';
+          state.screen = 'notFound';
+          render();
+        }
+        Cloud.flush();
+      } else if (e.loggedOut) {
+        state.online.status = 'error';
+        state.online.detail = e.message;
+        updateSync();
+      } else {
+        Cloud.forget(code);
+        state.online = null;
+        state.screen = 'notFound';
+        render();
+      }
+    });
+}
+
+function updateSync() {
+  const el = container.querySelector('[data-sync]');
+  if (el && state.online) el.innerHTML = renderSync(state.online);
+}
+
+Cloud.onStatus((code, status, detail) => {
+  if (!state.online || state.online.code !== code) return;
+  const wasConflict = state.online.status === 'conflict';
+  state.online.status = status;
+  state.online.detail = detail;
+  if ((status === 'conflict' || wasConflict) && state.screen === 'bracket') render(); // the banner comes or goes
+  else updateSync();
+});
+
+function useTheirs() {
+  const { version, tournament } = state.online.detail;
+  Cloud.accept(state.online.code, version, tournament);
+  state.tournament = tournament;
+  state.undoStack = [];
+  render();
+}
+
+function keepMine() {
+  if (!confirm("Replace the other device's version with yours? Its changes will be lost.")) return;
+  const { version } = state.online.detail;
+  state.online.status = 'saving';
+  render();
+  Cloud.overwrite(state.online.code, version);
+}
+
+// Home: the organiser's online tournaments, from the server or, offline, this device.
+function loadOnlineList() {
+  if (!state.organiser) return;
+  Cloud.list()
+    .then((list) => {
+      state.onlineList = list;
+      state.onlineFromDevice = false;
+    })
+    .catch(() => {
+      state.onlineList = Cloud.cachedList().map(({ code, tournament: t }) => ({ code, name: t.name, status: t.status, competitors: t.competitors.length, updatedAt: 0 }));
+      state.onlineFromDevice = true;
+    })
+    .then(() => {
+      state.onlinePending = Cloud.cachedList().filter((e) => e.pending).map((e) => e.code);
+      refreshLists();
+    });
+}
+
+function refreshLists() {
+  const el = container.querySelector('[data-lists]');
+  if (!el || state.screen !== 'home') return;
+  state.tournaments = Store.loadAll();
+  el.innerHTML = renderLists(state);
+}
+
 function handleRecordWinner(matchId, winnerId) {
+  if (waitingForConflict()) return;
   if (state.externalUpdateAvailable) {
     alert('This tournament changed in another tab/window. Reload it (button above) before recording more results, or you could overwrite what was just saved there.');
     return;
@@ -202,6 +372,7 @@ function handleRecordWinner(matchId, winnerId) {
 // Matches reference competitors by id, so a rename only touches the
 // competitor list and shows up everywhere on the next render.
 function handleSaveNames() {
+  if (waitingForConflict()) return;
   if (state.externalUpdateAvailable) {
     alert('This tournament changed in another tab/window. Reload it (button above) before editing names, or you could overwrite what was just saved there.');
     return;
@@ -230,6 +401,7 @@ function handleSaveNames() {
 
 function handleUndo() {
   if (!state.undoStack.length) return;
+  if (waitingForConflict()) return;
   if (state.externalUpdateAvailable) {
     alert('This tournament changed in another tab/window. Reload it (button above) before undoing, or you could overwrite what was just saved there.');
     return;
@@ -300,6 +472,7 @@ function handleImportFile(file) {
       Store.upsert(t);
       state.nameDraft = null;
       Store.setActiveId(t.id);
+      if (location.pathname !== '/') return void (location.href = '/'); // imported files are local tournaments
       state.tournament = t;
       state.undoStack = [];
       state.screen = 'bracket';
@@ -322,7 +495,7 @@ container.addEventListener('click', (e) => {
     state.screen = 'setup';
     render();
   } else if (action === 'setup-next') handleSetupNext();
-  else if (action === 'names-draw') handleNamesDraw();
+  else if (action === 'names-draw') handleNamesDraw(el);
   else if (action === 'record-winner') handleRecordWinner(el.dataset.match, el.dataset.winner);
   else if (action === 'undo') handleUndo();
   else if (action === 'toggle-more') el.parentElement.classList.toggle('open');
@@ -347,6 +520,10 @@ container.addEventListener('click', (e) => {
   else if (action === 'new-tournament') goSetup();
   else if (action === 'open-tournament') handleOpenTournament(el.dataset.id);
   else if (action === 'delete-tournament') handleDeleteTournament(el.dataset.id);
+  else if (action === 'move-online') handleMoveOnline(el.dataset.id);
+  else if (action === 'delete-online') handleDeleteOnline(el.dataset.code);
+  else if (action === 'sync-use-theirs') useTheirs();
+  else if (action === 'sync-keep-mine') keepMine();
   else if (action === 'reload-external-update') handleReloadExternalUpdate();
   else if (action === 'go-home-force') {
     state.tournament = null;
@@ -386,19 +563,27 @@ function loadOrganiser() {
       state.organiser = (me && typeof me.email === 'string' && me.email) || null;
       const el = container.querySelector('[data-account]');
       if (el) el.innerHTML = renderAccount(state.organiser);
+      if (state.organiser) {
+        state.onlineList = null; // loading
+        refreshLists();
+        loadOnlineList();
+      }
     });
 }
 
 // ---- init ---------------------------------------------------------------
 
-// Tournament addresses (/t/<code>, /manage/<code>) arrive with cloud saving; until
-// then they, like any unknown path, show "not found". See route.js.
+// /manage/<code> opens an online tournament (Access has already asked for the login);
+// /t/<code> (public view) and /t/<code>/<rider> come later and, like any unknown
+// path, show "not found" for now. See route.js.
 // ?view (the active tournament) or ?view=<id> opens it read-only, without changing
 // which tournament is active for the organiser in this browser.
 const route = parseRoute(location.pathname);
 const params = new URLSearchParams(location.search);
 const viewed = route.name === 'home' && params.has('view') && Store.getById(params.get('view') || Store.getActiveId());
-if (route.name !== 'home') {
+if (route.name === 'manage') {
+  openOnline(route.code);
+} else if (route.name !== 'home') {
   state.screen = 'notFound';
 } else if (viewed) {
   state.readOnly = true;
@@ -414,5 +599,6 @@ if (route.name !== 'home') {
     }
   }
 }
-render();
-if (route.name === 'home' && !state.readOnly) loadOrganiser();
+if (route.name !== 'manage') render(); // openOnline renders itself
+if ((route.name === 'home' && !state.readOnly) || route.name === 'manage') loadOrganiser();
+Cloud.flush(); // anything left unsent from last time

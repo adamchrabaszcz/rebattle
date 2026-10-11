@@ -9,12 +9,12 @@ import { spawn, execFileSync } from 'node:child_process';
 import { readFileSync, existsSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { createServer } from '../../tools/serve.mjs';
+import { createServer, memoryStores } from '../../tools/serve.mjs';
 
 const server = createServer({ env: {} });
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
 // A second server where the local stand-in login says an organiser is logged in.
-const loggedIn = createServer({ env: { DEV_ORGANISER_EMAIL: 'organiser@example.com' } });
+const loggedIn = createServer({ env: { DEV_ORGANISER_EMAIL: 'organiser@example.com', ...memoryStores() } });
 await new Promise((r) => loggedIn.listen(0, '127.0.0.1', r));
 const BASE = `http://127.0.0.1:${server.address().port}/`;
 
@@ -58,6 +58,8 @@ await new Promise((r) => (ws.onopen = r));
 let seq = 0;
 const pending = {};
 const problems = [];
+let offlineOnPurpose = false; // the offline step expects failed requests
+const expected = new Set(); // error statuses a step causes on purpose, e.g. 409 (conflict), 404 (deleted)
 const requests = {};
 ws.onmessage = (m) => {
   const d = JSON.parse(m.data);
@@ -65,9 +67,9 @@ ws.onmessage = (m) => {
   const p = d.params;
   if (d.method === 'Runtime.exceptionThrown') problems.push('page error: ' + (p.exceptionDetails.exception?.description || p.exceptionDetails.text));
   if (d.method === 'Runtime.consoleAPICalled' && p.type === 'error') problems.push('console.error: ' + p.args.map((a) => a.value ?? a.description).join(' '));
-  if (d.method === 'Log.entryAdded' && (p.entry.level === 'error' || /Content Security Policy/.test(p.entry.text))) problems.push('log: ' + p.entry.text);
-  if (d.method === 'Network.responseReceived' && p.response.status >= 400) problems.push(`HTTP ${p.response.status}: ${p.response.url}`);
-  if (d.method === 'Network.loadingFailed' && !p.canceled) problems.push(`request failed (${p.errorText}): ${requests[p.requestId] || p.requestId}`);
+  if (d.method === 'Log.entryAdded' && (/Content Security Policy/.test(p.entry.text) || (p.entry.level === 'error' && !(offlineOnPurpose && /ERR_INTERNET_DISCONNECTED/.test(p.entry.text)) && ![...expected].some((s) => p.entry.text.includes('status of ' + s))))) problems.push('log: ' + p.entry.text);
+  if (d.method === 'Network.responseReceived' && p.response.status >= 400 && !expected.has(p.response.status)) problems.push(`HTTP ${p.response.status}: ${p.response.url}`);
+  if (d.method === 'Network.loadingFailed' && !p.canceled && !offlineOnPurpose) problems.push(`request failed (${p.errorText}): ${requests[p.requestId] || p.requestId}`);
   if (d.method === 'Network.requestWillBeSent') requests[p.requestId] = p.request.url;
 };
 const send = (method, params = {}) => new Promise((r) => { const id = ++seq; pending[id] = r; ws.send(JSON.stringify({ id, method, params })); });
@@ -81,6 +83,15 @@ await send('Log.enable');
 await send('Page.enable');
 await send('Network.enable');
 await send('DOM.enable');
+// Dialogs would block the page: record them instead, also on pages the app navigates to itself.
+await send('Page.addScriptToEvaluateOnNewDocument', { source: `window.__dialogs = []; window.alert = (m) => __dialogs.push('alert: ' + m); window.confirm = (m) => (__dialogs.push('confirm: ' + m), true);` });
+async function until(expression, ms = 8000) {
+  for (const end = Date.now() + ms; Date.now() < end; await sleep(100)) {
+    const v = await js(expression).catch(() => null); // the page may be navigating
+    if (v) return v;
+  }
+  throw new Error('timed out waiting for: ' + expression.slice(0, 80));
+}
 
 let failures = 0;
 async function step(name, fn) {
@@ -107,9 +118,10 @@ const H = `const q = (s) => document.querySelector(s), qa = (s) => [...document.
   const saved = () => JSON.parse(localStorage.getItem('ruedaBattle.tournaments') || '[]');
   const active = () => saved().find((t) => t.id === localStorage.getItem('ruedaBattle.activeTournamentId'));
   const setVal = (el, v) => { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); };
-  async function create(name, n, format) {
+  async function create(name, n, format, localOnly) {
     q('[data-action=go-setup]').click(); await wait();
     setVal(q('#f-name'), name); setVal(q('#f-count'), n); setVal(q('#f-lap'), 20);
+    if (localOnly) q('#f-local').click();
     q('input[name=heatFormat][value=' + format + ']').click();
     q('[data-action=setup-next]').click(); await wait();
     qa('.name-input').forEach((el, i) => setVal(el, 'Rider ' + (i + 1)));
@@ -308,10 +320,100 @@ await step('home shows the organiser login line, logged out and logged in', asyn
   return inn.replace(/\s+/g, ' ');
 });
 
+// ---- online tournaments (logged in, in-memory stores) ------------------------------
+
+const L = `http://127.0.0.1:${loggedIn.address().port}`;
+const serverCopy = (code) => `fetch('/api/manage/t/${code}').then((r) => r.json())`;
+const sync = `document.querySelector('[data-sync]')?.textContent`;
+let code;
+
+await step('logged in, a new tournament is saved online by default', async () => {
+  await send('Page.navigate', { url: L + '/' });
+  await until(`document.querySelector('[data-lists]')?.textContent.includes('No online tournaments yet')`);
+  await js(`(async () => { ${H} q('[data-action=go-setup]').click(); await wait(); return !!q('#f-local') && !q('#f-local').checked; })()`).then((ok) => check(ok, 'no unticked "keep in this browser" option'));
+  await js(`(async () => { ${H} q('[data-action=go-home]').click(); await wait(); await create('Online Open', 9, 'single'); return 1; })()`);
+  code = await until(`location.pathname.startsWith('/manage/') && document.querySelector('[data-action=record-winner]') && location.pathname.split('/')[2]`);
+  check(/^online-open-[a-z2-9]{4}$/.test(code), 'code ' + code);
+  await until(`${sync} === 'saved online'`);
+  return code;
+});
+
+await step('results go to the server, and a fresh device loads them from there', async () => {
+  await js(`(async () => { ${H} await play(3); return 1; })()`);
+  await until(`${sync} === 'saved online'`);
+  const server = await js(`${serverCopy(code)}.then((d) => ({ version: d.version, races: [...d.tournament.wb.matches, ...d.tournament.lb.matches].reduce((n, m) => n + m.races.length, 0) }))`);
+  check(server.version === 4 && server.races === 3, 'server has ' + JSON.stringify(server));
+  await js(`localStorage.removeItem('rebattle.online'), 1`); // as if on another device
+  await send('Page.reload');
+  await until(`document.querySelectorAll('.bracket-graph .match-card.completed').length >= 3 && ${sync} === 'saved online'`);
+  return 'version ' + server.version;
+});
+
+await step('offline, changes wait on the device and upload when back online', async () => {
+  offlineOnPurpose = true;
+  await send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+  await js(`(async () => { ${H} await play(2); return 1; })()`);
+  await until(`${sync} === 'offline, changes waiting'`);
+  const before = await js(`${serverCopy(code)}.then((d) => d.version)`).catch(() => 'unreachable');
+  await send('Network.emulateNetworkConditions', { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+  await until(`${sync} === 'saved online'`, 15000);
+  offlineOnPurpose = false;
+  const races = await js(`${serverCopy(code)}.then((d) => [...d.tournament.wb.matches, ...d.tournament.lb.matches].reduce((n, m) => n + m.races.length, 0))`);
+  check(races === 5, 'server has ' + races + ' runs, expected 5');
+  return `server while offline: ${before}; after: 5 runs`;
+});
+
+await step('a change from another device: "use the other version" and "keep mine"', async () => {
+  // The other device renames the tournament on the server.
+  const other = (name) => js(`${serverCopy(code)}.then((d) => { d.tournament.name = ${JSON.stringify(name)}; return fetch('/api/manage/t/${code}', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ baseVersion: d.version, tournament: d.tournament }) }).then((r) => r.status); })`);
+  expected.add(409);
+  check((await other('Renamed Elsewhere')) === 200, 'other device could not save');
+  await js(`(async () => { ${H} await play(1); return 1; })()`);
+  await until(`!!document.querySelector('[data-action=sync-use-theirs]')`);
+  const blocked = await js(`(async () => { ${H} const n = qa('[data-action=record-winner]').length; __dialogs.length = 0; q('[data-action=record-winner]').click(); await wait(); return __dialogs.some((d) => d.includes('another device')) && qa('[data-action=record-winner]').length === n; })()`);
+  check(blocked, 'recording was not paused during the conflict');
+  await js(`document.querySelector('[data-action=sync-use-theirs]').click(), 1`);
+  await until(`!document.querySelector('[data-action=sync-use-theirs]') && document.querySelector('.event-top h1').textContent === 'Renamed Elsewhere' && ${sync} === 'saved online'`);
+
+  check((await other('Renamed Again')) === 200, 'other device could not save');
+  await js(`(async () => { ${H} await play(1); return 1; })()`);
+  await until(`!!document.querySelector('[data-action=sync-keep-mine]')`);
+  await js(`document.querySelector('[data-action=sync-keep-mine]').click(), 1`);
+  await until(`${sync} === 'saved online'`);
+  const name = await js(`${serverCopy(code)}.then((d) => d.tournament.name)`);
+  expected.delete(409);
+  check(name === 'Renamed Elsewhere', 'server name after keep mine: ' + name);
+});
+
+await step('a local tournament can be moved online', async () => {
+  await send('Page.navigate', { url: L + '/' });
+  await until(`!!document.querySelector('[data-action=go-setup]')`);
+  await js(`(async () => { ${H} await create('Local First', 6, 'single', true); return 1; })()`);
+  await until(`location.pathname === '/' && !!document.querySelector('[data-action=record-winner]')`);
+  await js(`document.querySelector('[data-action=go-home]').click(), 1`);
+  await until(`!!document.querySelector('[data-action=move-online]')`);
+  await js(`document.querySelector('[data-action=move-online]').click(), 1`);
+  const moved = await until(`location.pathname.startsWith('/manage/local-first-') && ${sync} === 'saved online' && location.pathname`);
+  await send('Page.navigate', { url: L + '/' });
+  await until(`document.querySelectorAll('[data-lists] a[href^="/manage/"]').length === 2`);
+  check(!(await js(`!!document.querySelector('[data-action=move-online]')`)), 'still listed in this browser');
+  return moved;
+});
+
+await step('an online tournament can be deleted', async () => {
+  await js(`document.querySelector('[data-action=delete-online][data-code="${code}"]').click(), 1`);
+  await until(`document.querySelectorAll('[data-lists] a[href^="/manage/"]').length === 1`);
+  expected.add(404);
+  const status = await js(`fetch('/api/manage/t/${code}').then((r) => r.status)`);
+  await sleep(200);
+  expected.delete(404);
+  check(status === 404, 'server still has it: ' + status);
+});
+
 // ---- addresses --------------------------------------------------------------
 
-await step('tournament links show "not found" until cloud saving, with all files loading', async () => {
-  for (const path of ['t/cable-open-x7k2', 't/cable-open-x7k2/dora', 'manage/cable-open-x7k2', 'no/such/page']) {
+await step('public links show "not found" for now, with all files loading', async () => {
+  for (const path of ['t/cable-open-x7k2', 't/cable-open-x7k2/dora', 'no/such/page']) {
     await open(path);
     await sleep(300);
     const r = await js(`({ title: document.querySelector('.card h2')?.textContent, brand: !!document.querySelector('.brand'), fonts: [...document.fonts].some((f) => f.status === 'loaded') })`);
