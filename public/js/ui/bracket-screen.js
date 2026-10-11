@@ -3,7 +3,9 @@
 import * as Bracket from '../engine/bracket.js';
 import { renderFinal4, renderLosersBracket, renderWinnersBracket } from './brackets.js';
 import { renderUpNext } from './cards.js';
+import { riderSlugs } from '../engine/slug.js';
 import { brandHome, DRAW_ICON, escapeHtml } from './html.js';
+import { renderShare } from './share.js';
 
 function renderStandings(tournament) {
   if (tournament.status !== 'completed') return '';
@@ -84,14 +86,17 @@ function renderLegend(readOnly) {
   `;
 }
 
-// Organisers get every action; the read-only view only gets watching the replay.
+// Organisers get every action; the read-only view only gets watching the replay,
+// and sharing the link when it's a public page.
 function renderToolbar(state) {
   const t = state.tournament;
   const replay = t.status === 'completed' ? '<button class="primary" data-action="open-replay">Share replay</button>' : '';
-  if (state.readOnly) return replay ? `<div class="toolbar event-toolbar">${replay}</div>` : '';
+  const share = state.live || state.online ? '<button data-action="open-share" data-share="tournament">Share</button>' : '';
+  if (state.readOnly) return replay || share ? `<div class="toolbar event-toolbar">${share}${replay}</div>` : '';
   return `
       <div class="toolbar event-toolbar">
         <button data-action="undo" ${state.undoStack.length ? '' : 'disabled'}>Undo</button>
+        ${share}
         ${replay}
         <button class="more-toggle" aria-label="More actions" data-action="toggle-more">&middot;&middot;&middot;</button>
         <div class="toolbar-more">
@@ -115,6 +120,32 @@ function renderSync(online) {
   return 'saved online';
 }
 
+// How a public page is getting its updates (store/live.js), updated in place (data-live).
+function renderLive(status) {
+  if (status === 'live') return '<span class="live-dot"></span>live';
+  if (status === 'polling') return 'updates every 20 s';
+  if (status === 'offline') return '<span class="sync-offline">offline, retrying</span>';
+  return 'connecting&hellip;';
+}
+
+// Public page: every rider, linking to their own page.
+function renderRiders(state) {
+  const t = state.tournament;
+  const slugs = riderSlugs(t);
+  const code = escapeHtml(state.live.code);
+  const links = t.competitors
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((c) => `<a href="/t/${code}/${escapeHtml(slugs[c.id])}" data-cid="${c.id}">${escapeHtml(c.name)}</a>`)
+    .join('');
+  return `
+    <section class="section riders">
+      <h2>Riders</h2>
+      <p class="note">Tap a name for that rider&rsquo;s own page: their heats, what&rsquo;s next and, at the end, their journey video.</p>
+      <div class="rider-links">${links}</div>
+    </section>`;
+}
+
 // Another device saved this tournament since this one last did. Nothing is lost
 // either way: the other version is in the banner, this one stays on this device.
 function renderConflict(state) {
@@ -134,12 +165,15 @@ function renderBracketScreen(state) {
     <div class="topbar event-top">
       <div class="title"><h1>${escapeHtml(t.name)}</h1><small>${t.competitors.length} competitors &middot; ${
     t.settings.heatFormat === 'bo3' ? 'best of 3' : 'single run'
-  } &middot; ${t.status === 'completed' ? 'completed' : 'in progress'}${readOnly ? ' &middot; <span class="view-badge">view only</span>' : ''}${
+  } &middot; ${t.status === 'completed' ? 'completed' : 'in progress'}${
+    state.live ? ` &middot; <span data-live>${renderLive(state.live.status)}</span>` : readOnly ? ' &middot; <span class="view-badge">view only</span>' : ''
+  }${
     state.online ? ` &middot; <span data-sync>${renderSync(state.online)}</span>` : ''
   }</small></div>
       ${brandHome()}
     </div>
     ${renderToolbar(state)}
+    ${renderShare(state)}
     ${
       state.externalUpdateAvailable
         ? `<div class="card" style="border-color: var(--accent-2); margin-bottom:20px;">
@@ -158,15 +192,18 @@ function renderBracketScreen(state) {
     }
     ${renderWinnersBracket(t, readOnly)}
     ${renderLosersBracket(t, readOnly)}
+    ${state.live ? renderRiders(state) : ''}
     ${renderLegend(readOnly)}
     <footer class="note">${
-      readOnly
+      state.live
+        ? 'Live: new results show up here as the organiser records them.'
+        : readOnly
         ? 'View only. New results show up here as soon as they are recorded in this browser.'
         : state.online
-        ? `Saved online as <span class="code">${escapeHtml(state.online.code)}</span>, and on this device so it keeps working offline.`
+        ? `Saved online, and on this device so it keeps working offline. Public page: <a href="/t/${escapeHtml(state.online.code)}">${escapeHtml(location.host)}/t/${escapeHtml(state.online.code)}</a>`
         : 'Auto-saved locally in this browser. Use Export to back up or move to another device.'
     }</footer>
   `;
 }
 
-export { renderBracketScreen, renderSync };
+export { renderBracketScreen, renderSync, renderLive };

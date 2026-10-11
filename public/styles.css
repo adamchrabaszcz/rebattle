@@ -436,3 +436,52 @@ footer.note a { color: var(--text); }
 @media (hover: none) { .key-item.only-desktop:last-child { display: none; } }
 .toolbar.align-end { justify-content: flex-end; }
 @media (max-width: 700px) { .event-top .brand-home { align-self: center; } }
+
+/* ---- Public pages: live status, riders, rider page ---- */
+.live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--win); margin-right: 5px; vertical-align: 1px; animation: live-pulse 2s ease-in-out infinite; }
+@keyframes live-pulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
+.rider-links { display: flex; flex-wrap: wrap; gap: 8px; }
+.rider-links a { color: var(--text); text-decoration: none; background: var(--panel-2); border: 1px solid var(--border); border-radius: 999px; padding: 6px 12px; font-size: 14px; }
+.rider-links a:hover { border-color: var(--accent); }
+.rider-status { margin-bottom: 20px; }
+.rider-headline { font-family: var(--font-display); font-size: 24px; font-weight: 650; }
+.rider-next { margin: 8px 0 0; color: var(--text); }
+.ready-tag { color: var(--accent); font-size: 13px; margin-left: 6px; }
+.rider-heats { list-style: none; margin: 0; padding: 0; max-width: 640px; font-variant-numeric: tabular-nums; }
+.rider-heats li { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); align-items: baseline; }
+.heat-label { color: var(--muted); font-size: 13px; }
+.heat-result.won { color: var(--win); font-weight: 600; }
+.heat-result.lost { color: var(--lose); font-weight: 600; }
+@media (max-width: 520px) {
+  .rider-heats li { grid-template-columns: 1fr auto; }
+  .heat-label { grid-column: 1 / -1; }
+}
+
+/* ---- Share panel and the printed poster ---- */
+.share-panel { margin-bottom: 20px; }
+.share-body { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+.share-qr { flex: none; width: 220px; max-width: 100%; }
+.share-qr .qr, .poster-qr .qr { display: block; width: 100%; height: auto; border-radius: 6px; }
+.share-side { flex: 1 1 260px; min-width: 0; }
+.share-side .toolbar { margin-top: 10px; }
+.poster { display: none; }
+@media print {
+  @page { size: A4 portrait; margin: 0; }
+  body.print-poster { background: #fff; }
+  body.print-poster #app { padding: 0; max-width: none; }
+  body.print-poster #app > * { display: none; }
+  body.print-poster #app > .share-panel { display: block; border: 0; padding: 0; margin: 0; background: none; }
+  body.print-poster .share-panel > :not(.poster) { display: none; }
+  body.print-poster .poster {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100vh; overflow: hidden; padding: 12mm; color: #000; text-align: center; gap: 8mm;
+  }
+  .poster-brand { font-size: 22pt; }
+  .poster-brand .brand-lead { color: #666; }
+  .poster-brand .brand-name { color: #000; }
+  .poster-name { font-family: var(--font-display); font-size: 34pt; font-weight: 650; line-height: 1.1; }
+  .poster-qr { width: 120mm; }
+  .poster-follow { font-size: 18pt; color: #444; }
+  .poster-url { font-family: var(--font-display); font-size: 22pt; font-weight: 650; word-break: break-all; }
+}

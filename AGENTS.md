@@ -17,10 +17,10 @@ Keep this file short. Detailed context lives in `docs/`; read the relevant doc b
 
 ## Rules
 
-- No build step, no runtime dependencies, no framework. Native ES modules; no globals. Dev tools only, pinned to an exact version (`package-lock.json`).
+- No build step, no framework, no npm runtime dependencies. Native ES modules; no globals. Dev tools only, pinned to an exact version (`package-lock.json`). Third-party browser code only as unmodified files in `public/js/vendor/`, with source, version and licence noted in `docs/architecture.md`.
 - `public/js/engine/` stays pure logic (no DOM, imports nothing else); cover changes with tests in `tests/`.
 - Every user-supplied string goes through `escapeHtml` before it reaches HTML.
 - Clicks go through `data-action` handled in `public/js/app.js`; no inline handlers. The read-only view only runs actions listed in `VIEW_ACTIONS`; add one there only if it changes no data.
 - Don't rename the `ruedaBattle.*` localStorage keys (existing saved data).
-- Online tournaments: the browser sends whole snapshots with `baseVersion`; the Worker checks login, same origin, size, `validateTournament` and ownership on every write. Keep owner emails out of anything public.
+- Online tournaments: the browser sends whole snapshots with `baseVersion`; the Worker checks login, same origin, size, `validateTournament` and ownership on every write. Keep owner emails out of anything public (`/api/t/*` and the live feed).
 - Conventional Commits; branch + PR, never commit straight to `main`.

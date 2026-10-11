@@ -1,8 +1,9 @@
 // In-memory stand-in for Durable Object namespaces, for tools/serve.mjs and tests.
 // Mirrors what the stores rely on: idFromName/get, one instance per name, a storage
-// with get/put/delete/deleteAll (values copied, like real storage), and one request
-// at a time per object (Cloudflare's input gates). Data is lost on restart; `npm run
-// dev` (wrangler) runs the real thing.
+// with get/put/delete/deleteAll (values copied, like real storage), one request at a
+// time per object (Cloudflare's input gates), and acceptWebSocket/getWebSockets for
+// live viewers (any object with send/close; see tools/ws.mjs). Data is lost on
+// restart; `npm run dev` (wrangler) runs the real thing.
 
 function memoryStorage() {
   const data = new Map();
@@ -29,14 +30,28 @@ export function fakeNamespace(StoreClass) {
   return {
     idFromName: (name) => ({ name, toString: () => name }),
     get(id) {
-      if (!objects.has(id.name)) objects.set(id.name, { store: new StoreClass({ storage: memoryStorage() }), queue: Promise.resolve() });
+      if (!objects.has(id.name)) {
+        const sockets = new Set();
+        const state = {
+          storage: memoryStorage(),
+          acceptWebSocket(ws) {
+            sockets.add(ws);
+            ws.onClose = () => sockets.delete(ws);
+          },
+          getWebSockets: () => [...sockets],
+        };
+        objects.set(id.name, { store: new StoreClass(state), queue: Promise.resolve(), sockets });
+      }
       const obj = objects.get(id.name);
+      const queued = (fn) => {
+        const run = obj.queue.then(fn);
+        obj.queue = run.catch(() => {});
+        return run;
+      };
       return {
-        fetch(input, init) {
-          const run = obj.queue.then(() => obj.store.fetch(new Request(input, init)));
-          obj.queue = run.catch(() => {});
-          return run;
-        },
+        fetch: (input, init) => queued(() => obj.store.fetch(new Request(input, init))),
+        // In place of the WebSocket upgrade: hands the store a socket directly.
+        connect: (ws) => queued(() => obj.store.connect(ws)),
       };
     },
     objects, // for tests: peek at what is stored

@@ -326,6 +326,7 @@ const L = `http://127.0.0.1:${loggedIn.address().port}`;
 const serverCopy = (code) => `fetch('/api/manage/t/${code}').then((r) => r.json())`;
 const sync = `document.querySelector('[data-sync]')?.textContent`;
 let code;
+let movedCode;
 
 await step('logged in, a new tournament is saved online by default', async () => {
   await send('Page.navigate', { url: L + '/' });
@@ -397,6 +398,7 @@ await step('a local tournament can be moved online', async () => {
   await send('Page.navigate', { url: L + '/' });
   await until(`document.querySelectorAll('[data-lists] a[href^="/manage/"]').length === 2`);
   check(!(await js(`!!document.querySelector('[data-action=move-online]')`)), 'still listed in this browser');
+  movedCode = moved.split('/')[2];
   return moved;
 });
 
@@ -410,15 +412,89 @@ await step('an online tournament can be deleted', async () => {
   check(status === 404, 'server still has it: ' + status);
 });
 
+// ---- public pages ------------------------------------------------------------
+
+// Another device (the organiser's phone) records one heat through the API; the page
+// runs the real engine for it.
+const recordElsewhere = (c) => js(`(async () => {
+  const B = await import('/js/engine/bracket.js');
+  const d = await fetch('/api/manage/t/${c}').then((r) => r.json());
+  const [m] = B.getPlayableMatches(d.tournament);
+  B.recordRaceWinner(d.tournament, m.id, m.slotA.competitorId);
+  return fetch('/api/manage/t/${c}', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ baseVersion: d.version, tournament: d.tournament }) }).then((r) => r.status);
+})()`);
+const doneOnBracket = `[...document.querySelectorAll('.bracket-graph .match-card.completed')].filter((c) => !c.classList.contains('bye')).length`;
+
+await step('the public page shows the tournament live, read-only, without owner emails', async () => {
+  await send('Page.navigate', { url: `${L}/t/${movedCode}` });
+  await until(`document.querySelector('[data-live]')?.textContent === 'live'`);
+  const r = await js(`({ won: !!document.querySelector('[data-action=record-winner]'), undo: !!document.querySelector('[data-action=undo]'), riders: document.querySelectorAll('.rider-links a').length, share: !!document.querySelector('[data-action=open-share]') })`);
+  check(!r.won && !r.undo, 'organiser buttons on the public page: ' + JSON.stringify(r));
+  check(r.riders === 6 && r.share, 'riders/share: ' + JSON.stringify(r));
+  const body = await js(`fetch('/api/t/${movedCode}').then((r) => r.text())`);
+  check(!body.includes('organiser@example.com'), 'public read leaks owners');
+  return r.riders + ' riders';
+});
+
+await step('a result recorded elsewhere appears on the public page by itself', async () => {
+  const before = await js(doneOnBracket);
+  check((await recordElsewhere(movedCode)) === 200, 'organiser save failed');
+  await until(`${doneOnBracket} > ${before}`, 5000);
+  return `${before} -> ${await js(doneOnBracket)} heats`;
+});
+
+await step("a rider's page shows where they stand and what's next, and updates live", async () => {
+  const href = await js(`document.querySelector('.rider-links a').getAttribute('href')`);
+  check(href.startsWith(`/t/${movedCode}/`) && /\/[a-z2-9]{6}$/.test(href), 'rider link ' + href);
+  await send('Page.navigate', { url: L + href });
+  await until(`document.querySelector('[data-live]')?.textContent === 'live' && !!document.querySelector('.rider-headline')`);
+  const r = await js(`({ name: document.querySelector('.event-top h1').textContent, head: document.querySelector('.rider-headline').textContent, next: document.querySelector('.rider-next')?.textContent || '', heats: document.querySelectorAll('.rider-heats li').length })`);
+  check(/^Rider [1-6]$/.test(r.name) && r.head, 'rider page: ' + JSON.stringify(r));
+  check(/Next:|Waiting/.test(r.next) || /Out|place/.test(r.head), 'no next heat: ' + JSON.stringify(r));
+  // Play the rest elsewhere: the page follows to the end and offers the journey video.
+  for (let i = 0; i < 12 && !(await js(`fetch('/api/t/${movedCode}').then((r) => r.json()).then((d) => d.tournament.status === 'completed')`)); i++) await recordElsewhere(movedCode);
+  await until(`!!document.querySelector('[data-action=open-journey]') && /place/.test(document.querySelector('.rider-headline').textContent)`, 5000);
+  const done = await js(`document.querySelector('.rider-headline').textContent + ' · ' + document.querySelectorAll('.rider-heats li').length + ' heats'`);
+  await js(`document.querySelector('[data-action=open-journey]').click(), 1`);
+  await until(`!!document.querySelector('#replay-canvas')`);
+  await js(`document.querySelector('[data-action=close-replay]').click(), 1`);
+  await until(`!!document.querySelector('.rider-headline')`);
+  return r.name + ': ' + done;
+});
+
+await step('share panel: link, QR code and a printable poster', async () => {
+  await send('Page.navigate', { url: `${L}/t/${movedCode}` });
+  await until(`!!document.querySelector('[data-action=open-share]')`);
+  await js(`document.querySelector('[data-action=open-share]').click(), 1`);
+  const r = await until(`document.querySelector('.share-url') && ({ url: document.querySelector('.share-url').value, qr: document.querySelectorAll('.share-qr svg path').length, poster: !!document.querySelector('.poster') })`);
+  check(r.url === `${L}/t/${movedCode}` && r.qr === 1 && r.poster, 'share panel: ' + JSON.stringify(r));
+  await js(`window.print = () => {}; document.querySelector('[data-action=print-poster]').click(), 1`);
+  await send('Emulation.setEmulatedMedia', { media: 'print' });
+  const printed = await js(`({ poster: getComputedStyle(document.querySelector('.poster')).display, bracket: document.querySelector('.bracket-graph').getClientRects().length ? 'shown' : 'none', qr: Math.round(document.querySelector('.poster-qr').getBoundingClientRect().width), url: document.querySelector('.poster-url').textContent })`);
+  await send('Emulation.setEmulatedMedia', { media: '' });
+  check(printed.poster === 'flex' && printed.bracket === 'none' && printed.url.endsWith('/t/' + movedCode), 'poster: ' + JSON.stringify(printed));
+  await js(`document.querySelector('[data-action=close-share]').click(), 1`);
+  await until(`!document.querySelector('.share-panel')`);
+  return printed.url;
+});
+
+await step('the organiser screen offers Share and the public link', async () => {
+  await send('Page.navigate', { url: `${L}/manage/${movedCode}` });
+  await until(`!!document.querySelector('[data-action=open-share]') && !!document.querySelector('footer a[href="/t/${movedCode}"]')`);
+});
+
 // ---- addresses --------------------------------------------------------------
 
-await step('public links show "not found" for now, with all files loading', async () => {
-  for (const path of ['t/cable-open-x7k2', 't/cable-open-x7k2/dora', 'no/such/page']) {
-    await open(path);
-    await sleep(300);
-    const r = await js(`({ title: document.querySelector('.card h2')?.textContent, brand: !!document.querySelector('.brand'), fonts: [...document.fonts].some((f) => f.status === 'loaded') })`);
-    check(r.title === 'Nothing here' && r.brand, `${path}: ${JSON.stringify(r)}`);
+await step('unknown tournaments, riders and paths show "not found", with all files loading', async () => {
+  expected.add(404);
+  for (const path of ['t/cable-open-x7k2', `t/${movedCode}/nobody`, 'no/such/page']) {
+    await send('Page.navigate', { url: `${L}/${path}` });
+    await until(`document.querySelector('.card h2')?.textContent === 'Nothing here' && !!document.querySelector('.brand') && [...document.fonts].some((f) => f.status === 'loaded')`).catch(() => {
+      throw new Error(path + ': no "Nothing here"');
+    });
   }
+  await sleep(200);
+  expected.delete(404);
   await js(`document.querySelector('[data-action=go-home]').click(), 1`);
   await sleep(1200);
   const home = await js(`({ path: location.pathname, app: !!document.querySelector('.brand') && !document.querySelector('.card h2')?.textContent.includes('Nothing') })`);

@@ -7,6 +7,7 @@
 
 import { organiserOf } from './auth.js';
 import { handleManage } from './manage.js';
+import { handlePublic } from './public.js';
 
 export { TournamentStore, OrganiserList } from './stores.js';
 
@@ -30,6 +31,7 @@ export default {
   async fetch(request, env = {}, ctx, deps = {}) {
     const url = new URL(request.url);
     if (url.pathname === '/api/health') return readOnly(request) ? json({ ok: true }) : notAllowed();
+    if (url.pathname.startsWith('/api/t/')) return handlePublic(request, env, json); // anyone, read-only
 
     // Organiser endpoints. Access only lets approved emails reach /api/manage/*;
     // the token is checked here again regardless (auth.js).

@@ -2,11 +2,13 @@
 import * as Bracket from './engine/bracket.js';
 import * as Store from './store/local.js';
 import * as Cloud from './store/cloud.js';
+import * as Live from './store/live.js';
+import { riderSlugs } from './engine/slug.js';
 import { render as renderScreen } from './ui/index.js';
 import { brandLogo, escapeHtml } from './ui/html.js';
 import { computeEstimateHtml } from './ui/setup.js';
 import { renderAccount, renderLists } from './ui/home.js';
-import { renderSync } from './ui/bracket-screen.js';
+import { renderLive, renderSync } from './ui/bracket-screen.js';
 import * as Replay from './replay/player.js';
 import { parseRoute } from './route.js';
 
@@ -30,18 +32,22 @@ const state = {
   nameDraft: null, // { competitorId: name } while the rename panel is open
   titleDraft: '', // tournament name being edited in the same panel
   tournaments: [], // saved list, filled for the home screen
-  readOnly: false, // view only: nothing can be recorded or edited (?view for now, the public link later)
+  readOnly: false, // view only: nothing can be recorded or edited (?view, and the public pages)
   organiser: undefined, // logged-in organiser's email, null if not logged in, undefined until known
   online: null, // the open tournament, if it is an online one: { code, status, detail } (store/cloud.js)
   onlineList: undefined, // home: the organiser's online tournaments (null while loading)
   onlineFromDevice: false, // home: the server was unreachable, the list shows this device's copies
   onlinePending: [], // home: codes with changes not uploaded yet
   notFoundReason: null, // 'offline' when an online tournament can't be loaded and isn't on this device
+  live: null, // public page (/t/<code>, rider pages): { code, status } (store/live.js)
+  riderId: null, // rider page: whose
+  share: null, // the share panel, while open: { url, title, name, poster } (ui/share.js)
+  replayFrom: 'bracket', // the screen "Back" returns to from the replay
 };
 
 // The only actions the read-only view runs. An allowlist, so anything added later
 // stays organiser-only unless it is listed here on purpose.
-const VIEW_ACTIONS = new Set(['go-home', 'open-replay', 'open-journey', 'close-replay']);
+const VIEW_ACTIONS = new Set(['go-home', 'open-replay', 'open-journey', 'close-replay', 'open-share', 'close-share', 'copy-link', 'native-share', 'print-poster']);
 
 function render() {
   try {
@@ -296,6 +302,80 @@ function openOnline(code) {
     });
 }
 
+// ---- public pages (/t/<code>, /t/<code>/<rider>) ---------------------------------
+
+// Read once for the first paint, then follow the live feed. Nothing here can change
+// the tournament: the page is read-only and only the organiser's saves come in.
+function openPublic(route) {
+  state.readOnly = true;
+  state.live = { code: route.code, status: 'connecting' };
+  state.screen = 'loading';
+  render();
+  Live.read(route.code)
+    .then(({ version, tournament }) => {
+      state.tournament = tournament;
+      if (route.name === 'rider') {
+        const slugs = riderSlugs(tournament);
+        state.riderId = Object.keys(slugs).find((id) => slugs[id] === route.rider) || null;
+        if (!state.riderId) return showNotFound();
+      }
+      state.screen = route.name === 'rider' ? 'rider' : 'bracket';
+      render();
+      Live.follow(route.code, version, {
+        onSnapshot: (data) => {
+          state.tournament = data.tournament; // a running replay keeps its own copy
+          if (state.screen === 'bracket' || state.screen === 'rider') render();
+        },
+        onGone: showNotFound,
+        onStatus: (status) => {
+          state.live.status = status;
+          const el = container.querySelector('[data-live]');
+          if (el) el.innerHTML = renderLive(status);
+        },
+      });
+    })
+    .catch((e) => {
+      state.notFoundReason = e.offline ? 'offline' : null;
+      showNotFound();
+    });
+}
+
+function showNotFound() {
+  state.screen = 'notFound';
+  render();
+}
+
+// The share panel: the whole tournament (with a poster to print) or one rider's page.
+function openShare(what) {
+  const t = state.tournament;
+  if (!state.live && !state.online) return; // a local tournament has no public page
+  const code = (state.live || state.online).code;
+  const base = location.origin + '/t/' + code;
+  if (what === 'rider') {
+    const name = Bracket.getName(t, state.riderId);
+    state.share = { url: base + '/' + riderSlugs(t)[state.riderId], title: `Share ${name}'s page`, name };
+  } else state.share = { url: base, title: 'Share this tournament', name: t.name, poster: true };
+  render();
+}
+
+function copyLink(button) {
+  const done = () => (button.textContent = 'Copied');
+  const fallback = () => {
+    const input = container.querySelector('.share-url');
+    input.focus();
+    input.select();
+    button.textContent = 'Selected: copy it';
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(state.share.url).then(done, fallback);
+  else fallback();
+}
+
+function printPoster() {
+  document.body.classList.add('print-poster');
+  window.addEventListener('afterprint', () => document.body.classList.remove('print-poster'), { once: true });
+  window.print();
+}
+
 function updateSync() {
   const el = container.querySelector('[data-sync]');
   if (el && state.online) el.innerHTML = renderSync(state.online);
@@ -447,7 +527,7 @@ function handleReloadExternalUpdate() {
 // never triggers this — each saves under its own id with no conflict.)
 window.addEventListener('storage', (e) => {
   if (e.key !== null && e.key !== 'ruedaBattle.tournaments') return; // pre-rename key, see store/local.js
-  if (!state.tournament) return;
+  if (!state.tournament || state.live) return; // public pages follow the server instead
   const fresh = Store.getById(state.tournament.id);
   if (!fresh) return;
   if (state.readOnly) {
@@ -501,12 +581,20 @@ container.addEventListener('click', (e) => {
   else if (action === 'toggle-more') el.parentElement.classList.toggle('open');
   else if (action === 'open-replay' || action === 'open-journey') {
     state.replayFocus = action === 'open-journey' ? el.dataset.cid : null;
+    state.replayFrom = state.screen === 'rider' ? 'rider' : 'bracket';
+    state.share = null;
     state.screen = 'replay';
     render();
   } else if (action === 'close-replay') {
-    state.screen = 'bracket';
+    state.screen = state.replayFrom;
     render();
-  }
+  } else if (action === 'open-share') openShare(el.dataset.share);
+  else if (action === 'close-share') {
+    state.share = null;
+    render();
+  } else if (action === 'copy-link') copyLink(el);
+  else if (action === 'native-share') navigator.share({ title: state.share.name, url: state.share.url }).catch(() => {}); // cancelled
+  else if (action === 'print-poster') printPoster();
   else if (action === 'edit-names') {
     state.nameDraft = {};
     state.titleDraft = state.tournament.name;
@@ -574,8 +662,7 @@ function loadOrganiser() {
 // ---- init ---------------------------------------------------------------
 
 // /manage/<code> opens an online tournament (Access has already asked for the login);
-// /t/<code> (public view) and /t/<code>/<rider> come later and, like any unknown
-// path, show "not found" for now. See route.js.
+// /t/<code> and /t/<code>/<rider> are the public, live pages. See route.js.
 // ?view (the active tournament) or ?view=<id> opens it read-only, without changing
 // which tournament is active for the organiser in this browser.
 const route = parseRoute(location.pathname);
@@ -583,6 +670,8 @@ const params = new URLSearchParams(location.search);
 const viewed = route.name === 'home' && params.has('view') && Store.getById(params.get('view') || Store.getActiveId());
 if (route.name === 'manage') {
   openOnline(route.code);
+} else if (route.name === 'view' || route.name === 'rider') {
+  openPublic(route);
 } else if (route.name !== 'home') {
   state.screen = 'notFound';
 } else if (viewed) {
@@ -599,6 +688,6 @@ if (route.name === 'manage') {
     }
   }
 }
-if (route.name !== 'manage') render(); // openOnline renders itself
+if (!['manage', 'view', 'rider'].includes(route.name)) render(); // the others render themselves
 if ((route.name === 'home' && !state.readOnly) || route.name === 'manage') loadOrganiser();
 Cloud.flush(); // anything left unsent from last time
