@@ -42,6 +42,13 @@ docs: add architecture notes
 
 Breaking changes (e.g. a change to the saved tournament format) get a `!` after the type and a `BREAKING CHANGE:` footer explaining what happens to existing data.
 
+## Planned work: GitHub issues
+
+- The roadmap is the [issue list](https://github.com/adamchrabaszcz/rebattle/issues), not a section in the docs.
+- Every task starts as an issue: a feature, a fix, a docs change. If you're asked for something that has no issue yet, open one first (title in plain words, what and why in the body, label `enhancement`, `bug` or `documentation`).
+- The pull request for it ends its description with `Closes #<issue>`, so merging closes the issue.
+- Ideas that aren't planned yet are issues too; close them as `not planned` if they're dropped.
+
 ## Checks
 
 ```sh

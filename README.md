@@ -83,10 +83,5 @@ Saved tournaments live in each browser per address, so data on `127.0.0.1` doesn
 - [`docs/brand.md`](docs/brand.md): logo, colours, type, wording
 - [`CONTRIBUTING.md`](CONTRIBUTING.md): workflow and Conventional Commits
 - [`AGENTS.md`](AGENTS.md): short brief for coding agents
+- Planned work and ideas: [GitHub issues](https://github.com/adamchrabaszcz/rebattle/issues)
 
-## Roadmap
-
-1. ~~Hosting on Cloudflare with a custom domain~~ (done: rebattle.app).
-2. ~~Cloud saving: one Durable Object per tournament, organiser login via Cloudflare Access, offline-tolerant saves~~ (done).
-3. ~~Public live link (`/t/<code>`), rider pages (`/t/<code>/<rider>`), share button, QR code and poster, the address at the end of the replay video, an introduction (`/about`)~~ (done). Next: how long until a rider's heat.
-4. ~~Smaller modules and a read-only viewer mode~~ (done).
