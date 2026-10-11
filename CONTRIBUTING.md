@@ -41,6 +41,7 @@ Breaking changes (e.g. a change to the saved tournament format) get a `!` after 
 node --test                       # engine + import tests
 node tests/browser/smoke.mjs      # plays the app in headless Chrome under the real CSP
 find public/js -name '*.js' -print0 | xargs -0 -n1 node --check   # every module parses
+npm ci && npx wrangler deploy --dry-run                        # the Worker builds (pinned wrangler)
 ```
 
 ## Code conventions

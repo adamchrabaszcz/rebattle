@@ -16,9 +16,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Bracket engine and import checks
+          cache: npm
+      - name: Dev tools (pinned wrangler)
+        run: npm ci
+      - name: Node tests (engine, import, layout, timeline, routes, worker)
         run: node --test
       - name: Modules parse
         run: find public/js -name '*.js' -print0 | xargs -0 -n1 node --check
       - name: Browser smoke test (headless Chrome, real CSP)
         run: node tests/browser/smoke.mjs
+      - name: Worker builds (wrangler dry run)
+        run: npx wrangler deploy --dry-run

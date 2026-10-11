@@ -1,6 +1,8 @@
 // Local static server for public/, with the same headers Cloudflare serves from
-// public/_headers (CSP included), so what works here works on rebattle.app.
-// No dependencies.
+// public/_headers (CSP included) and the same fallback: an app path such as
+// /t/<code> gets index.html (but a missing file with an extension is a 404 here,
+// stricter than Cloudflare, so broken asset paths fail loudly). No Worker: /api/* is 404 here (use `npm run dev`
+// for the full stack). No dependencies.
 //
 //   node tools/serve.mjs            http://127.0.0.1:8787
 //   PORT=9000 node tools/serve.mjs
@@ -42,8 +44,10 @@ export function createServer() {
   const rules = parseHeaders();
   return http.createServer((req, res) => {
     const path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
-    const file = normalize(join(ROOT, path === '/' ? 'index.html' : path));
-    if (!file.startsWith(ROOT) || path.startsWith('/_headers') || !existsSync(file) || statSync(file).isDirectory()) {
+    let file = normalize(join(ROOT, path === '/' ? 'index.html' : path));
+    const missing = !file.startsWith(ROOT) || path.startsWith('/_headers') || !existsSync(file) || statSync(file).isDirectory();
+    if (missing && !path.startsWith('/api/') && !extname(path)) file = join(ROOT, 'index.html'); // app route
+    else if (missing) {
       res.writeHead(404, { 'Content-Type': 'text/plain' }).end('not found');
       return;
     }

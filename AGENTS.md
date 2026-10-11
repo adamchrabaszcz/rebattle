@@ -12,12 +12,12 @@ Keep this file short. Detailed context lives in `docs/`; read the relevant doc b
 
 ## Commands
 
-- Run: `node tools/serve.mjs`, open http://127.0.0.1:8787
+- Run: `node tools/serve.mjs` (static app), or `npm install` once then `npm run dev` (app + Worker); open http://127.0.0.1:8787
 - Test: `node --test` and `node tests/browser/smoke.mjs` (both must pass; CI runs them on every push)
 
 ## Rules
 
-- No build step, no runtime dependencies, no framework. Native ES modules; no globals.
+- No build step, no runtime dependencies, no framework. Native ES modules; no globals. Dev tools only, pinned to an exact version (`package-lock.json`).
 - `public/js/engine/` stays pure logic (no DOM, imports nothing else); cover changes with tests in `tests/`.
 - Every user-supplied string goes through `escapeHtml` before it reaches HTML.
 - Clicks go through `data-action` handled in `public/js/app.js`; no inline handlers. The read-only view only runs actions listed in `VIEW_ACTIONS`; add one there only if it changes no data.

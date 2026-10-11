@@ -1,10 +1,14 @@
-// Cloudflare Workers deploy: static assets only (no Worker script yet).
-// Only public/ is published; docs, tests and tools stay out of the site.
+// Cloudflare Workers deploy: the app is static assets from public/ (docs, tests and
+// tools are never published); worker/ handles /api/* only.
 {
   "name": "rebattle",
+  "main": "worker/index.js",
   "compatibility_date": "2026-10-01",
   "assets": {
-    "directory": "./public"
+    "directory": "./public",
+    // /t/<code>, /manage/<code> and other app paths get index.html; the app routes them.
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
   },
   // Pull requests get a preview URL (`npx wrangler preview`); settings are inherited.
   "previews": {}

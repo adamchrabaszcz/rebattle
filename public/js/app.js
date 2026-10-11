@@ -5,6 +5,7 @@ import { render as renderScreen } from './ui/index.js';
 import { brandLogo, escapeHtml } from './ui/html.js';
 import { computeEstimateHtml } from './ui/setup.js';
 import * as Replay from './replay/player.js';
+import { parseRoute } from './route.js';
 
 const container = document.getElementById('app');
 const UNDO_LIMIT = 20;
@@ -311,7 +312,8 @@ container.addEventListener('click', (e) => {
   const action = el.dataset.action;
   if (state.readOnly && !VIEW_ACTIONS.has(action)) return;
 
-  if (action === 'go-home' && state.readOnly) location.href = location.pathname; // leave the view for the full app
+  // Away from the plain app (the read-only view, or another address): load / afresh.
+  if (action === 'go-home' && (state.readOnly || location.pathname !== '/')) location.href = '/';
   else if (action === 'go-home') goHome();
   else if (action === 'go-setup') goSetup();
   else if (action === 'go-setup-back') {
@@ -374,11 +376,16 @@ container.addEventListener('change', (e) => {
 
 // ---- init ---------------------------------------------------------------
 
+// Tournament addresses (/t/<code>, /manage/<code>) arrive with cloud saving; until
+// then they, like any unknown path, show "not found". See route.js.
 // ?view (the active tournament) or ?view=<id> opens it read-only, without changing
 // which tournament is active for the organiser in this browser.
+const route = parseRoute(location.pathname);
 const params = new URLSearchParams(location.search);
-const viewed = params.has('view') && Store.getById(params.get('view') || Store.getActiveId());
-if (viewed) {
+const viewed = route.name === 'home' && params.has('view') && Store.getById(params.get('view') || Store.getActiveId());
+if (route.name !== 'home') {
+  state.screen = 'notFound';
+} else if (viewed) {
   state.readOnly = true;
   state.tournament = viewed;
   state.screen = 'bracket';
