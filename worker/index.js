@@ -6,6 +6,9 @@
 // so they set their own here.
 
 import { organiserOf } from './auth.js';
+import { handleManage } from './manage.js';
+
+export { TournamentStore, OrganiserList } from './stores.js';
 
 const API_HEADERS = {
   'Content-Type': 'application/json; charset=utf-8',
@@ -23,7 +26,7 @@ const readOnly = (request) => request.method === 'GET' || request.method === 'HE
 const notAllowed = () => json({ error: 'method not allowed' }, 405, { Allow: 'GET, HEAD' });
 
 export default {
-  // deps.getKeys: Access signing keys, injectable for tests.
+  // deps (tests only): getKeys for Access signing keys, suffix for tournament codes.
   async fetch(request, env = {}, ctx, deps = {}) {
     const url = new URL(request.url);
     if (url.pathname === '/api/health') return readOnly(request) ? json({ ok: true }) : notAllowed();
@@ -43,6 +46,11 @@ export default {
       const who = await organiserOf(request, env, deps);
       if (!who) return json({ error: 'login required' }, 401);
       return new Response(null, { status: 302, headers: { Location: '/', 'Cache-Control': 'no-store' } });
+    }
+    if (url.pathname.startsWith('/api/manage/')) {
+      const who = await organiserOf(request, env, deps);
+      if (!who) return json({ error: 'login required' }, 401);
+      return handleManage(request, env, who, json, deps);
     }
     return json({ error: 'not found' }, 404);
   },

@@ -18,7 +18,7 @@ A tournament manager for head-to-head double-elimination events, built for a wak
 - **Replay video**: a vertical (1080×1920) animated recap of the whole event, or one rider's journey, exported as a video file and shareable from a phone.
 - **View-only mode**: `?view` opens the tournament read-only and follows results as they are recorded in another tab, e.g. on a second screen at the venue. A public link for spectators comes with cloud saving.
 - Everything is saved in the browser; export/import JSON to back up or move to another device.
-- Organiser login (Cloudflare Access, approved emails only), the groundwork for saving tournaments online.
+- **Online tournaments** for logged-in organisers (Cloudflare Access, approved emails): saved on the server, open from any device at `/manage/<code>`, keep working offline and upload when back, and ask which version to keep if two devices changed the same tournament. Local tournaments can be moved online.
 
 ## Run it
 
@@ -87,6 +87,6 @@ Saved tournaments live in each browser per address, so data on `127.0.0.1` doesn
 ## Roadmap
 
 1. ~~Hosting on Cloudflare with a custom domain~~ (done: rebattle.app).
-2. Cloud saving: one Durable Object per tournament, organiser login via Cloudflare Access, offline-tolerant saves, tournament links (`/t/<code>`).
+2. ~~Cloud saving: one Durable Object per tournament, organiser login via Cloudflare Access, offline-tolerant saves~~ (done). Next: the public live link (`/t/<code>`) with a share button and QR code.
 3. A public read-only link with live updates, and a "follow me" card for riders (next heat, opponent, how long until they ride).
 4. ~~Smaller modules and a read-only viewer mode~~ (done).

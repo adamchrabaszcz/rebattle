@@ -22,4 +22,5 @@ Keep this file short. Detailed context lives in `docs/`; read the relevant doc b
 - Every user-supplied string goes through `escapeHtml` before it reaches HTML.
 - Clicks go through `data-action` handled in `public/js/app.js`; no inline handlers. The read-only view only runs actions listed in `VIEW_ACTIONS`; add one there only if it changes no data.
 - Don't rename the `ruedaBattle.*` localStorage keys (existing saved data).
+- Online tournaments: the browser sends whole snapshots with `baseVersion`; the Worker checks login, same origin, size, `validateTournament` and ownership on every write. Keep owner emails out of anything public.
 - Conventional Commits; branch + PR, never commit straight to `main`.

@@ -74,6 +74,17 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 - `GET /api/manage/me` answers `{ email }` or `{ email: null }`; the app asks once at start and shows "Organiser log in" or "Logged in as … · Log out" under the tournament list. "Log in" goes to `/api/manage/login` (Access shows its email-code page, then the Worker sends the browser home); "Log out" is Access's own `/cdn-cgi/access/logout`.
 - Locally there is no Access: `DEV_ORGANISER_EMAIL` (in `.dev.vars` for `npm run dev`, or the environment for `node tools/serve.mjs`) logs you in, and only on `127.0.0.1` / `localhost`.
 
+## Online tournaments
+
+- **Where:** a logged-in organiser's tournaments live on Cloudflare, one Durable Object per tournament (`TournamentStore`, addressed by its code) and one per organiser (`OrganiserList`, by email, the list for the home screen). `worker/stores.js`; no region restriction, so each lives near where it was created. Local tournaments (no account, this browser only) still work exactly as before.
+- **Codes:** `worker/codes.js`: a short form of the name plus 4 random characters (`cable-open-x7k2`, no 0/o/1/l); the store refuses a taken code and the Worker draws again.
+- **API:** `worker/manage.js`, all under `/api/manage/` (behind Access): list, create, load, save, delete. Every write must be same-origin (`Origin` header), JSON, at most 512 KB, and pass `engine/validate.js` (the import check); only owners can load or change a tournament (anyone else gets 404). Owner emails never leave the server.
+- **Saving:** the organiser's browser stays the authority (it runs the engine, including the random draw) and sends whole snapshots with the version they were based on. The store accepts only if that is still the current version (compare-and-swap), keeps the last 20 versions, and otherwise answers 409 with its copy.
+- **Offline:** `store/cloud.js` writes every change to this device first (`rebattle.online` in localStorage), then sends the latest snapshot per tournament (an outbox of one slot each), retrying every 10 s and when the browser comes back online. The header shows saved online / saving / offline, changes waiting / changed on another device.
+- **Conflicts:** when another device saved in between, recording pauses and a banner offers "Use the other version" or "Keep mine" (which replaces the server copy after a confirm).
+- **Screens:** `/manage/<code>` opens an online tournament (this device's copy first, then the server's). Home lists "Online" and "In this browser only", with "Move online" (moves: removed from this browser once it is safely online) and Delete. While logged in, new tournaments are online unless "Keep in this browser only" is ticked; if saving online fails, the new tournament is kept in this browser instead.
+- **Locally:** `node tools/serve.mjs` runs the same Worker code against in-memory stores (`tools/fake-do.mjs`, lost on restart); `npm run dev` runs the real Durable Objects. Tests use the in-memory ones.
+
 ## Storage
 
 - `localStorage` keys `ruedaBattle.tournaments` and `ruedaBattle.activeTournamentId`; names predate the rebattle rename and must stay.

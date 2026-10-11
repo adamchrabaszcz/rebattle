@@ -68,6 +68,12 @@ function renderSetup(state) {
         </div>
       </div>
 
+      ${
+        state.organiser
+          ? `<label class="check"><input type="checkbox" id="f-local" ${d.localOnly ? 'checked' : ''} /> Keep in this browser only (don&rsquo;t save online)</label>`
+          : ''
+      }
+
       <div style="margin-top:22px;">
         <button class="primary" data-action="setup-next">Next: enter competitors</button>
       </div>

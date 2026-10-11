@@ -2,8 +2,8 @@
 // public/_headers (CSP included) and the same fallback: an app path such as
 // /t/<code> gets index.html (but a missing file with an extension is a 404 here,
 // stricter than Cloudflare, so broken asset paths fail loudly). /api/* goes straight
-// to worker/index.js (enough for endpoints without Durable Objects; `npm run dev` runs
-// the full stack). DEV_ORGANISER_EMAIL=you@example.com logs you in as an organiser
+// to worker/index.js, with in-memory stores (tools/fake-do.mjs); `npm run dev` runs
+// the real Durable Objects. DEV_ORGANISER_EMAIL=you@example.com logs you in as an organiser
 // (see worker/auth.js).
 // No dependencies.
 //
@@ -13,7 +13,8 @@ import http from 'node:http';
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { join, extname, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import worker from '../worker/index.js';
+import worker, { TournamentStore, OrganiserList } from '../worker/index.js';
+import { fakeNamespace } from './fake-do.mjs';
 
 const ROOT = fileURLToPath(new URL('../public/', import.meta.url));
 const TYPES = {
@@ -55,7 +56,10 @@ async function toWorker(req, res, env) {
   res.end(Buffer.from(await response.arrayBuffer()));
 }
 
-export function createServer({ env = { DEV_ORGANISER_EMAIL: process.env.DEV_ORGANISER_EMAIL } } = {}) {
+// Online saving works here too, in memory (tools/fake-do.mjs), lost on restart.
+export const memoryStores = () => ({ TOURNAMENTS: fakeNamespace(TournamentStore), ORGANISERS: fakeNamespace(OrganiserList) });
+
+export function createServer({ env = { DEV_ORGANISER_EMAIL: process.env.DEV_ORGANISER_EMAIL, ...memoryStores() } } = {}) {
   const rules = parseHeaders();
   return http.createServer((req, res) => {
     const path = decodeURIComponent(new URL(req.url, 'http://x').pathname);
