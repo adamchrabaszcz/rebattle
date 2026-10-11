@@ -1,6 +1,7 @@
 // New tournament: setup form, time estimate and the names screen.
 
 import * as Bracket from '../engine/bracket.js';
+import { renderVisibilityOptions } from './visibility.js';
 import { brandLogo, escapeHtml, fmtDuration } from './html.js';
 
 // ---- Setup ---------------------------------------------------------------
@@ -70,7 +71,11 @@ function renderSetup(state) {
 
       ${
         state.organiser
-          ? `<label class="check"><input type="checkbox" id="f-local" ${d.localOnly ? 'checked' : ''} /> Keep in this browser only (don&rsquo;t save online)</label>`
+          ? `<label class="check"><input type="checkbox" id="f-local" ${d.localOnly ? 'checked' : ''} /> Keep in this browser only (don&rsquo;t save online)</label>
+      <div class="field" id="f-visibility" style="max-width:none; margin-top:18px;" ${d.localOnly ? 'hidden' : ''}>
+        <label>Who can find it</label>${renderVisibilityOptions(d.listed)}
+        <p class="note" style="margin:6px 0 0;">You can change this at any time on the tournament&rsquo;s screen.</p>
+      </div>`
           : ''
       }
 

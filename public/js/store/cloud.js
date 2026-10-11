@@ -69,8 +69,9 @@ async function api(method, path, body) {
 export const list = () => api('GET', '/api/manage/tournaments');
 export const load = (code) => api('GET', '/api/manage/t/' + code);
 export const remove = (code) => api('DELETE', '/api/manage/t/' + code);
-export async function create(tournament) {
-  const { code, version } = await api('POST', '/api/manage/tournaments', { tournament });
+export const setVisibility = (code, listed) => api('PUT', `/api/manage/t/${code}/visibility`, { listed });
+export async function create(tournament, listed = false) {
+  const { code, version } = await api('POST', '/api/manage/tournaments', { tournament, listed });
   remember(code, version, tournament);
   return code;
 }
