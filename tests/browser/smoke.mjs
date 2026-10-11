@@ -545,6 +545,23 @@ await step('a new visitor gets the introduction at /, and can start a tournament
   await js(`(() => { localStorage.clear(); const o = ${kept}; for (const k in o) localStorage.setItem(k, o[k]); return 1; })()`);
 });
 
+await step('phone: tapping a list row opens it, its Delete button doesn\'t', async () => {
+  await view(390, 844, true);
+  await open('tournaments');
+  await until(`!!document.querySelector('[data-action=open-row]')`);
+  const r = await js(`(async () => { ${H}
+    if (qa('.open-btn').some((b) => b.offsetParent)) throw new Error('Open buttons shown on a phone');
+    window.confirm = () => false; // Delete asks first; answer no
+    q('[data-action=open-row] [data-action=delete-tournament]').click(); await wait();
+    if (!q('[data-lists]')) throw new Error('Delete opened the tournament');
+    const name = q('[data-action=open-row] strong').textContent;
+    q('[data-action=open-row] .meta').click(); await wait();
+    return { name, title: q('.event-top h1')?.textContent, path: location.pathname };
+  })()`);
+  check(r.title === r.name && r.path === '/', 'row did not open: ' + JSON.stringify(r));
+  return r.name;
+});
+
 await view(390, 844, true);
 await open();
 await step('phone: round tabs and the more-menu work', () => js(`(async () => { ${H}

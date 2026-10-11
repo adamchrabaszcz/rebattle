@@ -58,6 +58,7 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 ## Rendering (`ui/`)
 
 - HTML strings; every user string through `escapeHtml`.
+- Phones: a tap anywhere on a tournament list row opens it (`open-row`), and the Open buttons are hidden. Desktop keeps the Open button.
 - Bracket columns share one width on desktop (`--col-w`, set by `syncColumns`). Connector lines are an SVG overlay measured from the rendered cards (`drawConnectors`), with small hops where lines cross.
 - The Losers bracket is random, so `lbLayout` orders each column by the average position of where its riders came from (barycenter) to keep lines tidy.
 - Hovering a rider traces their whole path (`data-cid` on slots and edges).
