@@ -8,7 +8,17 @@
   - Full stops are **squares** (stem-width) in the logo only. Running text uses normal dots.
   - "bounceback" is one word in the logo only; in sentences it's "bounce back".
   - Amber underline under the whole word "rebattle". Where it animates (home screen, video intro) it waits while "drop. bounceback." is read (~1.1s), then draws left to right over ~0.75s.
-- Short mark / icon: Funnel Display Bold "r" with the amber underline starting exactly at the letter's left ink edge. App icons: `tools/make-icons.py`.
+- Short mark / icon: the logo's "r" (below) with the amber underline from the letter's left ink edge to the bounce's tip. App icons: `tools/make-icons.py`.
+
+### The logo's "r": the drop and the bounce
+
+The "r" of "rebattle" (and the mark) is Funnel Display Bold's r with two points, the name told in one letter:
+
+- **The drop:** the stem ends in half a square pointing down (as long as half the stem's width, like the square corner at the r's top left). Its tip sits a quarter of the way from the baseline to the underline.
+- **The bounce:** the arm ends in a point whose sides curve with the "e", keeping the same gap from it as the drop keeps from the underline (three quarters of the underline's distance below the baseline).
+- In the mark, the underline runs to the bounce's tip.
+
+Only the logo has it: "drop." in the full logo and all running text keep the font's own r. It is drawn by `logo_r()` in `tools/make-logo.py`; everything that shows the logo uses those outlines.
 - Competition screens: competition name on the left, logo on the right (the short mark on phones).
 
 ## Logo set
@@ -34,7 +44,7 @@ Three versions and a badge, each in four colourways: `docs/brand/logos/<version>
 - **One job per device.** The square full stops are the sentence's punctuation, so they appear only in `full`. The underline is the signature, on all three. The name is "rebattle" with no full stop, and the mark is "r" with no full stop ("r." reads as an abbreviation).
 - **Mono means one colour:** text, full stops and underline all in the same ink.
 - **Clear space:** keep at least the height of the "r" (its x-height) free around any version. **Minimum sizes:** `full` 120 px / 30 mm wide, `name` 48 px / 12 mm wide, `mark` 16 px tall.
-- **Don't:** recolour the underline in the full-colour versions, put the full stops on `name` or `mark`, stretch, outline or add effects, or set the logo in any other font.
+- **Don't:** recolour the underline in the full-colour versions, put the full stops on `name` or `mark`, stretch, outline or add effects, set the logo in any other font, or type it in Funnel Display (that loses the logo's "r": use the outlines).
 
 ## The address: rebattle.app
 

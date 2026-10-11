@@ -10,7 +10,7 @@ Writes:
 Versions (docs/brand.md has when to use which):
   full      "drop. bounceback. rebattle."  square full stops (the sentence's punctuation), underline under "rebattle"
   name      "rebattle"                     underline, no full stop
-  mark      "r"                            underline from the letter's left edge to its right
+  mark      "r"                            underline from the letter's left edge to its right (the bounce's tip)
   badge     the mark next to "rebattle.app": the one fixed "where to find us" element
   The address "rebattle.app" is text, not logo: Funnel Sans, a round dot, no underline, the logo's text colour.
 Colourways (named by the background they go on):
@@ -20,10 +20,14 @@ Colourways (named by the background they go on):
 Same rules as the app's logo (public/styles.css, .brand): letter-spacing -0.03em, square stops
 0.14em with a 0.06em gap, underline 0.075em below the baseline and 0.12em thick. No kerning
 (fontTools doesn't shape text).
+
+The "r" of "rebattle" (and the mark) is the logo's own: the drop and the bounce, see logo_r().
 """
 import os
 from fontTools.ttLib import TTFont
 from fontTools.varLib import instancer
+from fontTools.pens.basePen import BasePen
+from fontTools.pens.recordingPen import RecordingPen
 from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.transformPen import TransformPen
 from fontTools.pens.boundsPen import BoundsPen
@@ -41,6 +45,8 @@ SPACING = -0.03 * EM
 STOP, STOP_GAP = 0.14 * EM, 0.06 * EM
 GAP, THICK = 0.075 * EM, 0.12 * EM
 LINE_BOTTOM = -(GAP + THICK)
+DROP = GAP / 4  # the r's stem tip, below the baseline (see logo_r)
+BOUNCE = GAP - DROP  # the gap from that tip to the underline, and from the arm's point to the e
 BADGE_SIZE = 0.62  # the address's size next to the mark, relative to the mark
 BADGE_GAP = 0.32 * EM  # from the mark's underline end to the address
 PAD = 0.04 * EM  # a hair of room so nothing touches the edge; clear space is a usage rule
@@ -54,6 +60,88 @@ COLOURWAYS = {
 }
 
 
+class Flat(BasePen):
+    """The contours of a glyph as lists of points, curves flattened."""
+
+    def __init__(self, glyphs, dx=0):
+        super().__init__(glyphs)
+        self.contours, self.dx = [], dx
+
+    def _moveTo(self, p):
+        self.contours.append([(p[0] + self.dx, p[1])])
+
+    def _lineTo(self, p):
+        self.contours[-1].append((p[0] + self.dx, p[1]))
+
+    def _qCurveToOne(self, c, p):
+        x0, y0 = self._getCurrentPoint()
+        for i in range(1, 51):
+            t = i / 50
+            self._lineTo(((1 - t) ** 2 * x0 + 2 * t * (1 - t) * c[0] + t * t * p[0], (1 - t) ** 2 * y0 + 2 * t * (1 - t) * c[1] + t * t * p[1]))
+
+    def _curveToOne(self, c1, c2, p):
+        x0, y0 = self._getCurrentPoint()
+        for i in range(1, 51):
+            t, u = i / 50, 1 - i / 50
+            self._lineTo((u ** 3 * x0 + 3 * u * u * t * c1[0] + 3 * u * t * t * c2[0] + t ** 3 * p[0], u ** 3 * y0 + 3 * u * u * t * c1[1] + 3 * u * t * t * c2[1] + t ** 3 * p[1]))
+
+
+def logo_r():
+    """The logo's "r": a drop and a bounce. Funnel Display Bold's r with two points:
+    - the drop: the stem ends in half a square pointing down (as long as half the stem's width),
+      its tip DROP below the baseline, so the gap left to the underline is BOUNCE;
+    - the bounce: the arm ends in a point whose sides follow the e's outline at the same gap,
+      BOUNCE (lower side), mirrored about the arm's centre line (upper side).
+    Returns the outline as a RecordingPen; the advance width stays the r's."""
+    glyphs, cmap, _ = DISPLAY
+    r = RecordingPen()
+    glyphs[cmap[ord('r')]].draw(r)
+    points = [p for _, args in r.value for p in args]
+    s0, s1 = sorted(x for x, y in points if y == 0)  # the stem's foot
+    arm = sorted((y, x) for x, y in points if x == max(p[0] for p in points))  # the arm's end
+    (a0, ax), (a1, _) = arm
+    am, half = (a0 + a1) / 2, (s1 - s0) / 2
+
+    # The e's outer outline where it faces the arm, set where it follows the r in "rebattle".
+    e = Flat(glyphs, glyphs[cmap[ord('r')]].width + SPACING)
+    glyphs[cmap[ord('e')]].draw(e)
+    side = sorted((p for p in e.contours[0] if a0 - 100 < p[1] < a1 + 120 and p[0] < ax + 320), key=lambda p: p[1])
+    moved = []  # moved out, away from the e, by BOUNCE
+    for k, (x, y) in enumerate(side):
+        (xa, ya), (xb, yb) = side[max(0, k - 1)], side[min(len(side) - 1, k + 1)]
+        length = ((xb - xa) ** 2 + (yb - ya) ** 2) ** 0.5 or 1
+        moved.append((x - (yb - ya) / length * BOUNCE, y + (xb - xa) / length * BOUNCE))
+
+    def at(yy):
+        for (px, py), (x, y) in zip(moved, moved[1:]):
+            if py <= yy <= y:
+                return (px + (yy - py) / (y - py) * (x - px), yy)
+
+    lower = [at(a0)] + [p for p in moved if a0 < p[1] < am] + [at(am)]
+    upper = [(x, 2 * am - y) for x, y in reversed(lower[:-1])]
+    bounce = [(round(x, 1), round(y, 1)) for x, y in reversed(lower + upper)]  # top to tip to bottom
+    assert bounce[0][0] < ax, 'the bounce starts inside the arm'
+
+    out = RecordingPen()
+    for op, args in r.value:
+        if op == 'moveTo':
+            out.moveTo((s0, half - DROP))
+        elif op == 'lineTo' and args[0] == (ax, a1):
+            for p in bounce:
+                out.lineTo(p)
+        elif op == 'lineTo' and args[0] == (ax, a0):
+            pass
+        elif op == 'lineTo' and args[0] == (s1, 0):
+            out.lineTo((s1, half - DROP))
+            out.lineTo(((s0 + s1) / 2, -DROP))
+        else:
+            getattr(out, op)(*args)
+    return out
+
+
+LOGO_R = logo_r()
+
+
 class Art:
     """Shapes in font units (y up, baseline 0) and their bounds."""
 
@@ -64,15 +152,17 @@ class Art:
         self.x0, self.y0 = min(self.x0, x0), min(self.y0, y0)
         self.x1, self.y1 = max(self.x1, x1), max(self.y1, y1)
 
-    def text(self, s, x, colour, font=DISPLAY, size=1, y=0, spacing=SPACING):
-        """Draws s from x on baseline y; returns the end x and the ink bounds."""
+    def text(self, s, x, colour, font=DISPLAY, size=1, y=0, spacing=SPACING, logo_r=False):
+        """Draws s from x on baseline y (logo_r: its first letter is the logo's r); returns the
+        end x and the ink bounds."""
         glyphs, cmap, _ = font
         pen, bounds = SVGPathPen(glyphs), BoundsPen(glyphs)
-        for ch in s:
+        for i, ch in enumerate(s):
             name = cmap[ord(ch)]
             m = (size, 0, 0, size, x, y)
-            glyphs[name].draw(TransformPen(pen, m))
-            glyphs[name].draw(TransformPen(bounds, m))
+            draw = LOGO_R.replay if logo_r and i == 0 else glyphs[name].draw
+            draw(TransformPen(pen, m))
+            draw(TransformPen(bounds, m))
             x += glyphs[name].width * size + spacing * size
         self.parts.append(f'<path fill="{colour}" d="{pen.getCommands()}"/>')
         self.grow(*bounds.bounds)
@@ -106,7 +196,7 @@ def full(c, app_suffix=False):
     space = DISPLAY[0][DISPLAY[1][ord(' ')]].width + SPACING
     for i, (text, colour) in enumerate([('drop', c['lead']), ('bounceback', c['lead']), ('rebattle', c['text'])]):
         start = x
-        x, _ = a.text(text, x, colour)
+        x, _ = a.text(text, x, colour, logo_r=text == 'rebattle')
         if text == 'rebattle':
             a.underline(start, x, c['line'])
             if app_suffix:  # don't: the address joined to the sentence
@@ -120,7 +210,7 @@ def full(c, app_suffix=False):
 
 def name(c, with_stop=False):
     a = Art()
-    x, _ = a.text('rebattle', 0, c['text'])
+    x, _ = a.text('rebattle', 0, c['text'], logo_r=True)
     a.underline(0, x, c['line'])
     if with_stop:  # don't: the full stop belongs to the sentence
         a.stop(x, c['text'])
@@ -129,7 +219,7 @@ def name(c, with_stop=False):
 
 def mark(c, with_stop=False):
     a = Art()
-    _, (x0, _, x1, _) = a.text('r', 0, c['text'])
+    _, (x0, _, x1, _) = a.text('r', 0, c['text'], logo_r=True)
     a.underline(x0, x1, c['line'])
     if with_stop:  # don't: "r." reads as an abbreviation
         a.stop(x1, c['text'])
@@ -151,7 +241,7 @@ def badge(c):
 def address_as_logo(c):
     """Don't: rebattle.app in the logo font, with the square dot and the underline."""
     a = Art()
-    x, _ = a.text('rebattle', 0, c['text'])
+    x, _ = a.text('rebattle', 0, c['text'], logo_r=True)
     x = a.stop(x, c['text'])
     x, _ = a.text('app', x + STOP_GAP, c['text'])
     a.underline(0, x, c['line'])
