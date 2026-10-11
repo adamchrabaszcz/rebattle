@@ -8,7 +8,8 @@
   - Full stops are **squares** (stem-width) in the logo only. Running text uses normal dots.
   - "bounceback" is one word in the logo only; in sentences it's "bounce back".
   - Amber underline under the whole word "rebattle". Where it animates (home screen, video intro) it waits while "drop. bounceback." is read (~1.1s), then draws left to right over ~0.75s.
-- Short mark / icon: the logo's "r" (below) with the amber underline from the letter's left ink edge to the bounce's tip. App icons: `tools/make-icons.py`.
+- Short mark / icon: the logo's "r" (below) with the amber underline from the letter's left ink edge to the bounce's tip. App icons, favicon and the Instagram picture: `tools/make-icons.py`, from the outlines `tools/make-logo.py` writes (run that first).
+- Placing the mark: in a **round** crop (avatars, the Instagram picture) centre the **letter** (its top to the baseline) and let the underline hang below; in square and rounded-square tiles (app icons, favicon) centre the **whole mark**.
 
 ### The logo's "r": the drop and the bounce
 
@@ -81,7 +82,7 @@ In the video, blue `#4f8cff` marks the Winners bracket (opposite violet for Lose
 
 ## Instagram: @rebattle.app
 
-- **Profile picture:** `docs/brand/instagram/profile.png` (1080×1080; the "r" mark on the dark background, small enough to sit inside the round crop and still read at 44 px). Rebuild the SVG with `tools/make-icons.py`; the PNG is a 1080 px screenshot of it.
+- **Profile picture:** `docs/brand/instagram/profile.png` (1080×1080; the "r" mark on the dark background, the letter centred in the round crop with the underline below it, and still readable at 44 px). Rebuild the SVG with `tools/make-icons.py`; the PNG is a 1080 px screenshot of it.
 - **Name:** rebattle
 - **Bio** (120 of 150 characters):
 
