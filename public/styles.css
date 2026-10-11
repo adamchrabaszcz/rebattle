@@ -344,8 +344,8 @@ footer.note a { color: var(--text); }
 }
 .site-footer a { color: var(--text); text-decoration: none; }
 .site-footer a:hover { color: var(--accent-text); }
-.site-brand { display: inline-flex; align-items: flex-end; gap: 6px; font-family: var(--font-display); font-weight: 700; }
-.site-brand .r-mark { display: inline-block; height: 20px; }
+.site-brand { font-size: 20px; line-height: 1.2; }
+.site-brand:hover .brand-name { color: var(--text); opacity: 0.85; }
 .site-links { display: flex; gap: 8px 24px; flex-wrap: wrap; }
 .site-account { margin-left: auto; }
 .theme-switch { display: inline-flex; align-items: center; gap: 4px; }
