@@ -6,7 +6,7 @@
 //
 // Fails on any page error, console error, CSP violation, failed request or broken step.
 import { spawn, execFileSync } from 'node:child_process';
-import { readFileSync, existsSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { readFileSync, existsSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createServer, memoryStores } from '../../tools/serve.mjs';
@@ -72,11 +72,30 @@ ws.onmessage = (m) => {
   if (d.method === 'Network.loadingFailed' && !p.canceled && !offlineOnPurpose) problems.push(`request failed (${p.errorText}): ${requests[p.requestId] || p.requestId}`);
   if (d.method === 'Network.requestWillBeSent') requests[p.requestId] = p.request.url;
 };
-const send = (method, params = {}) => new Promise((r) => { const id = ++seq; pending[id] = r; ws.send(JSON.stringify({ id, method, params })); });
+const rawSend = (method, params = {}) => new Promise((r) => { const id = ++seq; pending[id] = r; ws.send(JSON.stringify({ id, method, params })); });
+// SMOKE_COVERAGE=<dir>: keep the app's coverage (tools/coverage.mjs). A page's scripts
+// go away when it navigates, so it is saved before each navigation and at the end.
+const COVERAGE = process.env.SMOKE_COVERAGE;
+let coverageFiles = 0;
+async function saveCoverage() {
+  if (!COVERAGE) return;
+  const r = await rawSend('Profiler.takePreciseCoverage');
+  const result = (r.result?.result || []).filter((s) => /\/js\//.test(s.url));
+  writeFileSync(join(COVERAGE, `page-${coverageFiles++}.json`), JSON.stringify({ result }));
+}
+const send = async (method, params = {}) => {
+  if (method === 'Page.navigate' || method === 'Page.reload') await saveCoverage();
+  return rawSend(method, params);
+};
 async function js(expression) {
   const r = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
   if (r.result?.exceptionDetails) throw new Error(r.result.exceptionDetails.exception?.description || r.result.exceptionDetails.text);
   return r.result?.result?.value;
+}
+if (COVERAGE) {
+  mkdirSync(COVERAGE, { recursive: true });
+  await send('Profiler.enable');
+  await send('Profiler.startPreciseCoverage', { callCount: true, detailed: true });
 }
 await send('Runtime.enable');
 await send('Log.enable');
@@ -605,6 +624,7 @@ await step('no page errors, console errors, CSP violations or failed requests', 
   check(!problems.length, problems.join('\n      '));
 });
 
+await saveCoverage();
 ws.close();
 console.log(failures ? `\n${failures} step(s) failed` : '\nall steps passed');
 process.exit(failures ? 1 : 0);

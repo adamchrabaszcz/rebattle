@@ -2,6 +2,8 @@
 
 **drop. bounceback. rebattle.**
 
+[![test](https://github.com/adamchrabaszcz/rebattle/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/adamchrabaszcz/rebattle/actions/workflows/test.yml) [![coverage](https://github.com/adamchrabaszcz/rebattle/raw/badges/badge.svg)](https://github.com/adamchrabaszcz/rebattle/actions/workflows/test.yml)
+
 A tournament manager for head-to-head double-elimination events, built for a wakeboard competition but sport-agnostic. Riders who lose once drop to the Losers bracket for a second chance; the top two of each bracket cross over into a Final 4.
 
 ## Format
@@ -49,6 +51,14 @@ node tests/browser/smoke.mjs   # the real app in headless Chrome
 - The smoke test serves `public/` with the same headers as Cloudflare (CSP included) and clicks through the app in headless Chrome: setup, draw, a full tournament, undo, rename, export, import, the replay video, a 40-rider bracket and phone width. Any page error, CSP violation or failed request fails it. Set `CHROME_PATH` if Chrome isn't found.
 
 Both run on every push via GitHub Actions, along with a Wrangler dry run that checks the Worker builds. Neither test needs anything installed.
+
+Coverage counts the lines both runs execute, in every module under `public/js` and `worker/` (also those no test loads). CI shows the per-file table in the run's summary, and each merge to `main` updates the badge above (kept on the `badges` branch). Locally:
+
+```sh
+NODE_V8_COVERAGE=coverage/node node --test
+NODE_V8_COVERAGE=coverage/node SMOKE_COVERAGE=coverage/browser node tests/browser/smoke.mjs
+node tools/coverage.mjs coverage
+```
 
 ## Deploy
 
