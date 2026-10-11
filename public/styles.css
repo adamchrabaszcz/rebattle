@@ -262,6 +262,8 @@ label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px
 .standings .journey-btn { opacity: 0; transition: opacity 0.12s; }
 .standings li:hover .journey-btn, .standings .journey-btn:focus { opacity: 1; }
 @media (hover: none) { .standings .journey-btn { opacity: 1; } }
+/* Replay: Download video (and Share once recorded) on the left, Back on the right. */
+.replay-top .replay-back { margin-left: auto; }
 .replay-row select {
   font: inherit; background: var(--panel-2); color: var(--text);
   border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 10px; max-width: 100%;
@@ -441,7 +443,6 @@ footer.note a { color: var(--text); }
   .key-grid { grid-template-columns: 1fr; }
 }
 @media (hover: none) { .key-item.only-desktop:last-child { display: none; } }
-.toolbar.align-end { justify-content: flex-end; }
 
 /* ---- Public pages: live status, riders, rider page ---- */
 .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--win); margin-right: 5px; vertical-align: 1px; animation: live-pulse 2s ease-in-out infinite; }

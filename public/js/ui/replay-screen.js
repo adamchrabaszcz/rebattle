@@ -12,7 +12,11 @@ function renderReplayScreen(state) {
       <div class="title"><h1>${escapeHtml(t.name)}</h1><small data-replay="subtitle">Replay</small></div>
       ${brandHome()}
     </div>
-    <div class="toolbar event-toolbar align-end"><button data-action="close-replay">Back to bracket</button></div>
+    <div class="toolbar event-toolbar replay-top">
+      <button class="primary" data-replay="export">Download video</button>
+      <button data-replay="share" hidden>Share&hellip;</button>
+      <button class="replay-back" data-action="close-replay">Back to bracket</button>
+    </div>
     <div class="replay">
       <div class="replay-stage">
         <canvas id="replay-canvas" width="1080" height="1920"></canvas>
@@ -33,10 +37,6 @@ function renderReplayScreen(state) {
               .map(({ id, place }) => `<option value="${id}">${escapeHtml(Bracket.getName(t, id))} &mdash; ${place}.</option>`)
               .join('')}
           </select>
-        </div>
-        <div class="replay-row">
-          <button class="primary" data-replay="export">Download video</button>
-          <button data-replay="share" hidden>Share&hellip;</button>
         </div>
         <p class="replay-status" data-replay="status">Vertical 1080&times;1920 &mdash; ready for Stories, Reels and TikTok.</p>
       </div>
