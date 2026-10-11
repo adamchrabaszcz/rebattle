@@ -4,6 +4,7 @@ import * as Store from './store/local.js';
 import { render as renderScreen } from './ui/index.js';
 import { brandLogo, escapeHtml } from './ui/html.js';
 import { computeEstimateHtml } from './ui/setup.js';
+import { renderAccount } from './ui/home.js';
 import * as Replay from './replay/player.js';
 import { parseRoute } from './route.js';
 
@@ -28,6 +29,7 @@ const state = {
   titleDraft: '', // tournament name being edited in the same panel
   tournaments: [], // saved list, filled for the home screen
   readOnly: false, // view only: nothing can be recorded or edited (?view for now, the public link later)
+  organiser: undefined, // logged-in organiser's email, null if not logged in, undefined until known
 };
 
 // The only actions the read-only view runs. An allowlist, so anything added later
@@ -374,6 +376,19 @@ container.addEventListener('change', (e) => {
   }
 });
 
+// Who is logged in (Cloudflare Access), asked once at start. Offline or without the
+// Worker this quietly stays "not logged in"; local tournaments don't need it.
+function loadOrganiser() {
+  fetch('/api/manage/me', { redirect: 'manual', credentials: 'same-origin' })
+    .then((res) => (res.ok ? res.json() : null))
+    .catch(() => null)
+    .then((me) => {
+      state.organiser = (me && typeof me.email === 'string' && me.email) || null;
+      const el = container.querySelector('[data-account]');
+      if (el) el.innerHTML = renderAccount(state.organiser);
+    });
+}
+
 // ---- init ---------------------------------------------------------------
 
 // Tournament addresses (/t/<code>, /manage/<code>) arrive with cloud saving; until
@@ -400,3 +415,4 @@ if (route.name !== 'home') {
   }
 }
 render();
+if (route.name === 'home' && !state.readOnly) loadOrganiser();

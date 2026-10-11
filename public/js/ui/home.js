@@ -38,7 +38,17 @@ function renderHome(state) {
       <h2>Saved tournaments</h2>
       ${list}
     </div>
+    <footer class="note account" data-account>${renderAccount(state.organiser)}</footer>
   `;
 }
 
-export { renderHome };
+// The organiser login line. undefined = not known yet (the app asks the server after
+// the first paint and then fills in just this element, so the logo animation keeps
+// running). Log in and out are plain links: Access handles both pages.
+function renderAccount(organiser) {
+  if (organiser === undefined) return '';
+  if (!organiser) return '<a href="/api/manage/login">Organiser log in</a>';
+  return `Logged in as ${escapeHtml(organiser)} &middot; <a href="/cdn-cgi/access/logout">Log out</a>`;
+}
+
+export { renderHome, renderAccount };

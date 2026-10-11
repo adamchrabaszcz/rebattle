@@ -67,6 +67,13 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 - The view follows changes made in another tab (the `storage` event) instead of showing the "updated elsewhere" warning, since it has nothing to overwrite.
 - For now it opens with `?view` (the active tournament) or `?view=<id>`, in the same browser. Cloud saving will replace this with a public link per tournament.
 
+## Organiser login
+
+- Cloudflare Access (Zero Trust) protects `/manage/*` and `/api/manage/*` and only lets approved emails in (a one-time code by email). The list of approved emails lives in the Access policy in the Cloudflare dashboard, not in this repo.
+- `worker/auth.js` checks the token Access attaches (`Cf-Access-Jwt-Assertion`) on every organiser request anyway: RS256 signature against the team's published keys (cached, refetched when a key rotates), issuer (`ACCESS_TEAM_DOMAIN`), audience (`ACCESS_AUD`, the app's AUD tag), expiry, and an email claim. Both values are in `wrangler.jsonc`; they aren't secrets. Empty values mean nobody is logged in.
+- `GET /api/manage/me` answers `{ email }` or `{ email: null }`; the app asks once at start and shows "Organiser log in" or "Logged in as … · Log out" under the tournament list. "Log in" goes to `/api/manage/login` (Access shows its email-code page, then the Worker sends the browser home); "Log out" is Access's own `/cdn-cgi/access/logout`.
+- Locally there is no Access: `DEV_ORGANISER_EMAIL` (in `.dev.vars` for `npm run dev`, or the environment for `node tools/serve.mjs`) logs you in, and only on `127.0.0.1` / `localhost`.
+
 ## Storage
 
 - `localStorage` keys `ruedaBattle.tournaments` and `ruedaBattle.activeTournamentId`; names predate the rebattle rename and must stay.

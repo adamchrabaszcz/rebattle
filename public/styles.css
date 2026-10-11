@@ -265,6 +265,7 @@ label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px
 .file-input-label input { display: none; }
 
 footer.note { margin-top: 40px; font-size: 12px; color: var(--muted); }
+footer.note a { color: var(--text); }
 
 /* ---- path tracing (hover a competitor) ---- */
 .match-card, .edge, .standings li { transition: opacity 0.12s; }

@@ -44,6 +44,17 @@ find public/js -name '*.js' -print0 | xargs -0 -n1 node --check   # every module
 npm ci && npx wrangler deploy --dry-run                        # the Worker builds (pinned wrangler)
 ```
 
+## Logging in locally
+
+There's no Cloudflare Access on your machine. To see the app as a logged-in organiser, set `DEV_ORGANISER_EMAIL`:
+
+```sh
+DEV_ORGANISER_EMAIL=you@example.com node tools/serve.mjs
+# or for npm run dev: put DEV_ORGANISER_EMAIL=you@example.com in .dev.vars (git-ignored)
+```
+
+It only works on `127.0.0.1` and `localhost`.
+
 ## Code conventions
 
 - No build step and no runtime dependencies. Native ES modules, readable as shipped; the root `package.json` only marks them as modules for Node.
