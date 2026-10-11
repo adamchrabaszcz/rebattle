@@ -13,6 +13,7 @@
   --on-accent: #1d1503;
   --accent-2: var(--accent);
   --losers: #a685ff;
+  --winners: #4f8cff; /* the video's Winners-bracket blue; the intro's step 1 */
   --win: #35c17a;
   --lose: #e35b5b;
   --radius: 10px;
@@ -485,3 +486,22 @@ footer.note a { color: var(--text); }
   .poster-follow { font-size: 18pt; color: #444; }
   .poster-url { font-family: var(--font-display); font-size: 22pt; font-weight: 650; word-break: break-all; }
 }
+
+/* ---- Introduction (/about, and / for a new visitor) ---- */
+.intro-lead { max-width: 640px; margin: 8px 0 24px; }
+.intro-lead p { margin: 0 0 10px; }
+.intro-big { font-family: var(--font-display); font-size: 26px; font-weight: 650; line-height: 1.25; color: var(--text); }
+.intro-follow, .intro-organisers { max-width: 640px; margin-bottom: 24px; }
+.intro-follow p, .intro-organisers p { margin-top: 0; }
+.follow-row { display: flex; gap: 8px; }
+.follow-row input { flex: 1; min-width: 0; }
+.field-error { color: var(--lose); margin: 8px 0 0; min-height: 1em; font-size: 14px; }
+.field-error:empty { display: none; }
+.intro-steps { list-style: none; margin: 0 0 24px; padding: 0; max-width: 640px; }
+.intro-steps li { display: flex; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.intro-steps p { margin: 4px 0 0; }
+.step-num { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-family: var(--font-display); color: var(--bg); }
+.step-wb .step-num { background: var(--winners); }
+.step-lb .step-num { background: var(--losers); }
+.step-f4 .step-num { background: var(--accent); }
+.card .btn + .btn, .card button + .btn { margin-left: 8px; }

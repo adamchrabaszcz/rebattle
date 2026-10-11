@@ -42,7 +42,7 @@ function drawProgress(ctx, tl, t) {
 function drawScene(ctx, tl, scene, local) {
   if (scene.type === 'intro') drawIntro(ctx, tl, local);
   else if (scene.type === 'round') drawRound(ctx, tl, scene, local);
-  else if (scene.type === 'podium') drawPodium(ctx, tl, local);
+  else if (scene.type === 'podium') drawPodium(ctx, tl, scene, local);
   else if (scene.type === 'qualify') drawQualify(ctx, tl, scene, local);
   else if (scene.type === 'journeyIntro') drawJourneyIntro(ctx, tl, local);
   else if (scene.type === 'result') drawResult(ctx, tl, scene, local);

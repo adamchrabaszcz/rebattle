@@ -13,7 +13,8 @@ function fmt(sec) {
   return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
 }
 
-function mount(container, tournament, focus) {
+// site: { host, code } for the address on the last scene (see buildTimeline).
+function mount(container, tournament, focus, site) {
   unmount();
   const canvas = container.querySelector('#replay-canvas');
   if (!canvas) return;
@@ -21,7 +22,8 @@ function mount(container, tournament, focus) {
   player = {
     canvas,
     ctx: canvas.getContext('2d'),
-    tl: buildTimeline(tournament, focus),
+    tl: buildTimeline(tournament, focus, site),
+    site,
     t: 0,
     playing: false,
     raf: null,
@@ -71,7 +73,7 @@ function mount(container, tournament, focus) {
 function setFocus(focus) {
   const p = player;
   pause();
-  p.tl = buildTimeline(p.tl.tournament, focus);
+  p.tl = buildTimeline(p.tl.tournament, focus, p.site);
   p.el.scrub.max = String(Math.round(p.tl.total * 1000));
   p.file = null;
   p.el.share.hidden = true;

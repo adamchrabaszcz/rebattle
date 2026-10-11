@@ -23,6 +23,7 @@ function renderNotFound(state) {
       <h2>Nothing here</h2>
       <p>We couldn't find a tournament at this address. Check the link you were sent.</p>
       <button class="primary" data-action="go-home">Open rebattle</button>
+      <a class="btn" href="/about">What is rebattle?</a>
     </div>
   `;
 }

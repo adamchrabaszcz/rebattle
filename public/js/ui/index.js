@@ -5,6 +5,7 @@ import { renderBracketScreen } from './bracket-screen.js';
 import { tabState } from './brackets.js';
 import { drawConnectors, tracePath } from './connectors.js';
 import { renderHome } from './home.js';
+import { renderIntro } from './intro.js';
 import { renderReplayScreen } from './replay-screen.js';
 import { renderRiderScreen } from './rider.js';
 import { renderLoading, renderNotFound } from './not-found.js';
@@ -67,6 +68,7 @@ function render(container, state) {
   bindTabs(container);
   container.classList.toggle('wide', state.screen === 'bracket');
   if (state.screen === 'home') container.innerHTML = renderHome(state);
+  else if (state.screen === 'intro') container.innerHTML = renderIntro(state);
   else if (state.screen === 'setup') container.innerHTML = renderSetup(state);
   else if (state.screen === 'names') container.innerHTML = renderNames(state);
   else if (state.screen === 'replay') container.innerHTML = renderReplayScreen(state);

@@ -18,6 +18,7 @@ All paths below are under `public/js/`.
 | `ui/index.js` | `render(container, state)`: picks the screen, binds tabs, hover tracing and resize |
 | `ui/html.js` | `escapeHtml`, `fmtDuration`, the logo, the "r" mark, the draw icon |
 | `ui/home.js`, `ui/setup.js` | Tournament list; setup form, time estimate, names screen |
+| `ui/intro.js` | The introduction (`/about`, and `/` for a new visitor): Follow a competition, how it works, start |
 | `ui/bracket-screen.js` | The tournament screen: header, toolbar, rename panel, standings, riders list (public page), legend |
 | `ui/rider.js` | A rider's page: stage, next heat, heats ridden, journey video |
 | `ui/share.js` | The share panel (link, QR code) and the printable poster |
@@ -64,7 +65,8 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 
 ## Replay video (`replay/`)
 
-- `buildTimeline(tournament, focus)` makes the scene list: intro, rounds (WB R1, WB R2, then LB/WB alternating), the semis crossover, semifinals, finals, podium. With `focus`, it builds one rider's journey instead.
+- `buildTimeline(tournament, focus, site)` makes the scene list: intro, rounds (WB R1, WB R2, then LB/WB alternating), the semis crossover, semifinals, finals, podium. With `focus`, it builds one rider's journey instead.
+- The last scene ends with the address (`site` = `{ host, code }`, the host being the page's own): "Results: rebattle.app/t/<code>" on the podium, "Dora’s journey: rebattle.app/t/<code>/<rider>" on a rider's result. A local tournament has no public page, so it shows just the host. With the address, the podium list keeps 11 rows a column to leave it room.
 - `drawFrame(ctx, timeline, t)` is a pure function of time, so playback, scrubbing and recording all give identical frames (confetti uses a seeded random).
 - 1080×1920 canvas, exported with `MediaRecorder` in real time (mp4 where supported, otherwise webm). Drawing and recording wait for the bundled fonts to load.
 - Losers rounds open with a short name shuffle ("random draw"); timing constants are in `replay/theme.js`.
@@ -94,6 +96,12 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 - **Screens:** `/manage/<code>` opens an online tournament (this device's copy first, then the server's). Home lists "Online" and "In this browser only", with "Move online" (moves: removed from this browser once it is safely online) and Delete. While logged in, new tournaments are online unless "Keep in this browser only" is ticked; if saving online fails, the new tournament is kept in this browser instead.
 - **Locally:** `node tools/serve.mjs` runs the same Worker code against in-memory stores (`tools/fake-do.mjs`, lost on restart); `npm run dev` runs the real Durable Objects. Tests use the in-memory ones.
 
+## Addresses and returning visitors
+
+- **`/`** takes you back to the last tournament opened on this device if it is still running (a local one, or an online one: then `/manage/<code>`). Otherwise it shows the list, or the introduction in a browser with nothing saved. An organiser logged in on a new device gets their list instead of the introduction once the login is known.
+- **The address follows the screen** (`syncAddress` in `app.js`): the list is `/tournaments`, a local tournament `/`, so a reload lands where you were. The logo goes to the list (`/tournaments`); on public pages and "Nothing here" it goes to `/`.
+- **`/about`**: the introduction for everyone, linked from the list and "Nothing here". "Follow a competition" takes a typed code or a pasted link (`followPath` in `route.js`) to the public page.
+
 ## Public pages
 
 - **`/t/<code>`:** the read-only tournament screen for anyone with the link, no login. A "live" dot in the header; a Riders list linking to each rider's page; Share; the replay and journeys once it's over.
@@ -108,14 +116,14 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 
 ## Storage
 
-- `localStorage` keys `ruedaBattle.tournaments` and `ruedaBattle.activeTournamentId`; names predate the rebattle rename and must stay.
+- `localStorage` keys `ruedaBattle.tournaments` and `ruedaBattle.activeTournamentId`; names predate the rebattle rename and must stay. `rebattle.online` holds this device's copies of online tournaments; `rebattle.activeOnline` the online tournament last opened here, when that was the last one (opening a local one clears it, and the other way round).
 - A `storage` event from another tab marks the open tournament as changed elsewhere; recording, renaming and undo are blocked until it is reloaded.
 - Import: `Store.readFile` parses and validates; `app.js` asks before replacing a tournament with the same id.
 
 ## Hosting
 
 - One Cloudflare Workers project: static assets from `public/` (docs, tests and tools are never served) plus `worker/index.js`, which runs only for `/api/*` (`run_worker_first`): health, the public API and the organiser API.
-- Unknown paths get `index.html` (`not_found_handling: "single-page-application"`), and `public/js/route.js` decides the screen: `/` is the app, `/t/<code>` and `/t/<code>/<rider>` are the public pages, `/manage/<code>` is the organiser's, anything else is "not found". That's why `index.html` uses absolute paths (`/js/…`).
+- Unknown paths get `index.html` (`not_found_handling: "single-page-application"`), and `public/js/route.js` decides the screen: `/t/<code>` and `/t/<code>/<rider>` are the public pages, `/manage/<code>` is the organiser's, `/tournaments` the list, `/about` the introduction, anything else is "not found". That's why `index.html` uses absolute paths (`/js/…`).
 - API responses set their own headers (`worker/index.js`); `_headers` only covers static files.
 - Wrangler is a pinned dev dependency (`package.json` + `package-lock.json`), so local runs, CI and Cloudflare's build use the same version.
 - Cloudflare's GitHub integration deploys `main` on every merge and builds a preview for each pull request.

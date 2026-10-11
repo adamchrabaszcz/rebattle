@@ -26,7 +26,7 @@
 | `--lose` | `#e35b5b` red | out (lost twice) only |
 | `--bg` / `--panel` / `--panel-2` | `#111318` / `#181b22` / `#20232c` | neutral dark greys, slightly warm |
 
-In the video, blue `#4f8cff` marks the Winners bracket (opposite violet for Losers).
+In the video, blue `#4f8cff` marks the Winners bracket (opposite violet for Losers); the app uses it (`--winners`) only for the intro's Winners bracket step.
 
 ## Wording
 
