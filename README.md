@@ -87,6 +87,6 @@ Saved tournaments live in each browser per address, so data on `127.0.0.1` doesn
 ## Roadmap
 
 1. ~~Hosting on Cloudflare with a custom domain~~ (done: rebattle.app).
-2. ~~Cloud saving: one Durable Object per tournament, organiser login via Cloudflare Access, offline-tolerant saves~~ (done). Next: the public live link (`/t/<code>`) with a share button and QR code.
-3. A public read-only link with live updates, and a "follow me" card for riders (next heat, opponent, how long until they ride).
+2. ~~Cloud saving: one Durable Object per tournament, organiser login via Cloudflare Access, offline-tolerant saves~~ (done).
+3. ~~Public live link (`/t/<code>`), rider pages (`/t/<code>/<rider>`), share button, QR code and poster~~ (done). Next: links in the replay video's end screens and an introduction on the main page; later, how long until a rider's heat.
 4. ~~Smaller modules and a read-only viewer mode~~ (done).

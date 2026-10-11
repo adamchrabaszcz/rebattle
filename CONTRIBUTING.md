@@ -57,7 +57,7 @@ It only works on `127.0.0.1` and `localhost`. Online tournaments then work too: 
 
 ## Code conventions
 
-- No build step and no runtime dependencies. Native ES modules, readable as shipped; the root `package.json` only marks them as modules for Node.
+- No build step and no npm runtime dependencies (third-party browser code only as unmodified files in `public/js/vendor/`). Native ES modules, readable as shipped; the root `package.json` only marks them as modules for Node.
 - `public/js/engine/` is pure logic: no DOM, no storage, imports nothing from `ui/`, `replay/` or `store/`. Engine changes need a test in `tests/`.
 - Screens are built as HTML strings in `public/js/ui/`; every user-supplied string goes through `escapeHtml`. Views get their data through `state` and never read storage.
 - One job per module; keep files under ~350 lines (the engine excepted). The module map is in `docs/architecture.md`.

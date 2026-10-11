@@ -9,11 +9,19 @@ All paths below are under `public/js/`.
 | `app.js` | Entry. Owns state, handles every click (`data-action` delegation), calls `render` |
 | `engine/bracket.js` | Engine (`Bracket`). Pure functions over a tournament object; no DOM, no storage |
 | `engine/lb-layout.js` | Pure: Losers-bracket display order and lines, shared by the bracket view and the replay |
+| `engine/validate.js` | Pure: the shape and safety check for imported files and every snapshot the Worker accepts |
+| `engine/slug.js` | Pure: names to address parts (tournament codes, rider links) |
+| `engine/rider.js` | Pure: one rider's stage, heats ridden and next heat, for their page |
 | `store/local.js` | `Store`: localStorage persistence, JSON export, import validation |
+| `store/cloud.js` | Online tournaments for the organiser: the API, this device's copy, the outbox |
+| `store/live.js` | Public pages: first read, then the live feed (WebSocket, polling fallback) |
 | `ui/index.js` | `render(container, state)`: picks the screen, binds tabs, hover tracing and resize |
 | `ui/html.js` | `escapeHtml`, `fmtDuration`, the logo, the "r" mark, the draw icon |
 | `ui/home.js`, `ui/setup.js` | Tournament list; setup form, time estimate, names screen |
-| `ui/bracket-screen.js` | The tournament screen: header, toolbar, rename panel, standings, legend |
+| `ui/bracket-screen.js` | The tournament screen: header, toolbar, rename panel, standings, riders list (public page), legend |
+| `ui/rider.js` | A rider's page: stage, next heat, heats ridden, journey video |
+| `ui/share.js` | The share panel (link, QR code) and the printable poster |
+| `ui/not-found.js` | "Nothing here", offline and loading screens |
 | `ui/brackets.js`, `ui/cards.js` | Winners, Losers and Final 4 columns (with phone tabs); match cards and their tags |
 | `ui/connectors.js` | Connector lines and path tracing, measured from the rendered cards |
 | `ui/replay-screen.js` | The replay screen's HTML; `replay/player.js` drives it |
@@ -23,6 +31,7 @@ All paths below are under `public/js/`.
 | `replay/rounds.js`, `replay/finale.js` | Scenes: intro, rounds, semis crossover; podium, journey, result, confetti |
 | `replay/frame.js` | `drawFrame(ctx, timeline, t)`, scene dots |
 | `replay/player.js` | Playback, scrubbing, recording and sharing |
+| `vendor/qrcode.js` | QR code encoder, third-party (see Public pages) |
 
 Dependencies point one way: `app.js` → `ui/`, `replay/`, `store/` → `engine/`. `engine/` imports nothing from the others.
 
@@ -30,7 +39,7 @@ Flow: a click → `app.js` mutates `state` (via `Bracket` for results) → `Stor
 
 ## Data model (saved as-is, also the export format)
 
-- `tournament`: `id`, `name`, `createdAt`, `status` (`in_progress` | `completed`), `settings` (`heatFormat` `single` | `bo3`, `lapTimeSeconds`, `breakSeconds`), `competitors` `[{id, name}]`, `bracketSize`, `bracketRounds`.
+- `tournament`: `id`, `name`, `createdAt`, `status` (`in_progress` | `completed`), `settings` (`heatFormat` `single` | `bo3`, `lapTimeSeconds`, `breakSeconds`), `competitors` `[{id, name, slug?}]` (`slug`: the rider's link, set once the tournament is online), `bracketSize`, `bracketRounds`.
 - `wb.matches`, `lb.matches`, `final4.{semi1, semi2, smallFinal, grandFinal}`: matches.
 - A match: `id`, `stage` (`WB` | `LB` | `SF` | `SMALL_FINAL` | `GRAND_FINAL`), `round` (WB) or `level` (LB), `slotA`/`slotB` `{competitorId, isBye}`, `races` (one entry per run, for best of 3), `winnerId`, `loserId`, `completed`, `isBye`, `isLbFinal`.
 - Each match carries `onWinnerAdvanceTo` / `onLoserAdvanceTo` descriptors (`slot`, `lbEntrant`, `lbLevelAdvance`, `eliminated`, `wbChampion`, `wbRunnerUp`, `lbChampion`, `lbRunnerUp`, `rank1`–`rank4`). Recording a result dispatches them, so advancement is automatic.
@@ -65,7 +74,7 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 - `state.readOnly` renders the tournament screen without anything that changes data: no Won buttons, Undo, Edit names, Export/Import, New/Delete, and no rename panel. Up next, the brackets, tracing, standings and the replay (including its video download) stay.
 - `app.js` also refuses every click whose action isn't in `VIEW_ACTIONS` (an allowlist), so a new organiser action is blocked in the view unless it is added there on purpose.
 - The view follows changes made in another tab (the `storage` event) instead of showing the "updated elsewhere" warning, since it has nothing to overwrite.
-- For now it opens with `?view` (the active tournament) or `?view=<id>`, in the same browser. Cloud saving will replace this with a public link per tournament.
+- Local tournaments open it with `?view` (the active tournament) or `?view=<id>`, in the same browser: a second screen at a venue without internet. Online tournaments have public pages instead (below).
 
 ## Organiser login
 
@@ -85,6 +94,18 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 - **Screens:** `/manage/<code>` opens an online tournament (this device's copy first, then the server's). Home lists "Online" and "In this browser only", with "Move online" (moves: removed from this browser once it is safely online) and Delete. While logged in, new tournaments are online unless "Keep in this browser only" is ticked; if saving online fails, the new tournament is kept in this browser instead.
 - **Locally:** `node tools/serve.mjs` runs the same Worker code against in-memory stores (`tools/fake-do.mjs`, lost on restart); `npm run dev` runs the real Durable Objects. Tests use the in-memory ones.
 
+## Public pages
+
+- **`/t/<code>`:** the read-only tournament screen for anyone with the link, no login. A "live" dot in the header; a Riders list linking to each rider's page; Share; the replay and journeys once it's over.
+- **`/t/<code>/<rider>`:** one rider's page (`ui/rider.js`, `engine/rider.js`): where they stand (unbeaten / Losers bracket / Final 4 / out / place), their next heat and opponent (or "waiting for the draw"), the heats they rode, and "Watch my journey" at the end.
+- **API (`worker/public.js`, no login):** `GET /api/t/<code>` returns `{ code, version, updatedAt, tournament }`; `GET /api/t/<code>/live` is a WebSocket into the tournament's Durable Object, which sends the snapshot on connect and after every save, and `{ type: 'deleted' }` when it is deleted. Hibernation API, so idle viewers cost nothing; viewers can't send anything. Never the owners' emails.
+- **In the browser (`store/live.js`):** one read for the first paint, then the socket. It reconnects with backoff (and at once when a phone returns to the page); after 3 attempts that never open, it reads every 20 s instead. Versions only move forward.
+- **Rider links:** made from the name (`dora-nowak`, then `-2`, `-3` for the same name) and stored on the competitor as `slug` when the tournament goes online, so fixing a typo later doesn't break links already shared. Tournaments that went online before this get them the next time the organiser opens them; until then the page works them out the same way.
+- **Sharing (`ui/share.js`):** the link, Copy, the phone's share sheet where there is one, a QR code (inline SVG, black on white with a quiet zone), and for the whole tournament a poster that only shows when printing (A4: name, QR code, "Follow live at …"). Both the organiser screen and the public pages have it.
+- **QR encoder:** `public/js/vendor/qrcode.js` is `dist/qrcode.mjs` from `qrcode-generator` 2.0.4 by Kazuhiko Arase (MIT, licence header kept), unmodified (sha256 `ea91d7118a5395289170da848b7c6758b996163bfbccf312591ab65a4911b7c0`). Update by replacing the file with a newer release's.
+- **Locally:** `tools/serve.mjs` answers the live feed with a minimal WebSocket (`tools/ws.mjs`) that the in-memory store gets directly.
+- **CSP:** `connect-src 'self'` covers the same-origin socket. A browser that doesn't apply `'self'` to WebSockets falls back to reading every 20 s.
+
 ## Storage
 
 - `localStorage` keys `ruedaBattle.tournaments` and `ruedaBattle.activeTournamentId`; names predate the rebattle rename and must stay.
@@ -93,8 +114,8 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 
 ## Hosting
 
-- One Cloudflare Workers project: static assets from `public/` (docs, tests and tools are never served) plus `worker/index.js`, which runs only for `/api/*` (`run_worker_first`). For now it only answers `/api/health`; cloud saving adds the tournament API there.
-- Unknown paths get `index.html` (`not_found_handling: "single-page-application"`), and `public/js/route.js` decides the screen: `/` is the app, `/t/<code>`, `/t/<code>/<rider>` and `/manage/<code>` are tournament links (shown as "not found" until cloud saving), anything else is "not found". That's why `index.html` uses absolute paths (`/js/…`).
+- One Cloudflare Workers project: static assets from `public/` (docs, tests and tools are never served) plus `worker/index.js`, which runs only for `/api/*` (`run_worker_first`): health, the public API and the organiser API.
+- Unknown paths get `index.html` (`not_found_handling: "single-page-application"`), and `public/js/route.js` decides the screen: `/` is the app, `/t/<code>` and `/t/<code>/<rider>` are the public pages, `/manage/<code>` is the organiser's, anything else is "not found". That's why `index.html` uses absolute paths (`/js/…`).
 - API responses set their own headers (`worker/index.js`); `_headers` only covers static files.
 - Wrangler is a pinned dev dependency (`package.json` + `package-lock.json`), so local runs, CI and Cloudflare's build use the same version.
 - Cloudflare's GitHub integration deploys `main` on every merge and builds a preview for each pull request.

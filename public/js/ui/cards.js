@@ -146,10 +146,10 @@ function renderUpNext(tournament, readOnly) {
 function stageLabel(tournament, match) {
   if (match.stage === 'WB') return isWbFinal(tournament, match) ? 'Winners · Final' : 'Winners · Round ' + match.round;
   if (match.stage === 'LB') return match.isLbFinal ? 'Losers · Final' : 'Losers · Round ' + match.level;
-  if (match.stage === 'SF') return 'Final 4 · Semifinal';
+  if (match.stage === 'SF') return 'Final 4 · Semifinal ' + (tournament.final4.semi2 && tournament.final4.semi2.id === match.id ? 2 : 1);
   if (match.stage === 'SMALL_FINAL') return 'Small Final (3rd place)';
   if (match.stage === 'GRAND_FINAL') return 'Grand Final (1st place)';
   return match.stage;
 }
 
-export { pendingPoolCard, matchCard, renderUpNext };
+export { pendingPoolCard, matchCard, renderUpNext, stageLabel };
