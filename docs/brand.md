@@ -9,16 +9,20 @@
   - "bounceback" is one word in the logo only; in sentences it's "bounce back".
   - Amber underline under the whole word "rebattle". Where it animates (home screen, video intro) it waits while "drop. bounceback." is read (~1.1s), then draws left to right over ~0.75s.
 - Short mark / icon: Funnel Display Bold "r" with the amber underline starting exactly at the letter's left ink edge. App icons: `tools/make-icons.py`.
+- Competition screens: competition name on the left, logo on the right (the short mark on phones).
 
 ## Logo set
 
-Three versions, each in four colourways: `docs/brand/logos/<version>-<colourway>.svg` and `.png` (transparent). Drawn as outlines from the bundled font by `tools/make-logo.py`; the PNGs are headless-Chrome screenshots of the SVGs (full 2400 px wide, name 1600 px wide, mark 1024 px tall).
+Three versions and a badge, each in four colourways: `docs/brand/logos/<version>-<colourway>.svg` and `.png` (transparent). Drawn as outlines from the bundled fonts by `tools/make-logo.py`; the PNGs are headless-Chrome screenshots of the SVGs (full 2400 px wide, name 1600 px wide, mark 1024 px tall, badge 512 px tall).
 
 | Version | Looks like | Use |
 | --- | --- | --- |
 | `full` | drop. bounceback. <u>rebattle</u>. | the main logo: README, headers, posters, the video intro |
 | `name` | <u>rebattle</u> | where the sentence is too long: the site footer, small headers, partner and sponsor slots |
-| `mark` | <u>r</u> | avatars, app icons, favicons, watermarks |
+| `mark` | <u>r</u> | avatars, app icons, favicons, watermarks, the middle of QR codes |
+| `badge` | <u>r</u> rebattle.app | where to find us: stickers, slide and email footers, the corner of a layout without a QR code |
+
+![Logo do's and don'ts](brand/logo-usage.svg)
 
 | Colourway | On | Text | "drop. bounceback." | Underline |
 | --- | --- | --- | --- | --- |
@@ -35,7 +39,10 @@ Three versions, each in four colourways: `docs/brand/logos/<version>-<colourway>
 ## The address: rebattle.app
 
 `rebattle.app` is text, not a logo: set in **Funnel Sans** (the text font), with a **round dot**, **no underline**, in the same colour as the text around it (bolder for emphasis on posters). Never set it in Funnel Display, never with square full stops or the underline, and never combined with a logo as if it were one: put it under or next to the logo, as a line of text.
-- Competition screens: competition name on the left, logo on the right (the short mark on phones).
+
+- **The badge** (`badge`: the mark next to the address, its x-height centred on the "r") is the one fixed "where to find us" element.
+- **Next to a QR code, just the address:** the QR code carries the "r" in its middle, so a badge beside it would repeat it. A poster puts the logo at the top and, at the bottom, the QR code with "rebattle.app" as text.
+- **Everywhere else the address is plain text** in the layout: the end of the replay video, the Instagram bio, the back of a shirt.
 
 ## Type
 
