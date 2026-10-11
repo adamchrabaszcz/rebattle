@@ -600,6 +600,21 @@ footer.note a { color: var(--text); }
 .intro-lead p { margin: 0 0 10px; }
 .intro-big { font-family: var(--font-display); font-size: 26px; font-weight: 650; line-height: 1.25; color: var(--text); }
 .intro-follow, .intro-organisers { max-width: 640px; margin-bottom: 24px; }
+
+/* Listed competitions (ui/competitions.js): /competitions and the intro's section. */
+.intro-note { max-width: 640px; margin: 0 0 20px; }
+.competition-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.competition-card {
+  display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; text-decoration: none; color: var(--text);
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.competition-card:hover { border-color: var(--accent); }
+.competition-name { font-family: var(--font-display); font-weight: 650; font-size: 17px; }
+.competition-meta { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.competition-status { font-size: 14px; margin-top: 4px; }
+.show-more { margin-top: 16px; }
+.intro-competitions p { margin: 12px 0 0; }
+.intro-competitions a { color: var(--text); }
 .intro-follow p, .intro-organisers p { margin-top: 0; }
 .follow-row { display: flex; gap: 8px; }
 .follow-row input { flex: 1; min-width: 0; }
@@ -623,7 +638,8 @@ footer.note a { color: var(--text); }
   #app.intro-page > .intro-lead { grid-row: 2; }
   #app.intro-page > .intro-follow { grid-row: 3; grid-column: 1; }
   #app.intro-page > .intro-organisers { grid-row: 3; grid-column: 2; }
-  #app.intro-page > .intro-how { grid-row: 4; margin-top: 8px; }
+  #app.intro-page > .intro-competitions { grid-row: 4; }
+  #app.intro-page > .intro-how { grid-row: 5; margin-top: 8px; }
   #app.intro-page .intro-follow, #app.intro-page .intro-organisers { max-width: none; height: calc(100% - 24px); }
   #app.intro-page .intro-lead { max-width: 760px; }
   #app.intro-page .intro-big { font-size: 34px; }

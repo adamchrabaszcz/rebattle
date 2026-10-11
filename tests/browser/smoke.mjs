@@ -588,6 +588,31 @@ await step('unknown tournaments, riders and paths show "not found", with all fil
 
 // ---- introduction and returning visitors --------------------------------------
 
+await step('listed competitions show on /competitions and the intro; unlisted pages ask not to be indexed', async () => {
+  const setListed = (listed) => js(`fetch('/api/manage/t/${movedCode}/visibility', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ listed: ${listed} }) }).then((r) => r.status)`);
+  const noindex = `!!document.querySelector('meta[name=robots][content=noindex]')`;
+  await send('Page.navigate', { url: L + '/tournaments' });
+  await until(`!!document.querySelector('[data-lists]')`);
+  check((await setListed(true)) === 200, 'could not list it');
+
+  await send('Page.navigate', { url: L + '/competitions' });
+  const card = await until(`(() => { const a = document.querySelector('.competition-card[href="/t/${movedCode}"]'); return a && a.textContent.replace(/\\s+/g, ' ').trim(); })()`);
+  check(/Winner:/.test(card) && /6 riders/.test(card), 'card: ' + card);
+  check(await js(`!!document.querySelector('.site-footer a[href="/competitions"]')`), 'no footer link');
+
+  await send('Page.navigate', { url: L + '/about' });
+  await until(`!document.querySelector('[data-intro-competitions]').hidden && !!document.querySelector('[data-intro-competitions] a[href="/t/${movedCode}"]')`);
+
+  await send('Page.navigate', { url: `${L}/t/${movedCode}` });
+  await until(`document.querySelector('[data-live]')?.textContent === 'live'`);
+  check(!(await js(noindex)), 'a listed page asks not to be indexed');
+  check((await setListed(false)) === 200, 'could not unlist it');
+  await send('Page.reload');
+  await until(`document.querySelector('[data-live]')?.textContent === 'live'`);
+  check(await js(noindex), 'an unlisted page can be indexed');
+  return card;
+});
+
 await step('/about: Follow takes a code or a pasted link, and rejects anything else', async () => {
   await send('Page.navigate', { url: L + '/about' });
   await until(`!!document.querySelector('#f-follow')`);

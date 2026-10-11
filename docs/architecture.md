@@ -124,6 +124,8 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 - **The index:** one more Durable Object, `CompetitionIndex` (a single instance, binding `COMPETITIONS`). It holds a summary per listed competition (`worker/listing.js`: code, name, dates, riders count, status, whether a heat has been ridden, the winner's name once finished; never owners). `worker/manage.js` keeps it in step after every create, save, visibility change and delete.
 - **In the app (`ui/visibility.js`):** the same two explained options wherever the organiser chooses: at setup ("Who can find it", only when saving online) and from the organiser screen, where a line under the toolbar says which applies, with Change. The share panel repeats that line. A local tournament moved online starts unlisted, and the confirmation says so.
 - **`GET /api/competitions?offset&limit`** (public): running competitions first (most recently updated), then finished ones, newest first; at most 50 per page. Finished ones stay listed until the organiser unlists or deletes them.
+- **`/competitions`** (`ui/competitions.js`): a card per listed competition, linking to its public page: name, riders, date, then "Starting soon" (no heat yet), "Live now" (a result in the last 6 hours), "In progress", or "Winner: …". 30 at a time, with Show more. The introduction shows the latest 3 (filled in after it renders, hidden while there are none), and the footer links to the page.
+- **Search engines:** `GET /api/t/<code>` also says whether the competition is listed; the public and rider pages of an unlisted one add `<meta name="robots" content="noindex">`, so a link posted somewhere doesn't put it in search results.
 
 ## Storage
 

@@ -8,6 +8,7 @@ import { render as renderScreen } from './ui/index.js';
 import { brandLogo, escapeHtml } from './ui/html.js';
 import { computeEstimateHtml } from './ui/setup.js';
 import { renderAccount, renderLists } from './ui/home.js';
+import { renderIntroCompetitions } from './ui/competitions.js';
 import { renderLive, renderSync } from './ui/bracket-screen.js';
 import * as Replay from './replay/player.js';
 import { followPath, parseRoute } from './route.js';
@@ -68,6 +69,8 @@ const state = {
   visibilityPanel: false, // organiser screen: the "who can find it" options are open
   replayFrom: 'bracket', // the screen "Back" returns to from the replay
   hasWork: false, // intro: tournaments are saved on this device (links to the list)
+  competitions: null, // /competitions: { items, total, loading, error } (ui/competitions.js)
+  introCompetitions: null, // intro: the latest listed competitions ([] once asked and there are none)
   theme: readTheme(), // the footer's Auto / Light / Dark (js/theme.js applies it)
 };
 
@@ -83,6 +86,7 @@ function render() {
     state.hasWork = hasWork(); // the footer's "Your tournaments", the intro's button
     renderScreen(container, state);
     syncAddress();
+    if (state.screen === 'intro' && state.introCompetitions === null) loadIntroCompetitions();
     if (state.screen === 'setup') bindSetupLiveUpdates();
     if (state.visibilityPanel) bindOptionGroups();
     if (state.screen === 'replay') {
@@ -362,13 +366,55 @@ function openOnline(code) {
 
 // Read once for the first paint, then follow the live feed. Nothing here can change
 // the tournament: the page is read-only and only the organiser's saves come in.
+// ---- listed competitions (/competitions, the intro) --------------------------------
+
+function fetchCompetitions(offset, limit) {
+  return fetch(`/api/competitions?offset=${offset}&limit=${limit}`, { credentials: 'omit' }).then((res) => {
+    if (!res.ok) throw new Error('server error ' + res.status);
+    return res.json();
+  });
+}
+
+// The page: the first 30, then 30 more per "Show more".
+function loadCompetitions() {
+  const list = state.competitions || (state.competitions = { items: [], total: 0 });
+  list.loading = true;
+  list.error = null;
+  fetchCompetitions(list.items.length, 30)
+    .then(({ total, competitions }) => {
+      list.items = list.items.concat(competitions);
+      list.total = total;
+    })
+    .catch((e) => (list.error = navigator.onLine === false ? 'you seem to be offline' : e.message))
+    .then(() => {
+      list.loading = false;
+      if (state.screen === 'competitions') render();
+    });
+}
+
+// The intro's section: the latest 3, filled in place so the logo's animation isn't restarted.
+function loadIntroCompetitions() {
+  state.introCompetitions = []; // asked once per visit
+  fetchCompetitions(0, 3)
+    .then(({ competitions }) => {
+      state.introCompetitions = competitions;
+      const el = container.querySelector('[data-intro-competitions]');
+      if (!el || !competitions.length) return;
+      el.innerHTML = renderIntroCompetitions(competitions);
+      el.hidden = false;
+    })
+    .catch(() => {}); // no list, no section: the intro works without it
+}
+
 function openPublic(route) {
   state.readOnly = true;
   state.live = { code: route.code, status: 'connecting' };
   state.screen = 'loading';
   render();
   Live.read(route.code)
-    .then(({ version, tournament }) => {
+    .then(({ version, tournament, listed }) => {
+      // An unlisted competition stays out of search engines, even if its link is posted somewhere.
+      if (!listed) document.head.insertAdjacentHTML('beforeend', '<meta name="robots" content="noindex">');
       state.tournament = tournament;
       if (route.name === 'rider') {
         const slugs = riderSlugs(tournament);
@@ -644,10 +690,11 @@ container.addEventListener('click', (e) => {
 
   // The logo: a viewer (and "Nothing here") goes to /, where rebattle starts for them;
   // the organiser goes to the tournament list, loaded afresh from an online tournament.
-  if (action === 'go-home' && (state.readOnly || state.screen === 'notFound')) location.href = '/';
+  if (action === 'go-home' && (state.readOnly || state.screen === 'notFound' || state.screen === 'competitions')) location.href = '/';
   else if (action === 'go-home' && state.online) location.href = '/tournaments';
   else if (action === 'go-home') goHome();
   else if (action === 'follow') follow();
+  else if (action === 'more-competitions') loadCompetitions();
   else if (action === 'set-theme') setTheme(el.dataset.themeChoice);
   else if (action === 'go-setup') goSetup();
   else if (action === 'go-setup-back') {
@@ -788,6 +835,9 @@ if (route.name === 'manage') {
   state.screen = 'home';
 } else if (route.name === 'about') {
   state.screen = 'intro';
+} else if (route.name === 'competitions') {
+  state.screen = 'competitions';
+  loadCompetitions();
 } else if (route.name !== 'home') {
   state.screen = 'notFound';
 } else if (viewed) {
@@ -806,5 +856,5 @@ if (route.name === 'manage') {
 }
 if (redirect) location.replace(redirect);
 else if (!['manage', 'view', 'rider'].includes(route.name)) render(); // the others render themselves
-if (['home', 'list', 'about', 'manage'].includes(route.name) && !state.readOnly && !redirect) loadOrganiser();
+if (['home', 'list', 'about', 'competitions', 'manage'].includes(route.name) && !state.readOnly && !redirect) loadOrganiser();
 Cloud.flush(); // anything left unsent from last time

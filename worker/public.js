@@ -3,7 +3,7 @@
 //
 //   GET /api/competitions?offset=0&limit=30  -> { total, competitions: [summary] }
 //                            the listed ones (worker/listing.js), running first, then finished
-//   GET /api/t/<code>        -> { code, version, updatedAt, tournament }
+//   GET /api/t/<code>        -> { code, version, updatedAt, listed, tournament }
 //   GET /api/t/<code>/live   WebSocket: { type: 'snapshot', version, updatedAt, tournament }
 //                            on connect and after every save, { type: 'deleted' } at the end;
 //                            a viewer that sends anything is disconnected
@@ -32,6 +32,6 @@ export async function handlePublic(request, env, json) {
   }
   const res = await store.fetch('https://store/read');
   if (res.status !== 200) return json({ error: 'not found' }, 404);
-  const { version, updatedAt, tournament } = await res.json();
-  return json({ code: m[1], version, updatedAt, tournament });
+  const { version, updatedAt, listed, tournament } = await res.json();
+  return json({ code: m[1], version, updatedAt, listed: !!listed, tournament }); // listed: the page may be indexed
 }

@@ -2,6 +2,7 @@
 // is, following a competition by its code, how the format works, and how to start.
 
 import { brandLogo } from './html.js';
+import { renderIntroCompetitions } from './competitions.js';
 
 const STEPS = [
   ['wb', 'Winners bracket', 'Everyone starts here. Win and you move on. Lose once and you drop to the Losers bracket: no one is out after one bad run.'],
@@ -10,6 +11,7 @@ const STEPS = [
 ];
 
 // state.hasWork: tournaments saved on this device (shows the way to the list).
+// state.introCompetitions: the latest listed competitions (filled in by app.js).
 function renderIntro(state) {
   return `
     <div class="topbar">
@@ -29,6 +31,7 @@ function renderIntro(state) {
       </div>
       <p class="field-error" id="follow-error" role="alert"></p>
     </div>
+    <section class="section intro-competitions" data-intro-competitions ${state.introCompetitions && state.introCompetitions.length ? '' : 'hidden'}>${renderIntroCompetitions(state.introCompetitions)}</section>
     <section class="section intro-how">
       <h2>How it works</h2>
       <ol class="intro-steps">
