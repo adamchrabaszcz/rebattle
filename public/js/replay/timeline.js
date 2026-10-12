@@ -139,12 +139,39 @@ function journeyScenes(t, focus, heatScenes, site) {
         stats: `${ridden.length} heat${ridden.length === 1 ? '' : 's'} · ${wins} win${wins === 1 ? '' : 's'} · ${ridden.length - wins} loss${
           ridden.length - wins === 1 ? '' : 'es'
         }`,
-        link: siteLink(site, `${name(t, focus).split(/\s+/)[0]}’s journey:`, site && site.code && `/t/${site.code}/${riderSlugs(t)[focus]}`),
+        link: siteLink(site, `${name(t, focus)}’s journey:`, site && site.code && `/t/${site.code}/${riderSlugs(t)[focus]}`),
       },
     ]);
 }
 
-const name = (t, id) => Bracket.getName(t, id) || 'TBD';
+// The video is a file people post well beyond the event, so it shows first names only
+// (the app's screens and public pages keep the full names): the first word, with a
+// number after it kept ("Rider 12"). Riders who share a first name get their last
+// name's initial ("Adam C." and "Adam K."), so a heat never reads "Adam vs Adam".
+function shortNames(competitors) {
+  const words = (c) => String(c.name || '').trim().split(/\s+/).filter(Boolean);
+  const first = (c) => {
+    const [w = '', next] = words(c);
+    return next && /^\d+$/.test(next) ? `${w} ${next}` : w;
+  };
+  const count = {};
+  competitors.forEach((c) => (count[first(c).toLowerCase()] = (count[first(c).toLowerCase()] || 0) + 1));
+  const short = (c) => {
+    const w = words(c);
+    const shared = count[first(c).toLowerCase()] > 1 && w.length > 1 && first(c) === w[0];
+    return shared ? `${w[0]} ${w.at(-1)[0].toUpperCase()}.` : first(c);
+  };
+  return new Map(competitors.map((c) => [c.id, short(c)]));
+}
+
+let shortCache = { key: null, names: null }; // name() runs for every card on every frame
+function shortName(t, id) {
+  const key = t.competitors.map((c) => c.id + '\u0000' + c.name).join('\u0001');
+  if (shortCache.key !== key) shortCache = { key, names: shortNames(t.competitors) };
+  return shortCache.names.get(id);
+}
+
+const name = (t, id) => (id && shortName(t, id)) || Bracket.getName(t, id) || 'TBD';
 
 // The address shown at the end of the video: { label, url }, or null without a site.
 // A local tournament has no public page, so it gets just the host, unlabelled.
@@ -153,4 +180,4 @@ function siteLink(site, label, path) {
   return path ? { label, url: site.host + path } : { label: '', url: site.host };
 }
 
-export { name, buildTimeline };
+export { name, shortNames, buildTimeline };
