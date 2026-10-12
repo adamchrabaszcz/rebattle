@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 
 import * as Bracket from '../public/js/engine/bracket.js';
 import { lbLayout, slotOf } from '../public/js/engine/lb-layout.js';
-import { buildTimeline } from '../public/js/replay/timeline.js';
+import { buildTimeline, firstName, name } from '../public/js/replay/timeline.js';
 
 function played(n, heatFormat) {
   const t = Bracket.createTournament({ name: 'Test', competitorNames: Array.from({ length: n }, (_, i) => 'Rider ' + (i + 1)), settings: { heatFormat, lapTimeSeconds: 20 } });
@@ -115,4 +115,15 @@ test("a rider's journey shows only their heats, then their final place", () => {
       assert.deepEqual(shown.map((m) => m.id).sort(), all.filter(rode).map((m) => m.id).sort(), `${n}: all of their heats`);
     }
   }
+});
+
+test('the video shows first names only', () => {
+  const cases = { 'Lena Kowalczyk': 'Lena', 'Jan van der Berg': 'Jan', '  Eva  ': 'Eva', Max: 'Max', 'Rider 12': 'Rider 12', 'Rider 3 Smith': 'Rider 3', '': '' };
+  for (const [full, shown] of Object.entries(cases)) assert.equal(firstName(full), shown, full);
+
+  const t = Bracket.createTournament({ name: 'Cable Open', competitorNames: ['Dora Smith', 'Lena Kowalczyk', 'Eva Nowak', 'Max'], settings: { heatFormat: 'single', lapTimeSeconds: 20 } });
+  const dora = t.competitors.find((c) => c.name === 'Dora Smith');
+  assert.equal(name(t, dora.id), 'Dora');
+  assert.equal(name(t, null), 'TBD');
+  assert.equal(t.name, 'Cable Open', 'the tournament keeps its name');
 });

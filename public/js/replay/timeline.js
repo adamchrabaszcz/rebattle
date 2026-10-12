@@ -139,12 +139,20 @@ function journeyScenes(t, focus, heatScenes, site) {
         stats: `${ridden.length} heat${ridden.length === 1 ? '' : 's'} · ${wins} win${wins === 1 ? '' : 's'} · ${ridden.length - wins} loss${
           ridden.length - wins === 1 ? '' : 'es'
         }`,
-        link: siteLink(site, `${name(t, focus).split(/\s+/)[0]}’s journey:`, site && site.code && `/t/${site.code}/${riderSlugs(t)[focus]}`),
+        link: siteLink(site, `${name(t, focus)}’s journey:`, site && site.code && `/t/${site.code}/${riderSlugs(t)[focus]}`),
       },
     ]);
 }
 
-const name = (t, id) => Bracket.getName(t, id) || 'TBD';
+// The video is a file people post well beyond the event, so it shows first names only
+// (the app's screens and public pages keep the full names): the first word, with a
+// number after it kept ("Rider 12").
+function firstName(full) {
+  const [first = '', second] = String(full || '').trim().split(/\s+/);
+  return second && /^\d+$/.test(second) ? `${first} ${second}` : first;
+}
+
+const name = (t, id) => firstName(Bracket.getName(t, id)) || 'TBD';
 
 // The address shown at the end of the video: { label, url }, or null without a site.
 // A local tournament has no public page, so it gets just the host, unlabelled.
@@ -153,4 +161,4 @@ function siteLink(site, label, path) {
   return path ? { label, url: site.host + path } : { label: '', url: site.host };
 }
 
-export { name, buildTimeline };
+export { name, firstName, buildTimeline };
