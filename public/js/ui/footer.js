@@ -22,6 +22,7 @@ function renderFooter(state) {
         <a href="/about">About</a>
         <a href="/about#follow">Follow a competition</a>
         <a href="/competitions">Competitions</a>
+        <a href="/brand">Brand</a>
         ${state.hasWork ? '<a href="/tournaments">Your tournaments</a>' : ''}
       </nav>
       <div class="theme-switch" role="group" aria-label="Theme">

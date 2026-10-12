@@ -2,6 +2,7 @@
 // app.js owns state and wires up event handling via data-action delegation.
 
 import { renderBracketScreen } from './bracket-screen.js';
+import { renderBrand } from './brand.js';
 import { tabState } from './brackets.js';
 import { drawConnectors, tracePath } from './connectors.js';
 import { renderFooter } from './footer.js';
@@ -114,7 +115,7 @@ function render(container, state) {
   container.classList.toggle('wide', state.screen === 'bracket');
   // Every screen but the replay ends with the site footer.
   const footer = state.screen === 'replay' ? '' : renderFooter(state);
-  const screens = { home: renderHome, intro: renderIntro, competitions: renderCompetitions, setup: renderSetup, names: renderNames, replay: renderReplayScreen, notFound: renderNotFound, loading: renderLoading, rider: renderRiderScreen };
+  const screens = { home: renderHome, intro: renderIntro, competitions: renderCompetitions, brand: renderBrand, setup: renderSetup, names: renderNames, replay: renderReplayScreen, notFound: renderNotFound, loading: renderLoading, rider: renderRiderScreen };
   if (screens[state.screen]) container.innerHTML = screens[state.screen](state) + footer;
   else if (state.screen === 'bracket') {
     container.innerHTML = renderBracketScreen(state) + footer;

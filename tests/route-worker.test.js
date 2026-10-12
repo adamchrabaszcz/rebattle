@@ -50,7 +50,7 @@ const assets = {
 
 test('worker: paths that are no file get the app, with a 404 unless the app knows them', async () => {
   const env = { ASSETS: assets };
-  for (const path of ['/about', '/tournaments', '/competitions', '/t/cable-open-x7k2', '/t/cable-open-x7k2/dora', '/manage/cable-open-x7k2', '/about/']) {
+  for (const path of ['/about', '/tournaments', '/competitions', '/brand', '/t/cable-open-x7k2', '/t/cable-open-x7k2/dora', '/manage/cable-open-x7k2', '/about/']) {
     const res = await worker.fetch(new Request('https://rebattle.app' + path), env);
     assert.equal(res.status, 200, path);
     assert.equal(await res.text(), '<!doctype html>app', path);

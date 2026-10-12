@@ -3,7 +3,7 @@
 Run from the repo root, after tools/make-logo.py:  python3 tools/make-icons.py
 Reads the mark's outlines from public/js/ui/logo-outlines.js (written by tools/make-logo.py), so the
 icons carry the same "r" as the app. Writes public/icons/favicon.svg and public/icons/touch-icon.svg,
-and docs/brand/instagram/profile.svg (the Instagram profile picture: square, mark small enough for
+and public/brand/instagram/profile.svg (the Instagram profile picture: square, mark small enough for
 the round crop). The PNGs (favicon-32, apple-touch-icon, icon-512, profile) are headless-Chrome
 screenshots of those SVGs at 32/180/512/1080 px.
 """
@@ -32,5 +32,5 @@ def svg(size=64, rounded=True, fill_frac=0.6, centre_letter=False):
 
 open('public/icons/favicon.svg', 'w').write(svg(64, True))
 open('public/icons/touch-icon.svg', 'w').write(svg(180, False, fill_frac=0.5))
-os.makedirs('docs/brand/instagram', exist_ok=True)
-open('docs/brand/instagram/profile.svg', 'w').write(svg(1080, False, fill_frac=0.5, centre_letter=True))
+os.makedirs('public/brand/instagram', exist_ok=True)
+open('public/brand/instagram/profile.svg', 'w').write(svg(1080, False, fill_frac=0.5, centre_letter=True))
