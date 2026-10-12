@@ -1,10 +1,12 @@
-// The rebattle Worker. Cloudflare runs it only for /api/* (wrangler.jsonc,
-// run_worker_first); everything else is a static file from public/, and unknown
-// paths such as /t/<code> get index.html so the app can route them itself.
+// The rebattle Worker. Cloudflare runs it first for /api/* (wrangler.jsonc,
+// run_worker_first); other requests are static files from public/, and only a path
+// that is no file reaches the Worker: app routes such as /t/<code> get index.html
+// (appPage), anything else the same page with a 404.
 //
 // Static responses get their headers from public/_headers; API responses don't,
 // so they set their own here.
 
+import { parseRoute } from '../public/js/route.js';
 import { organiserOf } from './auth.js';
 import { handleManage } from './manage.js';
 import { handlePublic } from './public.js';
@@ -54,6 +56,17 @@ export default {
       if (!who) return json({ error: 'login required' }, 401);
       return handleManage(request, env, who, json, deps);
     }
+    if (!url.pathname.startsWith('/api/')) return appPage(request, env, url);
     return json({ error: 'not found' }, 404);
   },
 };
+
+// A path that is no file: index.html, so the app routes it (route.js). Paths the app doesn't
+// know get the same page with a 404, so people see its "not found" screen and search
+// engines a real 404 instead of endless copies of the home page.
+async function appPage(request, env, url) {
+  if (!readOnly(request)) return new Response(null, { status: 405, headers: { Allow: 'GET, HEAD' } });
+  const page = await env.ASSETS.fetch(new URL('/', url));
+  const status = page.ok && parseRoute(url.pathname).name === 'notFound' ? 404 : page.status;
+  return new Response(request.method === 'HEAD' ? null : page.body, { status, headers: page.headers });
+}

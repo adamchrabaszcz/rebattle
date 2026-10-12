@@ -140,8 +140,8 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 
 ## Hosting
 
-- One Cloudflare Workers project: static assets from `public/` (docs, tests and tools are never served) plus `worker/index.js`, which runs only for `/api/*` (`run_worker_first`): health, the public API and the organiser API.
-- Unknown paths get `index.html` (`not_found_handling: "single-page-application"`), and `public/js/route.js` decides the screen: `/t/<code>` and `/t/<code>/<rider>` are the public pages, `/manage/<code>` is the organiser's, `/tournaments` the list, `/about` the introduction, anything else is "not found". That's why `index.html` uses absolute paths (`/js/…`).
+- One Cloudflare Workers project: static assets from `public/` (docs, tests and tools are never served) plus `worker/index.js`, which runs first for `/api/*` (`run_worker_first`): health, the public API and the organiser API. It also gets every other path that is no file (below).
+- A path that is no file reaches the Worker (`not_found_handling: "none"`), which serves `index.html` through the `ASSETS` binding, with the headers `_headers` gives it. `public/js/route.js` decides the screen: `/t/<code>` and `/t/<code>/<rider>` are the public pages, `/manage/<code>` is the organiser's, `/tournaments` the list, `/about` the introduction. Anything else is "not found": the same page with a **404** (`appPage` in `worker/index.js`), so search engines don't index copies of the home page. `tools/serve.mjs` does the same locally. That's why `index.html` uses absolute paths (`/js/…`).
 - API responses set their own headers (`worker/index.js`); `_headers` only covers static files.
 - Wrangler is a pinned dev dependency (`package.json` + `package-lock.json`), so local runs, CI and Cloudflare's build use the same version.
 - Cloudflare's GitHub integration deploys `main` on every merge and builds a preview for each pull request.

@@ -6,8 +6,10 @@
   "compatibility_date": "2026-10-01",
   "assets": {
     "directory": "./public",
-    // /t/<code>, /manage/<code> and other app paths get index.html; the app routes them.
-    "not_found_handling": "single-page-application",
+    // A path that is no file (/t/<code>, /manage/<code>, a typo) goes to the Worker, which
+    // serves index.html: 200 for the app's routes, 404 for the rest (worker/index.js).
+    "not_found_handling": "none",
+    "binding": "ASSETS",
     "run_worker_first": ["/api/*"]
   },
   // Cloudflare Access for organisers (/manage/*, /api/manage/*). Not secrets: the team
