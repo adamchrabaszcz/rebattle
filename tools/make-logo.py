@@ -9,6 +9,8 @@ Writes:
 - public/js/ui/logo-outlines.js  the full, name and mark outlines for the app and the video.
 - public/brand/share-preview.svg  the link preview (1200x630); public/icons/share-preview.png is its
   headless-Chrome screenshot.
+- public/brand/instagram/video-cover.svg  the cover for a Reel or Story (1080x1920); the .png next to
+  it is its screenshot.
 Then tools/make-icons.py, the PNG screenshots, and tools/make-brand-kit.py for the zip.
 
 Versions (docs/brand.md has when to use which):
@@ -320,6 +322,29 @@ def preview():
 
 
 open('public/brand/share-preview.svg', 'w').write(preview())
+
+
+# ---- video cover: the picked cover of a Reel or Story, for any contest --------------------
+
+COVER_W, COVER_H = 1080, 1920
+
+
+def video_cover():
+    """The full logo dead centre (it survives the 4:5 and square crops of a profile grid) and the
+    address at the bottom, as outlines (public/brand/instagram/video-cover.svg; .png is its screenshot)."""
+    c = COLOURWAYS['on-dark']
+    logo, address = full(c), Art()
+    address.text('rebattle.app', 0, c['text'], font=SANS, spacing=0)
+    s, k = 900 / (logo.x1 - logo.x0), 54 / EM  # the address 54 px to the em
+    logo_h = (logo.y1 - logo.y0) * s
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {COVER_W} {COVER_H}" width="{COVER_W}" height="{COVER_H}" role="img" aria-label="drop. bounceback. rebattle. rebattle.app">'
+            f'<rect width="{COVER_W}" height="{COVER_H}" fill="#111318"/>'
+            f'{logo.group(s, (COVER_W - (logo.x1 - logo.x0) * s) / 2, (COVER_H - logo_h) / 2)}'
+            f'{address.group(k, (COVER_W - (address.x1 - address.x0) * k) / 2, COVER_H - 180 - address.y1 * k)}'
+            '</svg>\n')
+
+
+open('public/brand/instagram/video-cover.svg', 'w').write(video_cover())
 
 
 # ---- usage sheet: do's and don'ts --------------------------------------------------

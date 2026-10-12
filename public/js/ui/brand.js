@@ -140,6 +140,7 @@ function renderBrand() {
       <div class="brand-social">
         <figure><img src="${FILES}instagram/profile.png" alt="The r mark on the dark background" loading="lazy"><figcaption>Profile picture, 1080×1080 · ${link('instagram/profile.png', 'PNG')} ${link('instagram/profile.svg', 'SVG')}</figcaption></figure>
         <figure><img src="/icons/share-preview.png" alt="The logo with “Double-elimination brackets, run from your phone.”" loading="lazy"><figcaption>Link preview, 1200×630 · <a href="/icons/share-preview.png" download>PNG</a> ${link('share-preview.svg', 'SVG')}</figcaption></figure>
+        <figure class="brand-cover"><img src="${FILES}instagram/video-cover.png" alt="The logo in the middle, rebattle.app at the bottom" loading="lazy"><figcaption>Video cover for Reels and Stories, 1080×1920: pick it as the cover when you post a replay · ${link('instagram/video-cover.png', 'PNG')} ${link('instagram/video-cover.svg', 'SVG')}</figcaption></figure>
       </div>
     </section>
 
