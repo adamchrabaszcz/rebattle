@@ -80,6 +80,10 @@ In the video, blue `#4f8cff` marks the Winners bracket (opposite violet for Lose
 - Final 4 origins: **WB 1st, WB 2nd, LB 1st, LB 2nd**.
 - "Random draw" for Losers-bracket pairings; "Bye" for no opponent; "Out" for eliminated.
 
+## Link preview
+
+What LinkedIn, WhatsApp, iMessage and the rest show when someone shares a rebattle.app link: `public/icons/share-preview.png` (1200×630), the full logo on the dark background, the tagline "Double-elimination brackets, run from your phone." in Funnel Sans and the address at the bottom. `tools/make-logo.py` writes it as outlines to `docs/brand/share-preview.svg`; the PNG is a 1200×630 headless-Chrome screenshot of it. The tags that point to it are in `public/index.html` (docs/architecture.md, Hosting).
+
 ## Instagram: @rebattle.app
 
 - **Profile picture:** `docs/brand/instagram/profile.png` (1080×1080; the "r" mark on the dark background, the letter centred in the round crop with the underline below it, and still readable at 44 px). Rebuild the SVG with `tools/make-icons.py`; the PNG is a 1080 px screenshot of it.
