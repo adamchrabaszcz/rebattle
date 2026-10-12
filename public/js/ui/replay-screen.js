@@ -41,6 +41,7 @@ function renderReplayScreen(state) {
               .map(({ id, place }) => `<option value="${id}">${escapeHtml(Bracket.getName(t, id))} &mdash; ${place}.</option>`)
               .join('')}
           </select>
+          <label class="replay-names" title="The video shows first names unless this is ticked"><input type="checkbox" data-replay="full-names" /> Full names</label>
         </div>
         <p class="replay-status" data-replay="status">Vertical 1080&times;1920 &mdash; ready for Stories, Reels and TikTok.</p>
       </div>

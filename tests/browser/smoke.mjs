@@ -282,6 +282,12 @@ await step('replay video draws on the canvas', () => js(`(async () => { ${H}
   let lit = 0;
   for (let i = 0; i < d.length; i += 4 * 97) if (d[i] + d[i + 1] + d[i + 2] > 300) lit++;
   if (lit < 50) throw new Error('canvas looks empty');
+  // "Full names" (first names by default) rebuilds the video from the start.
+  const names = q('[data-replay=full-names]');
+  if (!names || names.checked) throw new Error('no "Full names" box, or ticked by default');
+  if (Number(q('[data-replay=scrub]').value) < 800) throw new Error('the replay is not playing');
+  names.click(); await wait(100);
+  if (Number(q('[data-replay=scrub]').value) > 600) throw new Error('"Full names" did not restart the video');
   q('[data-action=close-replay]').click(); await wait();
   return cv.width + 'x' + cv.height;
 })()`));
