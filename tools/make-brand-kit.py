@@ -15,7 +15,7 @@ README = """rebattle brand kit
 ==================
 
 logos/      full, name, mark and badge, each on-dark, on-light, mono-dark, mono-white (SVG + PNG)
-instagram/  the profile picture
+instagram/  the profile picture, and the video cover for Reels and Stories (1080x1920)
 how/        how the logo is made: the steps, and the whole sheet (SVG + PNG)
 share-preview.png / .svg   the link preview (1200x630)
 logo-usage.svg             do's and don'ts

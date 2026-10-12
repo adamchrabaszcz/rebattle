@@ -669,6 +669,7 @@ footer.note a { color: var(--text); }
 .brand-social figure { margin: 0; }
 .brand-social img { display: block; width: 100%; height: auto; border-radius: var(--radius); }
 .brand-social figcaption { margin-top: 8px; font-size: 14px; color: var(--muted); }
+.brand-social .brand-cover img { max-width: 220px; }
 @media (max-width: 700px) { .brand-social { grid-template-columns: 1fr; } }
 .card .btn + .btn, .card button + .btn { margin-left: 8px; }
 /* Desktop: the intro spans the page (same width as the header): the lead, then
