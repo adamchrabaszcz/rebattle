@@ -1,0 +1,54 @@
+name: format
+
+# The format of issues and pull requests (CONTRIBUTING.md, tools/format-check.mjs).
+# Issues can't be blocked, so one that misses a section gets the needs-format label and a
+# comment, both removed once it is fixed. A pull request without a Conventional Commit
+# title or a "Closes #n" line fails this check, which is required on main.
+on:
+  issues:
+    types: [opened, edited, reopened]
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  issue:
+    if: github.event_name == 'issues'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the issue's sections
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.issue.number }}
+          HAS_LABEL: ${{ contains(github.event.issue.labels.*.name, 'needs-format') }}
+        run: |
+          missing=$(node tools/format-check.mjs issue | grep '^Missing: ' || true)
+          if [ -n "$missing" ]; then
+            echo "$missing"
+            if [ "$HAS_LABEL" != "true" ]; then
+              gh label create needs-format --repo "$REPO" --color fbca04 --description "Issue misses a required section" 2>/dev/null || true
+              gh issue edit "$NUMBER" --repo "$REPO" --add-label needs-format
+              printf 'This issue is missing:\n%s\n\nThe format is in CONTRIBUTING.md ("Issues and pull requests"); the issue forms write it for you. The needs-format label goes away once it is fixed.\n' \
+                "$(echo "$missing" | sed 's/^Missing: /- /')" | gh issue comment "$NUMBER" --repo "$REPO" --body-file -
+            fi
+          elif [ "$HAS_LABEL" = "true" ]; then
+            gh issue edit "$NUMBER" --repo "$REPO" --remove-label needs-format
+            echo "Format OK; label removed."
+          else
+            echo "Format OK."
+          fi
+
+  pull-request:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Conventional Commit title and a Closes line
+        run: node tools/format-check.mjs pr
