@@ -170,6 +170,12 @@ await step('home screen renders the logo with the bundled fonts', async () => {
   check(r.fonts.some((f) => /Funnel/.test(f)), 'Funnel fonts not loaded');
 });
 
+await step('robots.txt and sitemap.xml are real files, not the app', async () => {
+  const types = await js(`Promise.all(['/robots.txt', '/sitemap.xml'].map((p) => fetch(p).then((r) => r.ok && r.headers.get('content-type'))))`);
+  check(/^text\/plain/.test(types[0]), 'robots.txt: ' + types[0]);
+  check(/xml/.test(types[1]), 'sitemap.xml: ' + types[1]);
+});
+
 await step('colours follow the device: light by day, dark by night', async () => {
   const bg = `getComputedStyle(document.body).backgroundColor`;
   const seen = {};

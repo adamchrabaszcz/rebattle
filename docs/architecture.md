@@ -149,4 +149,9 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
   - **CSP:** only the site's own files. No inline scripts or `<style>` tags; `style="…"` attributes are allowed because the UI sets widths and colours with them. A new outside source (analytics, a CDN, the future API on another host) needs adding to the CSP first.
   - **Caching:** fonts are cached for a year (rename a font file to change it), icons for a week. HTML, CSS and JS are always revalidated, so a deploy shows up at once.
 - `public/manifest.webmanifest` lets phones install the app ("Add to Home Screen") in standalone mode with the "r" icon.
+- **Search engines:**
+  - `index.html` has a description, `WebApplication` structured data (JSON-LD is data, not a script, so the CSP allows it) and `<noscript>` text for crawlers that don't run JavaScript.
+  - `public/robots.txt` keeps crawlers out of `/manage/` and `/api/`.
+  - `public/sitemap.xml` lists the fixed pages; add a page there when a new fixed route appears in `route.js`, because a test checks every sitemap URL is a real route.
+  - There's no canonical tag: every path serves the same `index.html`, so a fixed one would mark tournament pages as copies of the home page.
 - **Link previews:** the Open Graph and Twitter tags in `index.html` give every shared link (LinkedIn, WhatsApp, iMessage, Slack, X, Facebook) the same title, description and image, `icons/share-preview.png` (docs/brand.md). Every path serves the same `index.html`, so a `/t/<code>` link shows it too. Platforms cache previews: after changing them, re-scrape with LinkedIn's Post Inspector or Facebook's Sharing Debugger.
