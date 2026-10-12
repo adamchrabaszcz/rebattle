@@ -24,6 +24,7 @@ function mount(container, tournament, focus, site) {
     canvas,
     ctx: canvas.getContext('2d'),
     tl: buildTimeline(tournament, focus, site),
+    source: tournament, // tl.tournament may be a copy with short names
     site,
     t: 0,
     playing: false,
@@ -35,6 +36,7 @@ function mount(container, tournament, focus, site) {
     el: {
       focus: q('focus'), subtitle: q('subtitle'), tip: q('tip'), play: q('play'), restart: q('restart'), scrub: q('scrub'), time: q('time'),
       export: q('export'), share: q('share'), status: q('status'), making: q('making'), progress: q('progress'), makingTime: q('making-time'), makingNote: q('making-note'),
+      fullNames: q('full-names'),
     },
   };
   const p = player;
@@ -69,6 +71,7 @@ function mount(container, tournament, focus, site) {
   p.el.export.addEventListener('click', exportVideo);
   p.el.focus.value = focus || '';
   p.el.focus.addEventListener('change', () => setFocus(p.el.focus.value || null));
+  p.el.fullNames.addEventListener('change', () => setFocus(p.tl.focus));
   updateSubtitle();
   p.el.share.addEventListener('click', shareVideo);
   draw();
@@ -76,10 +79,11 @@ function mount(container, tournament, focus, site) {
   if (!fontsLoaded) FONTS_READY.then(() => player === p && draw()); // repaint once the fonts are in
 }
 
+// A rider's journey or the whole competition, with short or full names: a new timeline.
 function setFocus(focus) {
   const p = player;
   pause();
-  p.tl = buildTimeline(p.tl.tournament, focus, p.site);
+  p.tl = buildTimeline(p.source, focus, p.site, { fullNames: p.el.fullNames.checked });
   p.el.scrub.max = String(Math.round(p.tl.total * 1000));
   p.file = null;
   p.el.share.hidden = true;
@@ -231,7 +235,7 @@ async function exportVideo() {
   }
   if (canEncode()) {
     p.encoding = true;
-    p.el.export.disabled = p.el.focus.disabled = true;
+    p.el.export.disabled = p.el.focus.disabled = p.el.fullNames.disabled = true;
     showMaking(p, FAST_NOTE);
     let blob = null;
     try {
@@ -241,7 +245,7 @@ async function exportVideo() {
     }
     if (player !== p) return;
     p.encoding = false;
-    p.el.export.disabled = p.el.focus.disabled = false;
+    p.el.export.disabled = p.el.focus.disabled = p.el.fullNames.disabled = false;
     if (blob) return saveVideo(p, blob);
   }
   recordVideo(p);
@@ -313,7 +317,7 @@ function saveVideo(p, blob) {
 
 function setControlsDisabled(disabled) {
   const el = player.el;
-  [el.play, el.restart, el.scrub, el.export, el.focus].forEach((b) => (b.disabled = disabled));
+  [el.play, el.restart, el.scrub, el.export, el.focus, el.fullNames].forEach((b) => (b.disabled = disabled));
 }
 
 function shareVideo() {

@@ -401,6 +401,8 @@ footer.note a { color: var(--text); }
 .replay-controls { flex: 1; min-width: 260px; display: flex; flex-direction: column; gap: 12px; }
 .replay-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .replay-row input[type="range"] { flex: 1; min-width: 140px; accent-color: var(--accent); }
+.replay-names { display: inline-flex; align-items: center; gap: 6px; margin: 0; white-space: nowrap; }
+.replay-names input { accent-color: var(--accent); }
 .replay-time { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; }
 .replay-status { margin: 0; font-size: 13px; }
 /* While the video is made: a bar and what is going on, right under the button. */
