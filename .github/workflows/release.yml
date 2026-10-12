@@ -12,6 +12,8 @@ on:
 
 permissions:
   contents: write
+  issues: write
+  pull-requests: write
 
 concurrency:
   group: release
@@ -36,5 +38,9 @@ jobs:
         run: |
           version=$(node tools/release.mjs)
           if [ -z "$version" ]; then echo "Nothing to release (docs, ci, chore… only)."; exit 0; fi
+          previous=$(git describe --tags --abbrev=0 --match 'v[0-9]*.[0-9]*.[0-9]*' "$SHA" 2>/dev/null || true)
           gh release create "v$version" --target "$SHA" --title "v$version" --generate-notes
           echo "Released v$version" >> "$GITHUB_STEP_SUMMARY"
+          # The pull requests and issues it shipped get the milestone v$version and a comment.
+          # The release is out already: a failure here only leaves the marks missing.
+          node tools/release-marks.mjs "$version" "$previous" "$SHA" || echo "::warning::Could not mark the issues for v$version"

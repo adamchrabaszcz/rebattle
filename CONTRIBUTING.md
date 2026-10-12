@@ -77,7 +77,7 @@ Optional. #41, when it is one step of bigger work (also add it as a sub-issue th
 
 ## Releases
 
-Every merge to `main` deploys. After CI passes there, `.github/workflows/release.yml` tags the commit and publishes a GitHub release with the merged pull requests as notes, if the merge shipped something. The version follows the commit types since the last release (`tools/release.mjs`): a breaking change (`feat!:` or a `BREAKING CHANGE:` footer) → major, `feat` → minor, `fix` / `perf` → patch. `docs`, `ci`, `chore`, `test`, `refactor`, `style` and `build` make no release. So the commit type matters: it decides the version.
+Every merge to `main` deploys. After CI passes there, `.github/workflows/release.yml` tags the commit and publishes a GitHub release with the merged pull requests as notes, if the merge shipped something. The version follows the commit types since the last release (`tools/release.mjs`): a breaking change (`feat!:` or a `BREAKING CHANGE:` footer) → major, `feat` → minor, `fix` / `perf` → patch. `docs`, `ci`, `chore`, `test`, `refactor`, `style` and `build` make no release. So the commit type matters: it decides the version. After a release, every pull request in it and every issue those closed get the milestone `vX.Y.Z` and a "Released in vX.Y.Z" comment (`tools/release-marks.mjs`), so an issue shows which version shipped it.
 
 ## Checks
 
