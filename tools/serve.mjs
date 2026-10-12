@@ -1,7 +1,7 @@
 // Local static server for public/, with the same headers Cloudflare serves from
-// public/_headers (CSP included) and the same fallback: an app path such as
-// /t/<code> gets index.html (but a missing file with an extension is a 404 here,
-// stricter than Cloudflare, so broken asset paths fail loudly). /api/* goes straight
+// public/_headers (CSP included) and the same fallback as the Worker: an app path such
+// as /t/<code> gets index.html, any other path the same page with a 404 (but a missing
+// file with an extension is a plain-text 404 here, so broken asset paths fail loudly). /api/* goes straight
 // to worker/index.js, with in-memory stores (tools/fake-do.mjs), and the live feed
 // /api/t/<code>/live gets a minimal WebSocket (tools/ws.mjs); `npm run dev` runs the
 // real Durable Objects. DEV_ORGANISER_EMAIL=you@example.com logs you in as an organiser
@@ -15,6 +15,7 @@ import { readFileSync, existsSync, statSync } from 'node:fs';
 import { join, extname, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import worker, { TournamentStore, OrganiserList, CompetitionIndex } from '../worker/index.js';
+import { parseRoute } from '../public/js/route.js';
 import { fakeNamespace } from './fake-do.mjs';
 import { acceptWebSocket, refuseUpgrade } from './ws.mjs';
 
@@ -83,15 +84,17 @@ export function createServer({ env = { DEV_ORGANISER_EMAIL: process.env.DEV_ORGA
     }
     let file = normalize(join(ROOT, path === '/' ? 'index.html' : path));
     const missing = !file.startsWith(ROOT) || path.startsWith('/_headers') || !existsSync(file) || statSync(file).isDirectory();
-    if (missing && !path.startsWith('/api/') && !extname(path)) file = join(ROOT, 'index.html'); // app route
-    else if (missing) {
+    if (missing && extname(path)) {
       res.writeHead(404, { 'Content-Type': 'text/plain' }).end('not found');
       return;
     }
+    // As the Worker does (appPage): any other path that is no file gets index.html, with a 404 unless the app knows it.
+    const status = missing && parseRoute(path).name === 'notFound' ? 404 : 200;
+    if (missing) file = join(ROOT, 'index.html');
     const headers = { 'Content-Type': TYPES[extname(file)] || 'application/octet-stream' };
     for (const r of rules) if (matches(r.pattern, path)) Object.assign(headers, r.headers);
     headers['Cache-Control'] = 'no-store'; // always serve the files on disk while developing
-    res.writeHead(200, headers).end(readFileSync(file));
+    res.writeHead(status, headers).end(readFileSync(file));
   });
   server.on('upgrade', (req, socket) => toLiveFeed(req, socket, env).catch(() => socket.destroy()));
   return server;
