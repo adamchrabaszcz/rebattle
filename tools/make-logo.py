@@ -7,6 +7,8 @@ Writes:
   headless-Chrome screenshots of these SVGs (see docs/brand.md).
 - docs/brand/logo-usage.svg  do's and don'ts, shown in docs/brand.md.
 - public/js/ui/logo-outlines.js  the full, name and mark outlines for the app and the video.
+- docs/brand/share-preview.svg  the link preview (1200x630); public/icons/share-preview.png is its
+  headless-Chrome screenshot.
 
 Versions (docs/brand.md has when to use which):
   full      "drop. bounceback. rebattle."  square full stops (the sentence's punctuation), underline under "rebattle"
@@ -288,6 +290,35 @@ open('public/js/ui/logo-outlines.js', 'w').write(
     '// "drop. bounceback.") and line (the underline).\n'
     f'export const EM = {EM};\n'
     f'export const LOGO = {LOGO_JS};\n')
+
+
+# ---- link preview: what LinkedIn, WhatsApp & co. show for a shared link ------------------------
+
+PREVIEW_W, PREVIEW_H = 1200, 630  # the Open Graph size; platforms crop little of it
+TAGLINE = 'Double-elimination brackets, run from your phone.'
+
+
+def preview():
+    """The full logo on the dark background, the tagline under it and the address at the bottom,
+    all as outlines (docs/brand/share-preview.svg; public/icons/share-preview.png is its screenshot)."""
+    c = COLOURWAYS['on-dark']
+    logo, line = full(c), Art()
+    line.text(TAGLINE, 0, c['lead'], font=SANS, spacing=0)
+    address = Art()
+    address.text('rebattle.app', 0, c['text'], font=SANS, spacing=0)
+    s = 960 / (logo.x1 - logo.x0)
+    ts = 0.46 * s  # the tagline at a bit under half the logo's size
+    logo_h, line_h = (logo.y1 - logo.y0) * s, (line.y1 - line.y0) * ts
+    top = (PREVIEW_H - logo_h - 70 - line_h) / 2 - 20
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {PREVIEW_W} {PREVIEW_H}" width="{PREVIEW_W}" height="{PREVIEW_H}" role="img" aria-label="rebattle: {TAGLINE}">'
+            f'<rect width="{PREVIEW_W}" height="{PREVIEW_H}" fill="#111318"/>'
+            f'{logo.group(s, (PREVIEW_W - (logo.x1 - logo.x0) * s) / 2, top)}'
+            f'{line.group(ts, (PREVIEW_W - (line.x1 - line.x0) * ts) / 2, top + logo_h + 70)}'
+            f'{address.group(ts * 0.8, (PREVIEW_W - (address.x1 - address.x0) * ts * 0.8) / 2, PREVIEW_H - 70 - (address.y1 - address.y0) * ts * 0.8)}'
+            '</svg>\n')
+
+
+open('docs/brand/share-preview.svg', 'w').write(preview())
 
 
 # ---- usage sheet: do's and don'ts --------------------------------------------------
