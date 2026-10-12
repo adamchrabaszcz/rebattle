@@ -21,6 +21,16 @@ The "r" of "rebattle" (and the mark) is Funnel Display Bold's r with two points,
 - **The bounce:** the arm ends in a point whose sides curve with the "e", keeping the same gap from it as the drop keeps from the underline (three quarters of the underline's distance below the baseline).
 - In the mark, the underline runs to the bounce's tip.
 
+Step by step, as on the brand page ("How the logo is made"); 1 part is a quarter of the gap from the baseline to the underline:
+
+| 1. The letter | 2. The drop | 3. The bounce | 4. The mark |
+| --- | --- | --- | --- |
+| ![The letter](../public/brand/how/1-letter.svg) | ![The drop](../public/brand/how/2-drop.svg) | ![The bounce](../public/brand/how/3-bounce.svg) | ![The mark](../public/brand/how/4-mark.svg) |
+
+![The logo, with callouts](../public/brand/how/5-logo.svg)
+
+`tools/make-logo-story.py` draws these from the real outlines (and the whole sheet, `public/brand/how/sheet.svg`; `sheet.png` is its screenshot), so they can't drift from the logo. Its captions are also on the page (`STORY` in `public/js/ui/brand.js`); a test checks they match.
+
 Only the logo has it: "drop." in the full logo and all running text keep the font's own r. It is drawn by `logo_r()` in `tools/make-logo.py`; everything that shows the logo uses those outlines (the app reads them from `public/js/ui/logo-outlines.js`, written by the same script).
 - Competition screens: competition name on the left, logo on the right (the short mark on phones).
 

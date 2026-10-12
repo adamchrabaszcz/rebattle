@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { crc32 } from 'node:zlib';
-import { renderBrand, VERSIONS, COLOURWAYS, COLOURS } from '../public/js/ui/brand.js';
+import { renderBrand, VERSIONS, COLOURWAYS, COLOURS, STORY } from '../public/js/ui/brand.js';
 import { parseRoute } from '../public/js/route.js';
 
 const PUBLIC = new URL('../public/', import.meta.url);
@@ -24,6 +24,14 @@ test('every version is offered in every colourway, as SVG and PNG', () => {
   for (const [id] of VERSIONS)
     for (const [cw] of COLOURWAYS)
       for (const ext of ['svg', 'png']) assert.match(html, new RegExp(`href="/brand/logos/${id}-${cw}\\.${ext}" download`));
+});
+
+test('"How the logo is made" has the same steps and captions as the sheet tools/make-logo-story.py draws', () => {
+  const tool = readFileSync(new URL('../tools/make-logo-story.py', import.meta.url), 'utf8');
+  for (const [file, title, text] of STORY) {
+    assert.ok(tool.includes(`('${file}', '${title}', '${text}'`), `${file}: the page and the sheet differ`);
+    assert.ok(existsSync(new URL(`brand/how/${file}.svg`, PUBLIC)), file);
+  }
 });
 
 test('the colours are the ones in docs/brand.md', () => {

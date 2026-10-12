@@ -1,8 +1,8 @@
-// The brand page (/brand): the logo files to download and how to use them, the colours,
-// the type and what the name and logo may be used for. docs/brand.md is the source;
+// The brand page (/brand): the logo files to download, how the logo is made, how to use
+// it, the colours, the type and what the name and logo may be used for. docs/brand.md is the source;
 // tests/brand.test.js checks the colours and the files here match it.
 
-import { brandHome } from './html.js';
+import { brandHome, brandLogo } from './html.js';
 
 const FILES = '/brand/';
 const COLOURWAYS = [
@@ -31,6 +31,15 @@ const COLOURS = [
   ['Green', '#35c17a', 'Advances, the winner’s path'],
   ['Violet', '#a685ff', 'Losers bracket, drops'],
   ['Red', '#e35b5b', 'Out (lost twice) only'],
+];
+
+// How the logo is made: [file in /brand/how/, title, caption]. The diagrams and the same
+// captions come from tools/make-logo-story.py (tests/brand.test.js checks they match).
+const STORY = [
+  ['1-letter', 'The letter', 'Funnel Display Bold’s own “r”. The underline will sit below the baseline.'],
+  ['2-drop', 'The drop', 'The stem ends in half a square, pointing down. Its tip takes 1 of the 4 parts between the baseline and the underline.'],
+  ['3-bounce', 'The bounce', 'The arm ends in a point that follows the “e”, 3 parts away: the gap the drop leaves, used twice. Mirrored about the arm’s centre line.'],
+  ['4-mark', 'The mark', 'The underline runs from the letter’s left edge to the bounce’s tip. One letter: drop, then bounce back.'],
 ];
 
 const RULES = [
@@ -73,6 +82,26 @@ function renderBrand() {
       <h2>The logo</h2>
       <p class="intro-note">The logo is the whole sentence: drop, bounce back, rebattle. Its “r” tells it in one letter: the stem drops below the line, and the arm bounces back. Three versions and a badge, each in four colourways.</p>
       <div class="brand-versions">${VERSIONS.map(renderVersion).join('')}</div>
+    </section>
+
+    <section class="section" id="how">
+      <h2>How the logo is made</h2>
+      <p class="intro-note">One letter tells the name. Every measure comes from the gap between the baseline and the underline, split into 4 parts.</p>
+      <ol class="story-steps">
+        ${STORY.map(([file, title, text], i) => `
+        <li>
+          <img src="${FILES}how/${file}.svg" width="560" height="640" alt="${title}: ${text}" loading="lazy">
+          <h3>${i + 1}. ${title}</h3>
+          <p>${text}</p>
+        </li>`).join('')}
+      </ol>
+      <h3 class="story-logo-title">The logo</h3>
+      <img class="story-logo" src="${FILES}how/5-logo.svg" width="2340" height="450" alt="drop. bounceback. rebattle. Square full stops, the sentence’s punctuation. The same “r”: the mark, set in the name. The underline, drawn at reading pace." loading="lazy">
+      <div class="story-live">
+        ${brandLogo({ animate: true })}
+        <button type="button" class="small" data-action="replay-logo">Play again</button>
+      </div>
+      <p class="brand-sheet">The whole sheet: ${link('how/sheet.svg', 'SVG')} ${link('how/sheet.png', 'PNG')}</p>
     </section>
 
     <section class="section">
@@ -120,4 +149,4 @@ function renderBrand() {
     </section>`;
 }
 
-export { renderBrand, VERSIONS, COLOURWAYS, COLOURS };
+export { renderBrand, VERSIONS, COLOURWAYS, COLOURS, STORY };

@@ -817,7 +817,7 @@ await step('phone: a sideways swipe changes the round, a vertical one doesn\'t',
   return `tab ${first} -> ${second}`;
 });
 
-await step('phone: the brand page shows every logo, fits the screen and copies a colour', async () => {
+await step('phone: the brand page shows every logo, fits the screen, copies a colour and plays the logo again', async () => {
   await send('Browser.grantPermissions', { origin: new URL(BASE).origin, permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'] });
   await send('Emulation.setFocusEmulationEnabled', { enabled: true }); // the clipboard wants a focused page
   await open('brand');
@@ -833,9 +833,17 @@ await step('phone: the brand page shows every logo, fits the screen and copies a
     if (!zip.ok || !/zip/.test(zip.headers.get('content-type'))) throw new Error('zip: ' + zip.status + ' ' + zip.headers.get('content-type'));
     const amber = q('[data-action=copy-colour][data-value="#ffb020"]');
     amber.click(); await wait(100);
-    return { images: imgs.length, copied: amber.classList.contains('copied') && (await navigator.clipboard.readText()) === '#ffb020' };
+    const copied = amber.classList.contains('copied') && (await navigator.clipboard.readText()) === '#ffb020';
+    const live = q('.story-live .brand');
+    const clock = () => Math.max(-1, ...live.getAnimations({ subtree: true }).map((a) => a.currentTime));
+    await wait(2200); // the first drawing has finished
+    const before = clock();
+    q('[data-action=replay-logo]').click(); await wait(50);
+    const after = clock();
+    return { images: imgs.length, copied, replayed: before > 1800 && after >= 0 && after < 1000 };
   })()`);
   check(r.copied, 'the colour was not copied');
+  check(r.replayed, '"Play again" did not draw the underline again');
   return r.images + ' images';
 });
 

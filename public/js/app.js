@@ -500,6 +500,14 @@ function copyColour(button) {
   }, () => {});
 }
 
+// The brand page's live logo: draw the underline again (the animation is CSS, brand-animate).
+function replayLogo(button) {
+  const logo = button.parentElement.querySelector('.brand');
+  logo.classList.remove('brand-animate');
+  void logo.offsetWidth; // restart the animation
+  logo.classList.add('brand-animate');
+}
+
 function printPoster() {
   document.body.classList.add('print-poster');
   window.addEventListener('afterprint', () => document.body.classList.remove('print-poster'), { once: true });
@@ -737,6 +745,7 @@ container.addEventListener('click', (e) => {
     render();
   } else if (action === 'copy-link') copyLink(el);
   else if (action === 'copy-colour') copyColour(el);
+  else if (action === 'replay-logo') replayLogo(el);
   else if (action === 'native-share') navigator.share({ title: state.share.name, url: state.share.url }).catch(() => {}); // cancelled
   else if (action === 'print-poster') printPoster();
   else if (action === 'edit-names') {
