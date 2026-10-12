@@ -1,5 +1,7 @@
 # Brand
 
+The public version of this page is **[rebattle.app/brand](https://rebattle.app/brand)** (`public/js/ui/brand.js`), with every logo file to download. This file is the source: when a rule or a value changes here, change the page in the same pull request (`tests/brand.test.js` checks the colours match).
+
 ## Name and logo
 
 - Name: **rebattle**, always lowercase.
@@ -24,7 +26,9 @@ Only the logo has it: "drop." in the full logo and all running text keep the fon
 
 ## Logo set
 
-Three versions and a badge, each in four colourways: `docs/brand/logos/<version>-<colourway>.svg` and `.png` (transparent). Drawn as outlines from the bundled fonts by `tools/make-logo.py`; the PNGs are headless-Chrome screenshots of the SVGs (full 2400 px wide, name 1600 px wide, mark 1024 px tall, badge 512 px tall).
+Three versions and a badge, each in four colourways: `public/brand/logos/<version>-<colourway>.svg` and `.png` (transparent), served at `/brand/logos/…` for the brand page. Drawn as outlines from the bundled fonts by `tools/make-logo.py`; the PNGs are headless-Chrome screenshots of the SVGs (full 2400 px wide, name 1600 px wide, mark 1024 px tall, badge 512 px tall). `tools/make-brand-kit.py` then zips everything into `public/brand/rebattle-brand.zip`, the page's "download everything"; run it after changing any of the files (a test checks the zip is up to date).
+
+The file names are public links people save: don't rename them.
 
 | Version | Looks like | Use |
 | --- | --- | --- |
@@ -33,7 +37,7 @@ Three versions and a badge, each in four colourways: `docs/brand/logos/<version>
 | `mark` | <u>r</u> | avatars, app icons, favicons, watermarks, the middle of QR codes |
 | `badge` | <u>r</u> rebattle.app | where to find us: stickers, slide and email footers, the corner of a layout without a QR code |
 
-![Logo do's and don'ts](brand/logo-usage.svg)
+![Logo do's and don'ts](../public/brand/logo-usage.svg)
 
 | Colourway | On | Text | "drop. bounceback." | Underline |
 | --- | --- | --- | --- | --- |
@@ -82,11 +86,11 @@ In the video, blue `#4f8cff` marks the Winners bracket (opposite violet for Lose
 
 ## Link preview
 
-What LinkedIn, WhatsApp, iMessage and the rest show when someone shares a rebattle.app link: `public/icons/share-preview.png` (1200×630), the full logo on the dark background, the tagline "Double-elimination brackets, run from your phone." in Funnel Sans and the address at the bottom. `tools/make-logo.py` writes it as outlines to `docs/brand/share-preview.svg`; the PNG is a 1200×630 headless-Chrome screenshot of it. The tags that point to it are in `public/index.html` (docs/architecture.md, Hosting).
+What LinkedIn, WhatsApp, iMessage and the rest show when someone shares a rebattle.app link: `public/icons/share-preview.png` (1200×630), the full logo on the dark background, the tagline "Double-elimination brackets, run from your phone." in Funnel Sans and the address at the bottom. `tools/make-logo.py` writes it as outlines to `public/brand/share-preview.svg`; the PNG is a 1200×630 headless-Chrome screenshot of it. The tags that point to it are in `public/index.html` (docs/architecture.md, Hosting).
 
 ## Instagram: @rebattle.app
 
-- **Profile picture:** `docs/brand/instagram/profile.png` (1080×1080; the "r" mark on the dark background, the letter centred in the round crop with the underline below it, and still readable at 44 px). Rebuild the SVG with `tools/make-icons.py`; the PNG is a 1080 px screenshot of it.
+- **Profile picture:** `public/brand/instagram/profile.png` (1080×1080; the "r" mark on the dark background, the letter centred in the round crop with the underline below it, and still readable at 44 px). Rebuild the SVG with `tools/make-icons.py`; the PNG is a 1080 px screenshot of it.
 - **Name:** rebattle
 - **Bio** (120 of 150 characters):
 

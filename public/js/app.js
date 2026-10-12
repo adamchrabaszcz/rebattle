@@ -491,6 +491,15 @@ function copyLink(button) {
   else fallback();
 }
 
+// The brand page's colours: tap one to copy its hex value; it says so for a moment.
+function copyColour(button) {
+  if (!navigator.clipboard || !navigator.clipboard.writeText) return; // the value is on the button to read
+  navigator.clipboard.writeText(button.dataset.value).then(() => {
+    button.classList.add('copied');
+    setTimeout(() => button.classList.remove('copied'), 1200);
+  }, () => {});
+}
+
 function printPoster() {
   document.body.classList.add('print-poster');
   window.addEventListener('afterprint', () => document.body.classList.remove('print-poster'), { once: true });
@@ -690,7 +699,7 @@ container.addEventListener('click', (e) => {
 
   // The logo: a viewer (and "Nothing here") goes to /, where rebattle starts for them;
   // the organiser goes to the tournament list, loaded afresh from an online tournament.
-  if (action === 'go-home' && (state.readOnly || state.screen === 'notFound' || state.screen === 'competitions')) location.href = '/';
+  if (action === 'go-home' && (state.readOnly || ['notFound', 'competitions', 'brand'].includes(state.screen))) location.href = '/';
   else if (action === 'go-home' && state.online) location.href = '/tournaments';
   else if (action === 'go-home') goHome();
   else if (action === 'follow') follow();
@@ -727,6 +736,7 @@ container.addEventListener('click', (e) => {
     state.share = null;
     render();
   } else if (action === 'copy-link') copyLink(el);
+  else if (action === 'copy-colour') copyColour(el);
   else if (action === 'native-share') navigator.share({ title: state.share.name, url: state.share.url }).catch(() => {}); // cancelled
   else if (action === 'print-poster') printPoster();
   else if (action === 'edit-names') {
@@ -838,6 +848,8 @@ if (route.name === 'manage') {
 } else if (route.name === 'competitions') {
   state.screen = 'competitions';
   loadCompetitions();
+} else if (route.name === 'brand') {
+  state.screen = 'brand';
 } else if (route.name !== 'home') {
   state.screen = 'notFound';
 } else if (viewed) {
@@ -856,5 +868,5 @@ if (route.name === 'manage') {
 }
 if (redirect) location.replace(redirect);
 else if (!['manage', 'view', 'rider'].includes(route.name)) render(); // the others render themselves
-if (['home', 'list', 'about', 'competitions', 'manage'].includes(route.name) && !state.readOnly && !redirect) loadOrganiser();
+if (['home', 'list', 'about', 'competitions', 'brand', 'manage'].includes(route.name) && !state.readOnly && !redirect) loadOrganiser();
 Cloud.flush(); // anything left unsent from last time

@@ -2,13 +2,14 @@
 
 Run from the repo root:  pip install fonttools brotli && python3 tools/make-logo.py
 Writes:
-- docs/brand/logos/<version>-<colourway>.svg  (4 versions x 4 colourways), outlines on a transparent
-  background, so they don't depend on fonts on the viewer's machine. The PNGs next to them are
-  headless-Chrome screenshots of these SVGs (see docs/brand.md).
-- docs/brand/logo-usage.svg  do's and don'ts, shown in docs/brand.md.
+- public/brand/logos/<version>-<colourway>.svg  (4 versions x 4 colourways), outlines on a
+  transparent background, so they don't depend on fonts on the viewer's machine. The PNGs next to
+  them are headless-Chrome screenshots of these SVGs (see docs/brand.md). Served for the /brand page.
+- public/brand/logo-usage.svg  do's and don'ts, shown in docs/brand.md and on /brand.
 - public/js/ui/logo-outlines.js  the full, name and mark outlines for the app and the video.
-- docs/brand/share-preview.svg  the link preview (1200x630); public/icons/share-preview.png is its
+- public/brand/share-preview.svg  the link preview (1200x630); public/icons/share-preview.png is its
   headless-Chrome screenshot.
+Then tools/make-icons.py, the PNG screenshots, and tools/make-brand-kit.py for the zip.
 
 Versions (docs/brand.md has when to use which):
   full      "drop. bounceback. rebattle."  square full stops (the sentence's punctuation), underline under "rebattle"
@@ -263,10 +264,10 @@ VERSIONS = {
     'badge': lambda c: badge(c),
 }
 
-os.makedirs('docs/brand/logos', exist_ok=True)
+os.makedirs('public/brand/logos', exist_ok=True)
 for version, build in VERSIONS.items():
     for colourway, colours in COLOURWAYS.items():
-        open(f'docs/brand/logos/{version}-{colourway}.svg', 'w').write(build(colours).svg())
+        open(f'public/brand/logos/{version}-{colourway}.svg', 'w').write(build(colours).svg())
 
 
 def outlines(art):
@@ -300,7 +301,7 @@ TAGLINE = 'Double-elimination brackets, run from your phone.'
 
 def preview():
     """The full logo on the dark background, the tagline under it and the address at the bottom,
-    all as outlines (docs/brand/share-preview.svg; public/icons/share-preview.png is its screenshot)."""
+    all as outlines (public/brand/share-preview.svg; public/icons/share-preview.png is its screenshot)."""
     c = COLOURWAYS['on-dark']
     logo, line = full(c), Art()
     line.text(TAGLINE, 0, c['lead'], font=SANS, spacing=0)
@@ -318,7 +319,7 @@ def preview():
             '</svg>\n')
 
 
-open('docs/brand/share-preview.svg', 'w').write(preview())
+open('public/brand/share-preview.svg', 'w').write(preview())
 
 
 # ---- usage sheet: do's and don'ts --------------------------------------------------
@@ -386,4 +387,4 @@ for col, (ok, tiles) in enumerate([(True, DOS), (False, DONTS)]):
     for row, (label, bg, art) in enumerate(tiles):
         out.append(tile(col * (TILE_W + GUTTER), HEAD + row * (TILE_H + GUTTER), ok, label, bg, art))
 out.append('</svg>\n')
-open('docs/brand/logo-usage.svg', 'w').write(''.join(out))
+open('public/brand/logo-usage.svg', 'w').write(''.join(out))

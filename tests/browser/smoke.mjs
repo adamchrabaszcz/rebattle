@@ -817,6 +817,28 @@ await step('phone: a sideways swipe changes the round, a vertical one doesn\'t',
   return `tab ${first} -> ${second}`;
 });
 
+await step('phone: the brand page shows every logo, fits the screen and copies a colour', async () => {
+  await send('Browser.grantPermissions', { origin: new URL(BASE).origin, permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'] });
+  await send('Emulation.setFocusEmulationEnabled', { enabled: true }); // the clipboard wants a focused page
+  await open('brand');
+  await until(`!!document.querySelector('.brand-version') && !!document.querySelector('.site-footer a[href="/brand"]')`);
+  const r = await js(`(async () => { ${H}
+    const imgs = qa('main img, #app img');
+    imgs.forEach((img) => (img.loading = 'eager'));
+    await Promise.all(imgs.map((img) => img.decode().catch(() => {})));
+    const broken = imgs.filter((img) => !img.naturalWidth).map((img) => img.getAttribute('src'));
+    if (broken.length) throw new Error('not loaded: ' + broken.join(', '));
+    if (document.documentElement.scrollWidth > 390) throw new Error('page scrolls sideways: ' + document.documentElement.scrollWidth);
+    const zip = await fetch(q('a[href$=".zip"]').getAttribute('href'));
+    if (!zip.ok || !/zip/.test(zip.headers.get('content-type'))) throw new Error('zip: ' + zip.status + ' ' + zip.headers.get('content-type'));
+    const amber = q('[data-action=copy-colour][data-value="#ffb020"]');
+    amber.click(); await wait(100);
+    return { images: imgs.length, copied: amber.classList.contains('copied') && (await navigator.clipboard.readText()) === '#ffb020' };
+  })()`);
+  check(r.copied, 'the colour was not copied');
+  return r.images + ' images';
+});
+
 await step('no page errors, console errors, CSP violations or failed requests', async () => {
   await sleep(200);
   check(!problems.length, problems.join('\n      '));

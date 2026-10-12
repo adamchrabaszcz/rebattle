@@ -31,6 +31,7 @@ const TYPES = {
   '.webmanifest': 'application/manifest+json',
   '.txt': 'text/plain; charset=utf-8',
   '.xml': 'application/xml',
+  '.zip': 'application/zip',
 };
 
 // public/_headers: a path pattern on its own line, then indented "Name: value" lines.
