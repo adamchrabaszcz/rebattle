@@ -145,8 +145,8 @@ async function open(path = '') {
 }
 // Page-side helpers, injected per call (the app keeps no globals).
 const H = `const q = (s) => document.querySelector(s), qa = (s) => [...document.querySelectorAll(s)], wait = (ms = 40) => new Promise((r) => setTimeout(r, ms));
-  const saved = () => JSON.parse(localStorage.getItem('ruedaBattle.tournaments') || '[]');
-  const active = () => saved().find((t) => t.id === localStorage.getItem('ruedaBattle.activeTournamentId'));
+  const saved = () => JSON.parse(localStorage.getItem('rebattle.tournaments') || '[]');
+  const active = () => saved().find((t) => t.id === localStorage.getItem('rebattle.activeTournamentId'));
   const setVal = (el, v) => { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); };
   async function create(name, n, format, localOnly) {
     q('[data-action=go-setup]').click(); await wait();
@@ -267,7 +267,7 @@ await step('export JSON offers a rebattle_*.json download', () => js(`(async () 
 
 const tmp = mkdtempSync(join(tmpdir(), 'rebattle-import-'));
 await step('import rejects a crafted file and re-imports a valid one after asking', async () => {
-  const good = await js(`localStorage.getItem('ruedaBattle.tournaments')`);
+  const good = await js(`localStorage.getItem('rebattle.tournaments')`);
   const t = JSON.parse(good)[0];
   writeFileSync(join(tmp, 'bad.json'), JSON.stringify({ ...t, id: 'x" onmouseover="alert(1)' }));
   writeFileSync(join(tmp, 'good.json'), JSON.stringify(t));
@@ -428,7 +428,7 @@ await step('?view shows the active tournament read-only', () => js(`(async () =>
 })()`));
 
 await step('the view ignores organiser actions even if a button is forced in', () => js(`(async () => { ${H}
-  const before = localStorage.getItem('ruedaBattle.tournaments');
+  const before = localStorage.getItem('rebattle.tournaments');
   const card = q('.up-next .match-card');
   const slot = card.querySelector('[data-cid]');
   for (const html of [
@@ -440,7 +440,7 @@ await step('the view ignores organiser actions even if a button is forced in', (
     q('#app > button').click(); await wait();
     q('#app > button')?.remove();
   }
-  if (localStorage.getItem('ruedaBattle.tournaments') !== before) throw new Error('saved data changed');
+  if (localStorage.getItem('rebattle.tournaments') !== before) throw new Error('saved data changed');
   if (!q('.view-badge')) throw new Error('left the view');
 })()`));
 
@@ -449,6 +449,12 @@ await step('the view follows results recorded in another tab', async () => {
   // once; "Up next" repeats some), so it grows with every recorded run, best of 3 included.
   const count = `[...document.querySelectorAll('.bracket-graph .match-card')].reduce((n, c) => n + c.classList.contains('completed') + [...c.querySelectorAll('.score')].reduce((k, el) => k + Number(el.textContent), 0), 0)`;
   const before = await js(count);
+  // Another key changing elsewhere (the theme, online copies) leaves the view alone: a
+  // re-render would drop the mark.
+  const ignored = await js(`(() => { const a = document.querySelector('#app .match-card'); a.dataset.mark = '1';
+    window.dispatchEvent(new StorageEvent('storage', { key: 'rebattle.theme' }));
+    return document.querySelector('#app .match-card').dataset.mark === '1'; })()`);
+  check(ignored, 'a change to another storage key re-rendered the view');
   // A second, real tab plays the organiser and records one heat.
   const { targetId } = (await send('Target.createTarget', { url: BASE })).result;
   const other = (await (await fetch(`http://127.0.0.1:${port}/json`)).json()).find((t) => t.id === targetId);
@@ -752,6 +758,35 @@ await step('/about: Follow takes a code or a pasted link, and rejects anything e
   await js(`(() => { const i = document.querySelector('#f-follow'); i.value = ${pasted}; i.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); return 1; })()`);
   await until(`location.pathname === ${JSON.stringify(rider)} && !!document.querySelector('.rider-headline')`);
   return rider;
+});
+
+await step('/about#contact: the email and Instagram, reached from the footer and the brand page, and it fits a phone', async () => {
+  await send('Page.navigate', { url: BASE + 'brand' });
+  await until(`!!document.querySelector('.brand-version')`);
+  check(await js(`!!document.querySelector('.intro-note a[href="/about#contact"]')`), 'the brand page\'s "Ask us" doesn\'t go to the contact section');
+  await js(`document.querySelector('.site-footer a[href="/about#contact"]').click(), 1`);
+  await until(`location.pathname === '/about' && !!document.querySelector('#contact')`);
+  const r = await js(`(() => {
+    const c = document.querySelector('#contact');
+    return {
+      mail: c.querySelector('a[href^="mailto:"]')?.getAttribute('href'),
+      insta: c.querySelector('a[href*="instagram.com"]')?.getAttribute('href'),
+    };
+  })()`);
+  check(r.mail === 'mailto:hello@rebattle.app', 'the email link: ' + r.mail);
+  check(r.insta === 'https://www.instagram.com/rebattle.app/', 'the Instagram link: ' + r.insta);
+  // On a phone Contact is well below the fold, so this proves the link scrolls to it (on
+  // desktop it's on screen anyway).
+  await view(390, 844, true);
+  await send('Page.navigate', { url: BASE + 'about#contact' });
+  const phone = await until(`(() => {
+    const c = document.querySelector('#contact');
+    const top = c && c.querySelector('a[href^="mailto:"]') ? c.getBoundingClientRect().top : -1;
+    return scrollY > 0 && top >= 0 && top < innerHeight && { width: document.documentElement.scrollWidth };
+  })()`).catch(() => null);
+  await view(1400, 1000, false);
+  check(phone, 'on a phone, /about#contact doesn\'t scroll to the contact section');
+  check(phone.width <= 390, 'on a phone the page scrolls sideways: ' + phone.width);
 });
 
 await step('a logged-in organiser goes back to their running online tournament from /', async () => {

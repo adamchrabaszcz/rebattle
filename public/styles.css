@@ -673,8 +673,9 @@ footer.note a { color: var(--text); }
 @media (max-width: 700px) { .brand-social { grid-template-columns: 1fr; } }
 .card .btn + .btn, .card button + .btn { margin-left: 8px; }
 /* Desktop: the intro spans the page (same width as the header): the lead, then
-   Follow and For organisers side by side, then the three steps in a row. Placed
-   by grid so the HTML keeps its phone order (lead, Follow, steps, organisers). */
+   Follow and For organisers side by side, then the three steps in a row, then
+   Contact. Placed by grid so the HTML keeps its phone order (lead, Follow, steps,
+   organisers, contact). */
 @media (min-width: 701px) {
   #app.intro-page { display: grid; grid-template-columns: 1fr 1fr; column-gap: 20px; align-items: start; }
   #app.intro-page > * { grid-column: 1 / -1; }
@@ -684,6 +685,9 @@ footer.note a { color: var(--text); }
   #app.intro-page > .intro-organisers { grid-row: 3; grid-column: 2; }
   #app.intro-page > .intro-competitions { grid-row: 4; }
   #app.intro-page > .intro-how { grid-row: 5; margin-top: 8px; }
+  #app.intro-page > .intro-contact { grid-row: 6; }
+  /* Last, even when the competitions row (4) is empty and auto-placement would put it there. */
+  #app.intro-page > .site-footer { grid-row: 7; }
   #app.intro-page .intro-follow, #app.intro-page .intro-organisers { max-width: none; height: calc(100% - 24px); }
   #app.intro-page .intro-lead { max-width: 760px; }
   #app.intro-page .intro-big { font-size: 34px; }

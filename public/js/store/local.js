@@ -3,9 +3,8 @@
 
 import { validateTournament } from '../engine/validate.js';
 
-// Keys predate the rebattle rename; kept so tournaments already saved in browsers still load.
-const KEY_TOURNAMENTS = 'ruedaBattle.tournaments';
-const KEY_ACTIVE_ID = 'ruedaBattle.activeTournamentId';
+const KEY_TOURNAMENTS = 'rebattle.tournaments';
+const KEY_ACTIVE_ID = 'rebattle.activeTournamentId';
 // The online tournament last opened on this device (its code), when that was the last
 // one opened: / takes you back to it. Opening a local one clears it, and vice versa.
 const KEY_ACTIVE_ONLINE = 'rebattle.activeOnline';

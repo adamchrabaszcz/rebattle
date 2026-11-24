@@ -112,3 +112,7 @@ What LinkedIn, WhatsApp, iMessage and the rest show when someone shares a rebatt
 - **Link:** https://rebattle.app
 - **Content:** the replay videos are made for Reels and Stories (1080×1920); a rider's journey video is a ready-made post for that rider to share.
 - **Video cover:** `public/brand/instagram/video-cover.png` (1080×1920), the same for every contest: the full logo dead centre (so it survives the 4:5 and square crops of the profile grid) and rebattle.app at the bottom. Pick it as the cover when posting a replay; the video's own first frame is dark, as the intro fades in. `tools/make-logo.py` writes the SVG; the PNG is a 1080×1920 screenshot of it. Offered on /brand and in the zip.
+
+## README screenshots
+
+`docs/screenshots/` holds the app as the README shows it: `bracket-<light|dark>.png` (the Winners bracket on a 1440 px desktop) and `phone-<light|dark>.png` (a rider's page on a 390 px phone, at 2×). `tools/make-screenshots.mjs` makes them from a made-up tournament (invented riders, a fixed random seed) in headless Chrome; rerun it after changing how the bracket or the rider page looks. They aren't part of the site.

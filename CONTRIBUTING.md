@@ -115,7 +115,7 @@ It only works on `127.0.0.1` and `localhost`. Online tournaments then work too: 
 - One job per module; keep files under ~350 lines (the engine excepted). The module map is in `docs/architecture.md`.
 - Interaction goes through `data-action` attributes handled in `public/js/app.js`; no inline event handlers.
 - Comments explain *why*, not *what*.
-- The saved-data keys (`ruedaBattle.*`) predate the rename and stay as they are; new keys go under `rebattle.*`.
+- localStorage keys go under `rebattle.*`. Don't rename one once it's live: tournaments saved without an account exist only in that browser, under that key.
 - Brand rules (logo, colours, fonts, wording) are in `docs/brand.md`.
 
 ## Docs

@@ -21,7 +21,7 @@ Keep this file short. Detailed context lives in `docs/`; read the relevant doc b
 - `public/js/engine/` stays pure logic (no DOM, imports nothing else); cover changes with tests in `tests/`.
 - Every user-supplied string goes through `escapeHtml` before it reaches HTML.
 - Clicks go through `data-action` handled in `public/js/app.js`; no inline handlers. The read-only view only runs actions listed in `VIEW_ACTIONS`; add one there only if it changes no data.
-- Don't rename the `ruedaBattle.*` localStorage keys (existing saved data).
+- localStorage keys are `rebattle.*`; don't rename an existing one (saved data would be lost).
 - Every task has a GitHub issue (create one first if it's missing), in the format in CONTRIBUTING.md ("Issues and pull requests": What and why, Done when, optional Blast radius and Parent); its PR has a Conventional Commit title and says `Closes #n`, one issue per PR (`.github/workflows/format.yml` checks both). Multi-PR work: a parent issue with a sub-issue per step; the parent closes itself when the last one closes (CONTRIBUTING.md). No roadmap in the docs: planned work is the issue list.
 - Online tournaments: the browser sends whole snapshots with `baseVersion`; the Worker checks login, same origin, size, `validateTournament` and ownership on every write. Keep owner emails out of anything public (`/api/t/*` and the live feed).
 - Conventional Commits; branch + PR, never commit straight to `main`.
@@ -35,7 +35,7 @@ Claude reviews each pull request when it's opened or marked ready (`.github/work
 - **Read-only view:** a new entry in `VIEW_ACTIONS` that changes data.
 - **The engine:** `public/js/engine/` touching the DOM or storage, or importing anything.
 - **The Worker:** a write path missing a check (login, same origin, size, `validateTournament`, ownership, `baseVersion`); an owner email in `/api/t/*`, the public list or the live feed.
-- **Saved data:** a renamed `ruedaBattle.*` key, or a new key not under `rebattle.*`; a change to the tournament format without a `!` and a note on existing data.
+- **Saved data:** a renamed localStorage key, or a new one not under `rebattle.*`; a change to the tournament format without a `!` and a note on existing data.
 - **Dependencies:** a runtime npm dependency, a CDN, or a vendored file that is modified or not noted in `docs/architecture.md`.
 - **Tests:** an engine or Worker change without a test that fails without it.
 - **No personal data or secrets** in code, tests, docs or examples (real riders' names, emails other than `@example.com`).
