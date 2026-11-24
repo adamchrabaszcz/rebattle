@@ -33,4 +33,4 @@ What becomes easier, what becomes harder, what we now have to keep doing.
 - [0004. One Durable Object per tournament](0004-one-durable-object-per-tournament.md)
 - [0005. A random draw for every Losers bracket round](0005-random-losers-draw.md)
 - [0006. Organisers log in with Cloudflare Access](0006-cloudflare-access-login.md)
-- [0007. The first saved-data keys keep the old name](0007-saved-data-keys.md)
+- [0007. Saved-data keys are `rebattle.*`, and aren't renamed once live](0007-saved-data-keys.md)

@@ -1,15 +1,16 @@
-# 0007. The first saved-data keys keep the old name
+# 0007. Saved-data keys are `rebattle.*`, and aren't renamed once live
 
 - Status: Accepted
-- Date: 2026-10-10
+- Date: 2026-11-24
 
 ## Context
-Before it was called rebattle, the app saved tournaments in the browser under `ruedaBattle.tournaments` and `ruedaBattle.activeTournamentId`. Organisers have tournaments saved under those keys, and a local tournament exists only in that browser. Renaming the keys would make those tournaments disappear unless every version from then on migrated them, with no way to know when everyone had.
+Tournaments saved without an account exist only in that browser's localStorage. The first two keys were named before the rename to rebattle (`ruedaBattle.tournaments`, `ruedaBattle.activeTournamentId`); every key added later used `rebattle.*`. Renaming a key hides whatever a browser saved under the old name, and the server can't see local tournaments, so there's no telling whether anyone has one. In November 2026 the only real tournament (Rueda Battle 2026) was online, which doesn't use these keys, and no local tournaments were known.
 
 ## Decision
-Those two keys keep their names for good. Every key added since uses the new name: `rebattle.online`, `rebattle.activeOnline`, `rebattle.theme`.
+The two old keys were renamed to `rebattle.tournaments` and `rebattle.activeTournamentId` without a migration (#138), before the repository went public. From now on every localStorage key is `rebattle.*`, and a key isn't renamed once it's live.
 
 ## Consequences
-- Existing local tournaments keep loading, with no migration code.
-- The old name stays visible in the code and in the browser's storage; `docs/architecture.md` (Storage) explains it, and the review flags a renamed `ruedaBattle.*` key or a new key outside `rebattle.*`.
+- One naming scheme in the code and in the browser's storage.
+- A tournament saved locally under the old names before the rename stays in that browser but no longer shows.
+- Renaming a live key later needs a migration that carries the saved data over, kept until no browser is likely to still have the old key; the review flags a renamed key or a new one outside `rebattle.*`.
 - The saved tournament format follows the same rule: a change to it is a breaking change (a `!` commit and a note on what happens to existing data), never a silent one.

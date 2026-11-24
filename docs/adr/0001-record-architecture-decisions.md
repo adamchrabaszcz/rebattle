@@ -4,7 +4,7 @@
 - Date: 2026-11-24
 
 ## Context
-rebattle makes choices that look odd from outside: no framework, the organiser's phone as the authority, a random draw every Losers round, storage keys with an old name. The reasons were in pull request descriptions and private planning notes, so a newcomer, a contributor from a fork or the AI review couldn't find them, and would reasonably propose to undo them.
+rebattle makes choices that look odd from outside: no framework, the organiser's phone as the authority, a random draw every Losers round. The reasons were in pull request descriptions and private planning notes, so a newcomer, a contributor from a fork or the AI review couldn't find them, and would reasonably propose to undo them.
 
 ## Decision
 Record each such decision in `docs/adr/` as a short record (context, decision, consequences), in the format in this folder's README. `docs/architecture.md` keeps describing what the code does.
