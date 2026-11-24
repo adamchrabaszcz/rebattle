@@ -11,7 +11,10 @@ import { C, DRAW_EXTRA, TARGET_SECONDS } from './theme.js';
 // their result), or null for the whole competition.
 // site: { host, code } to put the tournament's public address on the last scene
 // (code null for a local tournament: then just the host).
-function buildTimeline(t, focus, site) {
+// fullNames: keep the riders' full names; otherwise the video shows short ones
+// (shortNames), and tl.tournament is a copy carrying them.
+function buildTimeline(t, focus, site, { fullNames = false } = {}) {
+  const shown = fullNames ? t : withShortNames(t);
   const k = t.bracketRounds;
   const wbRounds = {};
   t.wb.matches.forEach((m) => (wbRounds[m.round] = wbRounds[m.round] || []).push({ match: m }));
@@ -76,7 +79,7 @@ function buildTimeline(t, focus, site) {
       };
 
   const scenes = focus
-    ? journeyScenes(t, focus, rounds.filter(Boolean).concat([semis, finals]), site)
+    ? journeyScenes(shown, focus, rounds.filter(Boolean).concat([semis, finals]), site)
     : [{ type: 'intro', fixed: 3.5 }] // logo (underline done at 1.85s), then name, field and format
         .concat(rounds.filter(Boolean))
         .concat([
@@ -100,7 +103,7 @@ function buildTimeline(t, focus, site) {
     s.start = start;
     start += s.dur;
   });
-  return { scenes, total: start, tournament: t, focus: focus || null };
+  return { scenes, total: start, tournament: shown, focus: focus || null, fullNames };
 }
 
 // One rider's path: every heat they rode (in running order), one per
@@ -139,9 +142,36 @@ function journeyScenes(t, focus, heatScenes, site) {
         stats: `${ridden.length} heat${ridden.length === 1 ? '' : 's'} · ${wins} win${wins === 1 ? '' : 's'} · ${ridden.length - wins} loss${
           ridden.length - wins === 1 ? '' : 'es'
         }`,
-        link: siteLink(site, `${name(t, focus).split(/\s+/)[0]}’s journey:`, site && site.code && `/t/${site.code}/${riderSlugs(t)[focus]}`),
+        link: siteLink(site, `${name(t, focus)}’s journey:`, site && site.code && `/t/${site.code}/${riderSlugs(t)[focus]}`),
       },
     ]);
+}
+
+// The video is a file people post well beyond the event, so by default it shows first
+// names only (the app's screens and public pages keep the full names; the replay screen's
+// "Full names" box keeps them in the video too): the first word, with a number after it
+// kept ("Rider 12"). Riders who share a first name get their last name's initial
+// ("Adam C." and "Adam K."), so a heat never reads "Adam vs Adam".
+function shortNames(competitors) {
+  const words = (c) => String(c.name || '').trim().split(/\s+/).filter(Boolean);
+  const first = (c) => {
+    const [w = '', next] = words(c);
+    return next && /^\d+$/.test(next) ? `${w} ${next}` : w;
+  };
+  const count = {};
+  competitors.forEach((c) => (count[first(c).toLowerCase()] = (count[first(c).toLowerCase()] || 0) + 1));
+  const short = (c) => {
+    const w = words(c);
+    const shared = count[first(c).toLowerCase()] > 1 && w.length > 1 && first(c) === w[0];
+    return shared ? `${w[0]} ${w.at(-1)[0].toUpperCase()}.` : first(c);
+  };
+  return new Map(competitors.map((c) => [c.id, short(c)]));
+}
+
+// The tournament as the video shows it: a copy with the short names (the original is untouched).
+function withShortNames(t) {
+  const short = shortNames(t.competitors);
+  return { ...t, competitors: t.competitors.map((c) => ({ ...c, name: short.get(c.id) })) };
 }
 
 const name = (t, id) => Bracket.getName(t, id) || 'TBD';
@@ -153,4 +183,4 @@ function siteLink(site, label, path) {
   return path ? { label, url: site.host + path } : { label: '', url: site.host };
 }
 
-export { name, buildTimeline };
+export { name, shortNames, withShortNames, buildTimeline };

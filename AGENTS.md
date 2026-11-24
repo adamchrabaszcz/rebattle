@@ -22,7 +22,7 @@ Keep this file short. Detailed context lives in `docs/`; read the relevant doc b
 - Every user-supplied string goes through `escapeHtml` before it reaches HTML.
 - Clicks go through `data-action` handled in `public/js/app.js`; no inline handlers. The read-only view only runs actions listed in `VIEW_ACTIONS`; add one there only if it changes no data.
 - Don't rename the `ruedaBattle.*` localStorage keys (existing saved data).
-- Every task has a GitHub issue (create one first if it's missing); its PR says `Closes #n`, one issue per PR. Multi-PR work: a parent issue with a sub-issue per step; the parent closes itself when the last one closes (CONTRIBUTING.md). No roadmap in the docs: planned work is the issue list.
+- Every task has a GitHub issue (create one first if it's missing), in the format in CONTRIBUTING.md ("Issues and pull requests": What and why, Done when, optional Blast radius and Parent); its PR has a Conventional Commit title and says `Closes #n`, one issue per PR (`.github/workflows/format.yml` checks both). Multi-PR work: a parent issue with a sub-issue per step; the parent closes itself when the last one closes (CONTRIBUTING.md). No roadmap in the docs: planned work is the issue list.
 - Online tournaments: the browser sends whole snapshots with `baseVersion`; the Worker checks login, same origin, size, `validateTournament` and ownership on every write. Keep owner emails out of anything public (`/api/t/*` and the live feed).
 - Conventional Commits; branch + PR, never commit straight to `main`.
 - One feature or fix per PR, each branched from `main` and mergeable on its own; split multi-part requests (CONTRIBUTING.md).

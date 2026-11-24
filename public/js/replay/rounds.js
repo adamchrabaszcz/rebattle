@@ -131,7 +131,7 @@ function drawIntro(ctx, tl, local) {
     });
   });
   // The field, fading in underneath.
-  const names = t.competitors.map((c) => c.name).slice(0, 36);
+  const names = t.competitors.map((c) => name(t, c.id)).slice(0, 36);
   const cols = 3;
   names.forEach((n, i) => {
     const col = i % cols;

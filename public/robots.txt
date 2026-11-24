@@ -1,0 +1,6 @@
+# Organiser pages are behind the login, and the API is for the app.
+User-agent: *
+Disallow: /manage/
+Disallow: /api/
+
+Sitemap: https://rebattle.app/sitemap.xml

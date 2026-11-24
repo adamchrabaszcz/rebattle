@@ -170,6 +170,12 @@ await step('home screen renders the logo with the bundled fonts', async () => {
   check(r.fonts.some((f) => /Funnel/.test(f)), 'Funnel fonts not loaded');
 });
 
+await step('robots.txt and sitemap.xml are real files, not the app', async () => {
+  const types = await js(`Promise.all(['/robots.txt', '/sitemap.xml'].map((p) => fetch(p).then((r) => r.ok && r.headers.get('content-type'))))`);
+  check(/^text\/plain/.test(types[0]), 'robots.txt: ' + types[0]);
+  check(/xml/.test(types[1]), 'sitemap.xml: ' + types[1]);
+});
+
 await step('colours follow the device: light by day, dark by night', async () => {
   const bg = `getComputedStyle(document.body).backgroundColor`;
   const seen = {};
@@ -276,6 +282,12 @@ await step('replay video draws on the canvas', () => js(`(async () => { ${H}
   let lit = 0;
   for (let i = 0; i < d.length; i += 4 * 97) if (d[i] + d[i + 1] + d[i + 2] > 300) lit++;
   if (lit < 50) throw new Error('canvas looks empty');
+  // "Full names" (first names by default) rebuilds the video from the start.
+  const names = q('[data-replay=full-names]');
+  if (!names || names.checked) throw new Error('no "Full names" box, or ticked by default');
+  if (Number(q('[data-replay=scrub]').value) < 800) throw new Error('the replay is not playing');
+  names.click(); await wait(100);
+  if (Number(q('[data-replay=scrub]').value) > 600) throw new Error('"Full names" did not restart the video');
   q('[data-action=close-replay]').click(); await wait();
   return cv.width + 'x' + cv.height;
 })()`));
@@ -809,6 +821,36 @@ await step('phone: a sideways swipe changes the round, a vertical one doesn\'t',
   check(await js(`document.querySelector('.bracket-graph.has-tabs .bracket-column.active').className.includes('slide-from')`), 'no slide-in');
   await send('Emulation.setTouchEmulationEnabled', { enabled: false });
   return `tab ${first} -> ${second}`;
+});
+
+await step('phone: the brand page shows every logo, fits the screen, copies a colour and plays the logo again', async () => {
+  await send('Browser.grantPermissions', { origin: new URL(BASE).origin, permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'] });
+  await send('Emulation.setFocusEmulationEnabled', { enabled: true }); // the clipboard wants a focused page
+  await open('brand');
+  await until(`!!document.querySelector('.brand-version') && !!document.querySelector('.site-footer a[href="/brand"]')`);
+  const r = await js(`(async () => { ${H}
+    const imgs = qa('main img, #app img');
+    imgs.forEach((img) => (img.loading = 'eager'));
+    await Promise.all(imgs.map((img) => img.decode().catch(() => {})));
+    const broken = imgs.filter((img) => !img.naturalWidth).map((img) => img.getAttribute('src'));
+    if (broken.length) throw new Error('not loaded: ' + broken.join(', '));
+    if (document.documentElement.scrollWidth > 390) throw new Error('page scrolls sideways: ' + document.documentElement.scrollWidth);
+    const zip = await fetch(q('a[href$=".zip"]').getAttribute('href'));
+    if (!zip.ok || !/zip/.test(zip.headers.get('content-type'))) throw new Error('zip: ' + zip.status + ' ' + zip.headers.get('content-type'));
+    const amber = q('[data-action=copy-colour][data-value="#ffb020"]');
+    amber.click(); await wait(100);
+    const copied = amber.classList.contains('copied') && (await navigator.clipboard.readText()) === '#ffb020';
+    const live = q('.story-live .brand');
+    const clock = () => Math.max(-1, ...live.getAnimations({ subtree: true }).map((a) => a.currentTime));
+    await wait(2200); // the first drawing has finished
+    const before = clock();
+    q('[data-action=replay-logo]').click(); await wait(50);
+    const after = clock();
+    return { images: imgs.length, copied, replayed: before > 1800 && after >= 0 && after < 1000 };
+  })()`);
+  check(r.copied, 'the colour was not copied');
+  check(r.replayed, '"Play again" did not draw the underline again');
+  return r.images + ' images';
 });
 
 await step('no page errors, console errors, CSP violations or failed requests', async () => {

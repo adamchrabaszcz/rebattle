@@ -38,3 +38,38 @@ test('worker: wrong method and unknown API paths', async () => {
   assert.equal(other.status, 404);
   assert.deepEqual(await other.json(), { error: 'not found' });
 });
+
+// The static-assets binding: index.html with the headers public/_headers gives it.
+const assets = {
+  asked: [],
+  async fetch(url) {
+    this.asked.push(String(url));
+    return new Response('<!doctype html>app', { headers: { 'Content-Type': 'text/html', 'Content-Security-Policy': "default-src 'self'" } });
+  },
+};
+
+test('worker: paths that are no file get the app, with a 404 unless the app knows them', async () => {
+  const env = { ASSETS: assets };
+  for (const path of ['/about', '/tournaments', '/competitions', '/brand', '/t/cable-open-x7k2', '/t/cable-open-x7k2/dora', '/manage/cable-open-x7k2', '/about/']) {
+    const res = await worker.fetch(new Request('https://rebattle.app' + path), env);
+    assert.equal(res.status, 200, path);
+    assert.equal(await res.text(), '<!doctype html>app', path);
+  }
+  for (const path of ['/foo', '/wp-login.php', '/t/Cable', '/manage', '/old/page.html']) {
+    const res = await worker.fetch(new Request('https://rebattle.app' + path), env);
+    assert.equal(res.status, 404, path);
+    assert.equal(await res.text(), '<!doctype html>app', `${path}: the app shows its not-found screen`);
+  }
+  assert.ok(assets.asked.every((u) => u === 'https://rebattle.app/'), 'always index.html');
+});
+
+test('worker: the app page keeps its security headers; HEAD has no body, writes are refused', async () => {
+  const env = { ASSETS: assets };
+  const res = await worker.fetch(new Request('https://rebattle.app/nope'), env);
+  assert.equal(res.headers.get('Content-Security-Policy'), "default-src 'self'");
+  const head = await worker.fetch(new Request('https://rebattle.app/about', { method: 'HEAD' }), env);
+  assert.equal(head.status, 200);
+  assert.equal(await head.text(), '');
+  const post = await worker.fetch(new Request('https://rebattle.app/about', { method: 'POST' }), env);
+  assert.equal(post.status, 405);
+});

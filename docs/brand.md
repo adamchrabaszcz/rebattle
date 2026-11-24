@@ -1,5 +1,7 @@
 # Brand
 
+The public version of this page is **[rebattle.app/brand](https://rebattle.app/brand)** (`public/js/ui/brand.js`), with every logo file to download. This file is the source: when a rule or a value changes here, change the page in the same pull request (`tests/brand.test.js` checks the colours match).
+
 ## Name and logo
 
 - Name: **rebattle**, always lowercase.
@@ -19,12 +21,24 @@ The "r" of "rebattle" (and the mark) is Funnel Display Bold's r with two points,
 - **The bounce:** the arm ends in a point whose sides curve with the "e", keeping the same gap from it as the drop keeps from the underline (three quarters of the underline's distance below the baseline).
 - In the mark, the underline runs to the bounce's tip.
 
+Step by step, as on the brand page ("How the logo is made"); 1 part is a quarter of the gap from the baseline to the underline:
+
+| 1. The letter | 2. The drop | 3. The bounce | 4. The mark |
+| --- | --- | --- | --- |
+| ![The letter](../public/brand/how/1-letter.svg) | ![The drop](../public/brand/how/2-drop.svg) | ![The bounce](../public/brand/how/3-bounce.svg) | ![The mark](../public/brand/how/4-mark.svg) |
+
+![The logo, with callouts](../public/brand/how/5-logo.svg)
+
+`tools/make-logo-story.py` draws these from the real outlines (and the whole sheet, `public/brand/how/sheet.svg`; `sheet.png` is its screenshot), so they can't drift from the logo. Its captions are also on the page (`STORY` in `public/js/ui/brand.js`); a test checks they match.
+
 Only the logo has it: "drop." in the full logo and all running text keep the font's own r. It is drawn by `logo_r()` in `tools/make-logo.py`; everything that shows the logo uses those outlines (the app reads them from `public/js/ui/logo-outlines.js`, written by the same script).
 - Competition screens: competition name on the left, logo on the right (the short mark on phones).
 
 ## Logo set
 
-Three versions and a badge, each in four colourways: `docs/brand/logos/<version>-<colourway>.svg` and `.png` (transparent). Drawn as outlines from the bundled fonts by `tools/make-logo.py`; the PNGs are headless-Chrome screenshots of the SVGs (full 2400 px wide, name 1600 px wide, mark 1024 px tall, badge 512 px tall).
+Three versions and a badge, each in four colourways: `public/brand/logos/<version>-<colourway>.svg` and `.png` (transparent), served at `/brand/logos/…` for the brand page. Drawn as outlines from the bundled fonts by `tools/make-logo.py`; the PNGs are headless-Chrome screenshots of the SVGs (full 2400 px wide, name 1600 px wide, mark 1024 px tall, badge 512 px tall). `tools/make-brand-kit.py` then zips everything into `public/brand/rebattle-brand.zip`, the page's "download everything"; run it after changing any of the files (a test checks the zip is up to date).
+
+The file names are public links people save: don't rename them.
 
 | Version | Looks like | Use |
 | --- | --- | --- |
@@ -33,7 +47,7 @@ Three versions and a badge, each in four colourways: `docs/brand/logos/<version>
 | `mark` | <u>r</u> | avatars, app icons, favicons, watermarks, the middle of QR codes |
 | `badge` | <u>r</u> rebattle.app | where to find us: stickers, slide and email footers, the corner of a layout without a QR code |
 
-![Logo do's and don'ts](brand/logo-usage.svg)
+![Logo do's and don'ts](../public/brand/logo-usage.svg)
 
 | Colourway | On | Text | "drop. bounceback." | Underline |
 | --- | --- | --- | --- | --- |
@@ -80,9 +94,13 @@ In the video, blue `#4f8cff` marks the Winners bracket (opposite violet for Lose
 - Final 4 origins: **WB 1st, WB 2nd, LB 1st, LB 2nd**.
 - "Random draw" for Losers-bracket pairings; "Bye" for no opponent; "Out" for eliminated.
 
+## Link preview
+
+What LinkedIn, WhatsApp, iMessage and the rest show when someone shares a rebattle.app link: `public/icons/share-preview.png` (1200×630), the full logo on the dark background, the tagline "Double-elimination brackets, run from your phone." in Funnel Sans and the address at the bottom. `tools/make-logo.py` writes it as outlines to `public/brand/share-preview.svg`; the PNG is a 1200×630 headless-Chrome screenshot of it. The tags that point to it are in `public/index.html` (docs/architecture.md, Hosting).
+
 ## Instagram: @rebattle.app
 
-- **Profile picture:** `docs/brand/instagram/profile.png` (1080×1080; the "r" mark on the dark background, the letter centred in the round crop with the underline below it, and still readable at 44 px). Rebuild the SVG with `tools/make-icons.py`; the PNG is a 1080 px screenshot of it.
+- **Profile picture:** `public/brand/instagram/profile.png` (1080×1080; the "r" mark on the dark background, the letter centred in the round crop with the underline below it, and still readable at 44 px). Rebuild the SVG with `tools/make-icons.py`; the PNG is a 1080 px screenshot of it.
 - **Name:** rebattle
 - **Bio** (120 of 150 characters):
 
@@ -93,3 +111,4 @@ In the video, blue `#4f8cff` marks the Winners bracket (opposite violet for Lose
   ```
 - **Link:** https://rebattle.app
 - **Content:** the replay videos are made for Reels and Stories (1080×1920); a rider's journey video is a ready-made post for that rider to share.
+- **Video cover:** `public/brand/instagram/video-cover.png` (1080×1920), the same for every contest: the full logo dead centre (so it survives the 4:5 and square crops of the profile grid) and rebattle.app at the bottom. Pick it as the cover when posting a replay; the video's own first frame is dark, as the intro fades in. `tools/make-logo.py` writes the SVG; the PNG is a 1080×1920 screenshot of it. Offered on /brand and in the zip.

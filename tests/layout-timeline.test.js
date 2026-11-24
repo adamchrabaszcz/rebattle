@@ -5,10 +5,11 @@ import assert from 'node:assert/strict';
 
 import * as Bracket from '../public/js/engine/bracket.js';
 import { lbLayout, slotOf } from '../public/js/engine/lb-layout.js';
-import { buildTimeline } from '../public/js/replay/timeline.js';
+import { buildTimeline, name, shortNames } from '../public/js/replay/timeline.js';
+import { riderSlugs } from '../public/js/engine/slug.js';
 
-function played(n, heatFormat) {
-  const t = Bracket.createTournament({ name: 'Test', competitorNames: Array.from({ length: n }, (_, i) => 'Rider ' + (i + 1)), settings: { heatFormat, lapTimeSeconds: 20 } });
+function played(n, heatFormat, names = Array.from({ length: n }, (_, i) => 'Rider ' + (i + 1))) {
+  const t = Bracket.createTournament({ name: 'Test', competitorNames: names, settings: { heatFormat, lapTimeSeconds: 20 } });
   for (let guard = 0; guard < 10000; guard += 1) {
     const playable = Bracket.getPlayableMatches(t);
     if (!playable.length) break;
@@ -115,4 +116,27 @@ test("a rider's journey shows only their heats, then their final place", () => {
       assert.deepEqual(shown.map((m) => m.id).sort(), all.filter(rode).map((m) => m.id).sort(), `${n}: all of their heats`);
     }
   }
+});
+
+test('the video shows first names, with an initial only where two riders share one', () => {
+  const cases = {
+    'Lena Kowalczyk': 'Lena', 'Jan van der Berg': 'Jan B.', 'Jan Brown': 'Jan B.', '  Eva  ': 'Eva', Max: 'Max',
+    'Adam Nowak': 'Adam N.', 'adam kowalski': 'adam K.', 'Rider 12': 'Rider 12', 'Rider 3 Smith': 'Rider 3', 'Rider 1': 'Rider 1', '': '',
+  };
+  const names = Object.keys(cases);
+  const short = shortNames(names.map((n, i) => ({ id: 'c' + i, name: n })));
+  names.forEach((full, i) => assert.equal(short.get('c' + i), cases[full], full));
+
+  const t = played(4, 'single', ['Dora Smith', 'Lena Kowalczyk', 'Eva Nowak', 'Max']);
+  const dora = t.competitors.find((c) => c.name === 'Dora Smith');
+  const tl = buildTimeline(t, dora.id, { host: 'rebattle.app', code: 'cable-open-x7k2' });
+  assert.equal(name(tl.tournament, dora.id), 'Dora', 'short names by default');
+  assert.equal(name(tl.tournament, null), 'TBD');
+  assert.equal(tl.scenes.at(-1).link.label, 'Dora’s journey:');
+  assert.equal(tl.scenes.at(-1).link.url, `rebattle.app/t/cable-open-x7k2/${riderSlugs(t)[dora.id]}`, "the rider's page address is unchanged");
+  assert.equal(dora.name, 'Dora Smith', 'the tournament itself keeps the full names');
+
+  const full = buildTimeline(t, dora.id, null, { fullNames: true });
+  assert.equal(full.tournament, t);
+  assert.equal(name(full.tournament, dora.id), 'Dora Smith', '"Full names" keeps them in the video');
 });

@@ -4,11 +4,23 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>rebattle</title>
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="rebattle" />
+<meta property="og:url" content="https://rebattle.app/" />
+<meta property="og:title" content="rebattle: double-elimination brackets, run from your phone" />
+<meta property="og:description" content="Run head-to-head contests from your phone: one tap per heat, live brackets, a second chance in the Losers bracket and a replay video of the day. Free." />
+<meta property="og:image" content="https://rebattle.app/icons/share-preview.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="drop. bounceback. rebattle. Double-elimination brackets, run from your phone." />
+<meta name="twitter:card" content="summary_large_image" />
 <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
 <link rel="icon" href="/icons/favicon-32.png" sizes="32x32" type="image/png" />
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 <link rel="manifest" href="/manifest.webmanifest" />
 <meta name="theme-color" content="#111318" />
+<meta name="description" content="Run head-to-head contests from your phone: one tap per heat, live brackets, a second chance in the Losers bracket and a replay video of the day. Free." />
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"rebattle","url":"https://rebattle.app/","description":"Double-elimination brackets for head-to-head contests, run from your phone: live brackets, a Losers bracket for a second chance and replay videos.","applicationCategory":"SportsApplication","operatingSystem":"Any (web browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"}}</script>
 <script src="/js/theme.js"></script>
 <link rel="preload" href="/fonts/funnel-sans-normal-latin.woff2" as="font" type="font/woff2" crossorigin />
 <link rel="stylesheet" href="/fonts/fonts.css" />
@@ -29,6 +41,7 @@
 <link rel="modulepreload" href="/js/store/cloud.js" />
 <link rel="modulepreload" href="/js/store/live.js" />
 <link rel="modulepreload" href="/js/store/local.js" />
+<link rel="modulepreload" href="/js/ui/brand.js" />
 <link rel="modulepreload" href="/js/ui/bracket-screen.js" />
 <link rel="modulepreload" href="/js/ui/brackets.js" />
 <link rel="modulepreload" href="/js/ui/cards.js" />
@@ -47,6 +60,11 @@
 </head>
 <body>
 <div id="app"></div>
+<noscript>
+  <h1>rebattle</h1>
+  <p>Double-elimination brackets for head-to-head contests, run from your phone: one tap per heat, live brackets, a second chance in the Losers bracket and a replay video of the day. Free.</p>
+  <p>rebattle needs JavaScript. Turn it on and reload the page.</p>
+</noscript>
 <script type="module" src="/js/app.js"></script>
 </body>
 </html>

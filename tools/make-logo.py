@@ -2,11 +2,16 @@
 
 Run from the repo root:  pip install fonttools brotli && python3 tools/make-logo.py
 Writes:
-- docs/brand/logos/<version>-<colourway>.svg  (4 versions x 4 colourways), outlines on a transparent
-  background, so they don't depend on fonts on the viewer's machine. The PNGs next to them are
-  headless-Chrome screenshots of these SVGs (see docs/brand.md).
-- docs/brand/logo-usage.svg  do's and don'ts, shown in docs/brand.md.
+- public/brand/logos/<version>-<colourway>.svg  (4 versions x 4 colourways), outlines on a
+  transparent background, so they don't depend on fonts on the viewer's machine. The PNGs next to
+  them are headless-Chrome screenshots of these SVGs (see docs/brand.md). Served for the /brand page.
+- public/brand/logo-usage.svg  do's and don'ts, shown in docs/brand.md and on /brand.
 - public/js/ui/logo-outlines.js  the full, name and mark outlines for the app and the video.
+- public/brand/share-preview.svg  the link preview (1200x630); public/icons/share-preview.png is its
+  headless-Chrome screenshot.
+- public/brand/instagram/video-cover.svg  the cover for a Reel or Story (1080x1920); the .png next to
+  it is its screenshot.
+Then tools/make-icons.py, the PNG screenshots, and tools/make-brand-kit.py for the zip.
 
 Versions (docs/brand.md has when to use which):
   full      "drop. bounceback. rebattle."  square full stops (the sentence's punctuation), underline under "rebattle"
@@ -261,10 +266,10 @@ VERSIONS = {
     'badge': lambda c: badge(c),
 }
 
-os.makedirs('docs/brand/logos', exist_ok=True)
+os.makedirs('public/brand/logos', exist_ok=True)
 for version, build in VERSIONS.items():
     for colourway, colours in COLOURWAYS.items():
-        open(f'docs/brand/logos/{version}-{colourway}.svg', 'w').write(build(colours).svg())
+        open(f'public/brand/logos/{version}-{colourway}.svg', 'w').write(build(colours).svg())
 
 
 def outlines(art):
@@ -288,6 +293,58 @@ open('public/js/ui/logo-outlines.js', 'w').write(
     '// "drop. bounceback.") and line (the underline).\n'
     f'export const EM = {EM};\n'
     f'export const LOGO = {LOGO_JS};\n')
+
+
+# ---- link preview: what LinkedIn, WhatsApp & co. show for a shared link ------------------------
+
+PREVIEW_W, PREVIEW_H = 1200, 630  # the Open Graph size; platforms crop little of it
+TAGLINE = 'Double-elimination brackets, run from your phone.'
+
+
+def preview():
+    """The full logo on the dark background, the tagline under it and the address at the bottom,
+    all as outlines (public/brand/share-preview.svg; public/icons/share-preview.png is its screenshot)."""
+    c = COLOURWAYS['on-dark']
+    logo, line = full(c), Art()
+    line.text(TAGLINE, 0, c['lead'], font=SANS, spacing=0)
+    address = Art()
+    address.text('rebattle.app', 0, c['text'], font=SANS, spacing=0)
+    s = 960 / (logo.x1 - logo.x0)
+    ts = 0.46 * s  # the tagline at a bit under half the logo's size
+    logo_h, line_h = (logo.y1 - logo.y0) * s, (line.y1 - line.y0) * ts
+    top = (PREVIEW_H - logo_h - 70 - line_h) / 2 - 20
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {PREVIEW_W} {PREVIEW_H}" width="{PREVIEW_W}" height="{PREVIEW_H}" role="img" aria-label="rebattle: {TAGLINE}">'
+            f'<rect width="{PREVIEW_W}" height="{PREVIEW_H}" fill="#111318"/>'
+            f'{logo.group(s, (PREVIEW_W - (logo.x1 - logo.x0) * s) / 2, top)}'
+            f'{line.group(ts, (PREVIEW_W - (line.x1 - line.x0) * ts) / 2, top + logo_h + 70)}'
+            f'{address.group(ts * 0.8, (PREVIEW_W - (address.x1 - address.x0) * ts * 0.8) / 2, PREVIEW_H - 70 - (address.y1 - address.y0) * ts * 0.8)}'
+            '</svg>\n')
+
+
+open('public/brand/share-preview.svg', 'w').write(preview())
+
+
+# ---- video cover: the picked cover of a Reel or Story, for any contest --------------------
+
+COVER_W, COVER_H = 1080, 1920
+
+
+def video_cover():
+    """The full logo dead centre (it survives the 4:5 and square crops of a profile grid) and the
+    address at the bottom, as outlines (public/brand/instagram/video-cover.svg; .png is its screenshot)."""
+    c = COLOURWAYS['on-dark']
+    logo, address = full(c), Art()
+    address.text('rebattle.app', 0, c['text'], font=SANS, spacing=0)
+    s, k = 900 / (logo.x1 - logo.x0), 54 / EM  # the address 54 px to the em
+    logo_h = (logo.y1 - logo.y0) * s
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {COVER_W} {COVER_H}" width="{COVER_W}" height="{COVER_H}" role="img" aria-label="drop. bounceback. rebattle. rebattle.app">'
+            f'<rect width="{COVER_W}" height="{COVER_H}" fill="#111318"/>'
+            f'{logo.group(s, (COVER_W - (logo.x1 - logo.x0) * s) / 2, (COVER_H - logo_h) / 2)}'
+            f'{address.group(k, (COVER_W - (address.x1 - address.x0) * k) / 2, COVER_H - 180 - address.y1 * k)}'
+            '</svg>\n')
+
+
+open('public/brand/instagram/video-cover.svg', 'w').write(video_cover())
 
 
 # ---- usage sheet: do's and don'ts --------------------------------------------------
@@ -355,4 +412,4 @@ for col, (ok, tiles) in enumerate([(True, DOS), (False, DONTS)]):
     for row, (label, bg, art) in enumerate(tiles):
         out.append(tile(col * (TILE_W + GUTTER), HEAD + row * (TILE_H + GUTTER), ok, label, bg, art))
 out.append('</svg>\n')
-open('docs/brand/logo-usage.svg', 'w').write(''.join(out))
+open('public/brand/logo-usage.svg', 'w').write(''.join(out))

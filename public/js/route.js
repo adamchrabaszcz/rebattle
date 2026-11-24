@@ -4,6 +4,7 @@
 //   /tournaments       your tournament list
 //   /about             the introduction
 //   /competitions      the competitions organisers listed on rebattle.app
+//   /brand             the logo files and how to use them
 //   /t/<code>          public live view of a cloud tournament
 //   /t/<code>/<rider>  a rider's "follow me" card
 //   /manage/<code>     organiser screen (behind login)
@@ -17,6 +18,7 @@ export function parseRoute(pathname) {
   if (parts.length === 1 && parts[0] === 'tournaments') return { name: 'list' };
   if (parts.length === 1 && parts[0] === 'about') return { name: 'about' };
   if (parts.length === 1 && parts[0] === 'competitions') return { name: 'competitions' };
+  if (parts.length === 1 && parts[0] === 'brand') return { name: 'brand' };
   if (parts[0] === 't' && SLUG.test(parts[1] || '')) {
     if (parts.length === 2) return { name: 'view', code: parts[1] };
     if (parts.length === 3 && SLUG.test(parts[2])) return { name: 'rider', code: parts[1], rider: parts[2] };

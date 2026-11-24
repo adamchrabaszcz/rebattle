@@ -1,0 +1,30 @@
+name: Bug
+description: Something that doesn't work as it should
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What and why
+      description: What happens, what should happen instead, and where (browser, phone or desktop, screen). Steps to see it.
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      description: A short checklist that says when this is fixed.
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: blast
+    attributes:
+      label: Blast radius
+      description: Optional. Who is affected and how badly, and what a fix could touch (organisers, riders, viewers, saved data, the Worker).
+  - type: input
+    id: parent
+    attributes:
+      label: Parent
+      description: Optional. The parent issue when this belongs to bigger work (e.g. #57); also add it as a sub-issue there.
