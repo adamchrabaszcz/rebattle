@@ -449,6 +449,12 @@ await step('the view follows results recorded in another tab', async () => {
   // once; "Up next" repeats some), so it grows with every recorded run, best of 3 included.
   const count = `[...document.querySelectorAll('.bracket-graph .match-card')].reduce((n, c) => n + c.classList.contains('completed') + [...c.querySelectorAll('.score')].reduce((k, el) => k + Number(el.textContent), 0), 0)`;
   const before = await js(count);
+  // Another key changing elsewhere (the theme, online copies) leaves the view alone: a
+  // re-render would drop the mark.
+  const ignored = await js(`(() => { const a = document.querySelector('#app .match-card'); a.dataset.mark = '1';
+    window.dispatchEvent(new StorageEvent('storage', { key: 'rebattle.theme' }));
+    return document.querySelector('#app .match-card').dataset.mark === '1'; })()`);
+  check(ignored, 'a change to another storage key re-rendered the view');
   // A second, real tab plays the organiser and records one heat.
   const { targetId } = (await send('Target.createTarget', { url: BASE })).result;
   const other = (await (await fetch(`http://127.0.0.1:${port}/json`)).json()).find((t) => t.id === targetId);
