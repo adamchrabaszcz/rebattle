@@ -8,6 +8,6 @@
     "smoke": "node tests/browser/smoke.mjs"
   },
   "devDependencies": {
-    "wrangler": "4.149.0"
+    "wrangler": "4.167.0"
   }
 }
