@@ -43,20 +43,24 @@ function cleanup() {
 process.on('exit', cleanup);
 
 // Chrome on a CI runner sometimes needs well over 10 s to start; up to 60 s in all, and no
-// longer than it takes when it's quick.
+// longer than it takes when it's quick. A Chrome that exits (bad binary, a crash, no sandbox
+// as root) fails at once instead.
 const startBy = Date.now() + 60_000;
+const running = () => chrome.exitCode === null && chrome.signalCode === null;
 let port;
-while (!port && Date.now() < startBy) {
+while (!port && Date.now() < startBy && running()) {
   await sleep(100);
   try { port = readFileSync(join(profile, 'DevToolsActivePort'), 'utf8').split('\n')[0]; } catch {}
 }
 let target;
-while (port && !target && Date.now() < startBy) {
+while (port && !target && Date.now() < startBy && running()) {
   try { target = (await (await fetch(`http://127.0.0.1:${port}/json`)).json()).find((t) => t.type === 'page'); } catch {}
   if (!target) await sleep(100);
 }
 if (!target) {
-  console.error(`Chrome didn't start within 60 s (${port ? 'no page' : 'no debugging port'}); not an app failure.`);
+  console.error(running()
+    ? `Chrome didn't start within 60 s (${port ? 'no page' : 'no debugging port'}); not an app failure.`
+    : `Chrome exited before the test could start (${chrome.signalCode || `code ${chrome.exitCode}`}).`);
   process.exit(1);
 }
 const ws = new WebSocket(target.webSocketDebuggerUrl);
