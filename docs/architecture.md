@@ -136,7 +136,7 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 
 ## Storage
 
-- `localStorage` keys `ruedaBattle.tournaments` and `ruedaBattle.activeTournamentId`; names predate the rebattle rename and must stay. `rebattle.online` holds this device's copies of online tournaments; `rebattle.activeOnline` the online tournament last opened here, when that was the last one (opening a local one clears it, and the other way round). `rebattle.theme`: `light` or `dark` from the footer switch (none = Auto).
+- `localStorage` keys: `rebattle.tournaments` (the tournaments saved in this browser) and `rebattle.activeTournamentId`. They were `ruedaBattle.*`, from before the rebattle rename, until #138 renamed them without a migration (no local tournaments were known to exist); anything saved under the old names stays in the browser but no longer shows. `rebattle.online` holds this device's copies of online tournaments; `rebattle.activeOnline` the online tournament last opened here, when that was the last one (opening a local one clears it, and the other way round). `rebattle.theme`: `light` or `dark` from the footer switch (none = Auto).
 - A `storage` event from another tab marks the open tournament as changed elsewhere; recording, renaming and undo are blocked until it is reloaded.
 - Import: `Store.readFile` parses and validates; `app.js` asks before replacing a tournament with the same id.
 
