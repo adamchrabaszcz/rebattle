@@ -54,8 +54,11 @@ function dropTag(tournament, match, competitorId, isLoser) {
     return isWinner ? toSemi(2) : isLoser ? toSemi(1) : '';
   }
   if (match.stage === 'SF') {
+    const slot = match.slotA.competitorId === competitorId ? match.slotA : match.slotB;
+    // Before the Final 4 exists, its placeholder slots carry their own label (ui/brackets.js):
+    // final4.semi1 is still empty then, so it can't tell the two semifinals apart.
     const semi = tournament.final4.semi1 && tournament.final4.semi1.id === match.id ? 'semi1' : 'semi2';
-    const origin = SEMI_ORIGIN[semi][match.slotA.competitorId === competitorId ? 0 : 1];
+    const origin = slot.placeholder || SEMI_ORIGIN[semi][slot === match.slotA ? 0 : 1];
     return `<span class="drop-tag semi-tag">${origin}</span>`;
   }
   if (match.stage === 'WB') {
