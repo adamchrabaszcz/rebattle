@@ -5,7 +5,7 @@
   <img alt="drop. bounceback. rebattle." src="public/brand/logos/full-on-light.svg" width="560">
 </picture>
 
-[![test](https://github.com/adamchrabaszcz/rebattle/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/adamchrabaszcz/rebattle/actions/workflows/test.yml) [![codecov](https://codecov.io/gh/adamchrabaszcz/rebattle/graph/badge.svg?token=zoGFatLHzl)](https://codecov.io/gh/adamchrabaszcz/rebattle)
+[![test](https://github.com/adamchrabaszcz/rebattle/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/adamchrabaszcz/rebattle/actions/workflows/test.yml) [![codecov](https://codecov.io/gh/adamchrabaszcz/rebattle/graph/badge.svg)](https://codecov.io/gh/adamchrabaszcz/rebattle)
 
 A tournament manager for head-to-head double-elimination events, built for a wakeboard competition but sport-agnostic. Riders who lose once drop to the Losers bracket for a second chance; the top two of each bracket cross over into a Final 4.
 
@@ -29,12 +29,21 @@ A tournament manager for head-to-head double-elimination events, built for a wak
 
 ## Features
 
-- Setup with a time estimate, random draw, then one tap per heat to record the winner. Undo, rename riders or the tournament at any time.
-- Live bracket view: connector lines, path highlighting on hover, drop-in markers, shared places for riders out in the same round, a legend. On phones, brackets switch to round tabs.
-- **Replay video**: a vertical (1080×1920) animated recap of the whole event, or one rider's journey, exported as a video file and shareable from a phone.
-- **View-only mode**: `?view` opens the tournament read-only and follows results as they are recorded in another tab, e.g. on a second screen at the venue. A public link for spectators comes with cloud saving.
-- Everything is saved in the browser; export/import JSON to back up or move to another device.
-- **Online tournaments** for logged-in organisers (Cloudflare Access, approved emails): saved on the server, open from any device at `/manage/<code>`, keep working offline and upload when back, and ask which version to keep if two devices changed the same tournament. Local tournaments can be moved online.
+**For organisers**
+
+- **Run it from your phone:** setup with a time estimate and a random draw, then one tap per heat to record the winner. Single runs or best of 3. Undo, and rename riders or the tournament at any time.
+- **The bracket:** connector lines, a rider's whole path on hover, drop-in markers, shared places for riders out in the same round. On phones, one round at a time with tabs and swipes.
+- **Without an account,** everything is saved in this browser: export and import JSON to back up or move it. `?view` opens a read-only copy that follows the results, e.g. on a second screen at the venue.
+- **With an account** (approved organisers, Cloudflare Access login): tournaments are saved online and open from any device at `/manage/<code>`. They keep working when the venue wifi drops and upload when it's back, and if two devices changed the same tournament you pick which version to keep. Local tournaments can be moved online.
+- **Who can find it:** an online tournament is unlisted by default (only people with the link), or listed on [rebattle.app/competitions](https://rebattle.app/competitions).
+
+**For everyone else** (online tournaments, no login)
+
+- **A live page** at `rebattle.app/t/<code>`: the bracket, read-only, updating by itself as heats are recorded.
+- **A page for each rider:** where they stand, their next heat and opponent, the heats they've ridden.
+- **Sharing:** the link, the phone's share sheet, a QR code and a printable A4 poster.
+- **Replay video:** a vertical (1080×1920) animated recap of the whole event, or one rider's journey, saved as a video file to post. First names only, unless "Full names" is ticked.
+- **Follow a competition** by the code on its poster, or browse the listed ones. [rebattle.app/brand](https://rebattle.app/brand) has the logo and an Instagram kit for events running on rebattle.
 
 ## Run it
 
@@ -57,14 +66,14 @@ Any static server works for the app alone. Opening `index.html` straight from th
 ## Tests
 
 ```sh
-node --test                    # bracket engine + import checks
+node --test                    # engine, Worker and tools, in Node
 node tests/browser/smoke.mjs   # the real app in headless Chrome
 ```
 
-- `node --test` plays thousands of random tournaments (4–40 riders, both formats) and checks the bracket invariants, the import checks, the Losers-bracket layout, and the replay timeline (every heat shown once, in order; a rider's journey shows exactly their heats).
-- The smoke test serves `public/` with the same headers as Cloudflare (CSP included) and clicks through the app in headless Chrome: setup, draw, a full tournament, undo, rename, export, import, the replay video, a 40-rider bracket and phone width. Any page error, CSP violation or failed request fails it. Set `CHROME_PATH` if Chrome isn't found.
+- `node --test` plays thousands of random tournaments (4–40 riders, both formats) and checks the bracket invariants, the import checks, the Losers-bracket layout and the replay timeline (every heat shown once, in order; a rider's journey shows exactly their heats). It also runs the Worker against in-memory stores: the organiser login, saving online, the public pages and live feed, the competitions list, plus the addresses, SEO files, brand page and release tools.
+- The smoke test serves the app with the same headers as Cloudflare (CSP included) and the Worker on in-memory stores, then clicks through it in headless Chrome. It covers a full tournament (setup, draw, every heat, undo, rename, export and import), the replay video, the read-only view, saving online (offline, and a conflict between two devices), the public pages with live updates, sharing, the competitions list, the introduction and phone width. Any page error, console error, CSP violation or failed request fails it.
 
-Both run on every push via GitHub Actions, along with a Wrangler dry run that checks the Worker builds. Neither test needs anything installed.
+Both need only Node 22 or newer; the smoke test also needs Chrome (set `CHROME_PATH` if it isn't found). Neither needs `npm install`. Both run on every push via GitHub Actions, along with a Wrangler dry run that checks the Worker builds.
 
 Coverage counts the lines both runs execute, in every module under `public/js` and `worker/` (also those no test loads). CI puts the per-file table in the run's summary and uploads the report to [Codecov](https://codecov.io), which comments coverage changes on pull requests. Locally:
 
@@ -96,7 +105,7 @@ Saved tournaments live in each browser per address, so data on `127.0.0.1` doesn
 | `public/manifest.webmanifest` | Home-screen install (name, colours, icons) |
 | `public/icons/` | Favicon and home-screen icons, generated by `tools/make-icons.py` |
 | `public/brand/` | The logo files and the brand kit zip, offered on [rebattle.app/brand](https://rebattle.app/brand); generated by `tools/make-logo.py`, `tools/make-icons.py` and `tools/make-brand-kit.py` |
-| `tools/serve.mjs` | Local server with Cloudflare's headers |
+| `tools/` | The local server with Cloudflare's headers and in-memory stores (`serve.mjs`), the logo, icon and brand kit generators (`make-*.py`), and the CI scripts for coverage, the format check and releases |
 | `tests/` | `node --test` suite; `tests/browser/` the headless-Chrome smoke test |
 | `wrangler.jsonc` | Cloudflare deploy config |
 | `worker/` | The Worker behind `/api/*` |
