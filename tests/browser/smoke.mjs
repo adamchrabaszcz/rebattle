@@ -743,6 +743,31 @@ await step('/about: Follow takes a code or a pasted link, and rejects anything e
   return rider;
 });
 
+await step('/about#contact: the email and Instagram, reached from the footer and the brand page, and it fits a phone', async () => {
+  await send('Page.navigate', { url: BASE + 'brand' });
+  await until(`!!document.querySelector('.brand-version')`);
+  check(await js(`!!document.querySelector('.intro-note a[href="/about#contact"]')`), 'the brand page\'s "Ask us" doesn\'t go to the contact section');
+  await js(`document.querySelector('.site-footer a[href="/about#contact"]').click(), 1`);
+  await until(`location.pathname === '/about' && !!document.querySelector('#contact')`);
+  const r = await js(`(() => {
+    const c = document.querySelector('#contact');
+    return {
+      mail: c.querySelector('a[href^="mailto:"]')?.getAttribute('href'),
+      insta: c.querySelector('a[href*="instagram.com"]')?.getAttribute('href'),
+      inView: c.getBoundingClientRect().top < innerHeight,
+    };
+  })()`);
+  check(r.mail === 'mailto:hello@rebattle.app', 'the email link: ' + r.mail);
+  check(r.insta === 'https://www.instagram.com/rebattle.app/', 'the Instagram link: ' + r.insta);
+  check(r.inView, 'the footer link doesn\'t scroll to the contact section');
+  await view(390, 844, true);
+  await send('Page.navigate', { url: BASE + 'about#contact' });
+  await until(`!!document.querySelector('#contact a[href^="mailto:"]')`);
+  const width = await js(`document.documentElement.scrollWidth`);
+  await view(1400, 1000, false);
+  check(width <= 390, 'on a phone the page scrolls sideways: ' + width);
+});
+
 await step('a logged-in organiser goes back to their running online tournament from /', async () => {
   await send('Page.navigate', { url: L + '/tournaments' });
   await until(`!!document.querySelector('[data-action=go-setup]')`);
