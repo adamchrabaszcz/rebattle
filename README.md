@@ -9,6 +9,17 @@
 
 A tournament manager for head-to-head double-elimination events, built for a wakeboard competition but sport-agnostic. Riders who lose once drop to the Losers bracket for a second chance; the top two of each bracket cross over into a Final 4.
 
+<p>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/bracket-dark.png">
+    <img alt="The Winners bracket of a running tournament: connector lines, winners highlighted, tags for who drops to the Losers bracket" src="docs/screenshots/bracket-light.png" width="560">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/phone-dark.png">
+    <img alt="A rider's page on a phone: in the Losers bracket, their next heat and the heats they've ridden" src="docs/screenshots/phone-light.png" width="174">
+  </picture>
+</p>
+
 ## Format
 
 - **Winners bracket**: a classic knockout, filled up to a power of two with random byes.
