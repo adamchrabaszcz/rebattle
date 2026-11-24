@@ -754,18 +754,22 @@ await step('/about#contact: the email and Instagram, reached from the footer and
     return {
       mail: c.querySelector('a[href^="mailto:"]')?.getAttribute('href'),
       insta: c.querySelector('a[href*="instagram.com"]')?.getAttribute('href'),
-      inView: c.getBoundingClientRect().top < innerHeight,
     };
   })()`);
   check(r.mail === 'mailto:hello@rebattle.app', 'the email link: ' + r.mail);
   check(r.insta === 'https://www.instagram.com/rebattle.app/', 'the Instagram link: ' + r.insta);
-  check(r.inView, 'the footer link doesn\'t scroll to the contact section');
+  // On a phone Contact is well below the fold, so this proves the link scrolls to it (on
+  // desktop it's on screen anyway).
   await view(390, 844, true);
   await send('Page.navigate', { url: BASE + 'about#contact' });
-  await until(`!!document.querySelector('#contact a[href^="mailto:"]')`);
-  const width = await js(`document.documentElement.scrollWidth`);
+  const phone = await until(`(() => {
+    const c = document.querySelector('#contact');
+    const top = c && c.querySelector('a[href^="mailto:"]') ? c.getBoundingClientRect().top : -1;
+    return scrollY > 0 && top >= 0 && top < innerHeight && { width: document.documentElement.scrollWidth };
+  })()`).catch(() => null);
   await view(1400, 1000, false);
-  check(width <= 390, 'on a phone the page scrolls sideways: ' + width);
+  check(phone, 'on a phone, /about#contact doesn\'t scroll to the contact section');
+  check(phone.width <= 390, 'on a phone the page scrolls sideways: ' + phone.width);
 });
 
 await step('a logged-in organiser goes back to their running online tournament from /', async () => {
