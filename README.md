@@ -104,5 +104,5 @@ Saved tournaments live in each browser per address, so data on `127.0.0.1` doesn
 
 The code is under the [MIT licence](LICENSE): use it, run it, change it, and contributions are welcome under the same terms ([`CONTRIBUTING.md`](CONTRIBUTING.md)).
 
-The **rebattle** name and logo (`docs/brand/`, the icons) are not covered by the licence: they stay reserved, so a copy you run should have its own name and look. The bundled fonts keep their own licence (SIL OFL, `public/fonts/OFL.txt`), and the files in `public/js/vendor/` theirs (MIT, noted in `docs/architecture.md`).
+The **rebattle** name and logo (`public/brand/`, `public/icons/`) are not covered by the licence: they stay reserved, so a copy you run should have its own name and look. The bundled fonts keep their own licence (SIL OFL, `public/fonts/OFL.txt`), and the files in `public/js/vendor/` theirs (MIT, noted in `docs/architecture.md`).
 
