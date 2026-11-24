@@ -664,7 +664,7 @@ function handleReloadExternalUpdate() {
 // clobbers it. (Opening two DIFFERENT tournaments in two tabs is fine and
 // never triggers this — each saves under its own id with no conflict.)
 window.addEventListener('storage', (e) => {
-  if (e.key !== null && e.key !== 'ruedaBattle.tournaments') return; // pre-rename key, see store/local.js
+  if (e.key !== null && e.key !== 'rebattle.tournaments') return; // store/local.js
   if (!state.tournament || state.live) return; // public pages follow the server instead
   const fresh = Store.getById(state.tournament.id);
   if (!fresh) return;
