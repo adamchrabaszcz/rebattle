@@ -92,6 +92,8 @@ find public/js -name '*.js' -print0 | xargs -0 -n1 node --check   # every module
 npm ci && npx wrangler deploy --dry-run                        # the Worker builds (pinned wrangler)
 ```
 
+CI runs the same in `.github/workflows/`. Actions there are pinned to a full commit SHA with the version in a comment (`uses: actions/checkout@<sha> # v4.4.0`), because a tag can be moved to other code that would then run with the workflow's token and secrets. Pin a new action the same way; Dependabot (`.github/dependabot.yml`) proposes updates weekly as one `ci` pull request.
+
 ## Logging in locally
 
 There's no Cloudflare Access on your machine. To see the app as a logged-in organiser, set `DEV_ORGANISER_EMAIL`:
