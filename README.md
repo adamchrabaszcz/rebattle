@@ -107,6 +107,7 @@ Saved tournaments live in each browser per address, so data on `127.0.0.1` doesn
 
 - [`docs/architecture.md`](docs/architecture.md): modules, data model, bracket rules, rendering, replay video
 - [`docs/brand.md`](docs/brand.md): logo, colours, type, wording
+- [`docs/adr/`](docs/adr/README.md): why it's built this way, one short record per decision
 - [`CONTRIBUTING.md`](CONTRIBUTING.md): workflow and Conventional Commits
 - [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md): how we treat each other
 - [`AGENTS.md`](AGENTS.md): short brief for coding agents

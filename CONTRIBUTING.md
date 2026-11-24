@@ -121,3 +121,5 @@ It only works on `127.0.0.1` and `localhost`. Online tournaments then work too: 
 ## Docs
 
 Context belongs in `docs/`, not in long comments or in `AGENTS.md`. When a change alters behaviour, the data model or structure, update `docs/architecture.md` (or `docs/brand.md`) in the same pull request.
+
+Decisions that are costly to reverse, or that people will ask "why?" about, get a short record in [`docs/adr/`](docs/adr/README.md). A change that goes against an accepted record says so, and adds a new record that supersedes it.

@@ -8,6 +8,7 @@ Keep this file short. Detailed context lives in `docs/`; read the relevant doc b
 
 - `docs/architecture.md`: modules, data model, bracket rules, rendering, replay video
 - `docs/brand.md`: logo, colours, type, wording
+- `docs/adr/`: why it's built this way (no framework, the browser as authority, Durable Objects, the Losers draw, Access, the storage keys); a change against one supersedes it with a new record
 - `CONTRIBUTING.md`: workflow, commits, checks
 
 ## Commands

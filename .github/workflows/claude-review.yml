@@ -43,8 +43,9 @@ jobs:
             PR NUMBER: ${{ github.event.pull_request.number }}
 
             Review this pull request for bugs, security issues, edge cases and breaking changes.
-            Follow AGENTS.md (its "Code review" section first), CONTRIBUTING.md and
-            docs/architecture.md.
+            Follow AGENTS.md (its "Code review" section first), CONTRIBUTING.md,
+            docs/architecture.md and the decisions in docs/adr/. A change that goes against an
+            accepted decision without a new record superseding it is "**should fix**".
 
             Check the pull request against CONTRIBUTING.md: it closes exactly one issue and does
             one thing, an engine or Worker change has a test that fails without it, the docs it
