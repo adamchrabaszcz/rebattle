@@ -101,6 +101,7 @@ Saved tournaments live in each browser per address, so data on `127.0.0.1` doesn
 | `wrangler.jsonc` | Cloudflare deploy config |
 | `worker/` | The Worker behind `/api/*` |
 | `package.json` | Dev tools (pinned Wrangler) and scripts; marks `.js` as ES modules for Node |
+| `docs/screenshots/` | The README screenshots, made by `tools/make-screenshots.mjs` (needs Chrome); rerun after a design change |
 
 ## Docs
 
