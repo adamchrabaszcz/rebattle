@@ -1,5 +1,6 @@
 // The introduction (/about, and / in a browser with nothing saved): what rebattle
-// is, following a competition by its code, how the format works, and how to start.
+// is, following a competition by its code, how the format works, how to start, and how to
+// get in touch (#contact, linked from the footer and the brand page).
 
 import { brandLogo } from './html.js';
 import { renderIntroCompetitions } from './competitions.js';
@@ -9,6 +10,11 @@ const STEPS = [
   ['lb', 'Losers bracket', 'Your second chance. Pairings are a random draw each round. Lose here and you&rsquo;re out.'],
   ['f4', 'Final 4', 'The top two of each bracket cross over: WB 1st meets LB 2nd, WB 2nd meets LB 1st. The winners ride the Grand Final, the others the Small Final.'],
 ];
+
+// The project's own address (Cloudflare Email Routing), never an organiser's: owner emails stay
+// out of anything public. The Instagram link opens the app on phones.
+const CONTACT_EMAIL = 'hello@rebattle.app';
+const INSTAGRAM = 'https://www.instagram.com/rebattle.app/';
 
 // state.hasWork: tournaments saved on this device (shows the way to the list).
 // state.introCompetitions: the latest listed competitions (filled in by app.js).
@@ -43,6 +49,14 @@ function renderIntro(state) {
       <p>Set up a bracket in a minute, record each heat with one tap, keep going when the venue wifi drops. Without an account it&rsquo;s saved in this browser. Organisers with an account save online and get the live link, the QR poster and rider pages.</p>
       <div class="toolbar"><button class="primary" data-action="go-setup">Start a tournament</button></div>
     </div>
+    <section class="section intro-contact" id="contact">
+      <h2>Contact</h2>
+      <p>Running a contest, riding in one, or writing about one? Get in touch.</p>
+      <div class="toolbar">
+        <a class="btn" href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>
+        <a class="btn" href="${INSTAGRAM}" rel="noopener">Instagram @rebattle.app</a>
+      </div>
+    </section>
   `;
 }
 

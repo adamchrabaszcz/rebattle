@@ -146,7 +146,7 @@ function renderBrand() {
 
     <section class="section">
       <h2>Using the name and logo</h2>
-      <p class="intro-note">The rebattle code is open source (MIT), but the name and logo are not part of that licence. You’re welcome to use them to show that your event runs on rebattle: on posters, in announcements, in videos. Please don’t use them as your own brand, change them, or put them on a copy of the app you run yourself. Not sure? <a href="https://github.com/adamchrabaszcz/rebattle/issues" rel="noopener">Ask us</a>.</p>
+      <p class="intro-note">The rebattle code is open source (MIT), but the name and logo are not part of that licence. You’re welcome to use them to show that your event runs on rebattle: on posters, in announcements, in videos. Please don’t use them as your own brand, change them, or put them on a copy of the app you run yourself. Not sure? <a href="/about#contact">Ask us</a>.</p>
     </section>`;
 }
 
