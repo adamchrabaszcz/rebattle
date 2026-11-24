@@ -754,6 +754,35 @@ await step('/about: Follow takes a code or a pasted link, and rejects anything e
   return rider;
 });
 
+await step('/about#contact: the email and Instagram, reached from the footer and the brand page, and it fits a phone', async () => {
+  await send('Page.navigate', { url: BASE + 'brand' });
+  await until(`!!document.querySelector('.brand-version')`);
+  check(await js(`!!document.querySelector('.intro-note a[href="/about#contact"]')`), 'the brand page\'s "Ask us" doesn\'t go to the contact section');
+  await js(`document.querySelector('.site-footer a[href="/about#contact"]').click(), 1`);
+  await until(`location.pathname === '/about' && !!document.querySelector('#contact')`);
+  const r = await js(`(() => {
+    const c = document.querySelector('#contact');
+    return {
+      mail: c.querySelector('a[href^="mailto:"]')?.getAttribute('href'),
+      insta: c.querySelector('a[href*="instagram.com"]')?.getAttribute('href'),
+    };
+  })()`);
+  check(r.mail === 'mailto:hello@rebattle.app', 'the email link: ' + r.mail);
+  check(r.insta === 'https://www.instagram.com/rebattle.app/', 'the Instagram link: ' + r.insta);
+  // On a phone Contact is well below the fold, so this proves the link scrolls to it (on
+  // desktop it's on screen anyway).
+  await view(390, 844, true);
+  await send('Page.navigate', { url: BASE + 'about#contact' });
+  const phone = await until(`(() => {
+    const c = document.querySelector('#contact');
+    const top = c && c.querySelector('a[href^="mailto:"]') ? c.getBoundingClientRect().top : -1;
+    return scrollY > 0 && top >= 0 && top < innerHeight && { width: document.documentElement.scrollWidth };
+  })()`).catch(() => null);
+  await view(1400, 1000, false);
+  check(phone, 'on a phone, /about#contact doesn\'t scroll to the contact section');
+  check(phone.width <= 390, 'on a phone the page scrolls sideways: ' + phone.width);
+});
+
 await step('a logged-in organiser goes back to their running online tournament from /', async () => {
   await send('Page.navigate', { url: L + '/tournaments' });
   await until(`!!document.querySelector('[data-action=go-setup]')`);

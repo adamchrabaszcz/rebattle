@@ -1,5 +1,5 @@
 // The footer on every screen but the replay: the way to the introduction, following
-// a competition, your tournaments, the colours (Auto / Light / Dark) and the organiser
+// a competition, your tournaments, contact, the colours (Auto / Light / Dark) and the organiser
 // login (filled in place by app.js once known, data-account). One row on desktop, two
 // columns on phones.
 
@@ -23,6 +23,7 @@ function renderFooter(state) {
         <a href="/about#follow">Follow a competition</a>
         <a href="/competitions">Competitions</a>
         <a href="/brand">Brand</a>
+        <a href="/about#contact">Contact</a>
         ${state.hasWork ? '<a href="/tournaments">Your tournaments</a>' : ''}
       </nav>
       <div class="theme-switch" role="group" aria-label="Theme">
