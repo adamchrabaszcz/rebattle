@@ -11,3 +11,13 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+  # The dev tools (wrangler, package-lock.json). Security updates only: a limit of 0 opens no
+  # weekly version updates, but gives the security pull requests this entry's `build` prefix
+  # and lets Dependabot rebase them.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+    commit-message:
+      prefix: build
