@@ -21,7 +21,7 @@ jobs:
       contents: read
       issues: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Check the issue's sections
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -46,9 +46,10 @@ jobs:
           fi
 
   pull-request:
-    if: github.event_name == 'pull_request'
+    # Dependabot's action updates have no issue to close; they're reviewed like any pull request.
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Conventional Commit title and a Closes line
         run: node tools/format-check.mjs pr
