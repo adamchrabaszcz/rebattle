@@ -96,6 +96,7 @@ Saved tournaments live in each browser per address, so data on `127.0.0.1` doesn
 - [`docs/architecture.md`](docs/architecture.md): modules, data model, bracket rules, rendering, replay video
 - [`docs/brand.md`](docs/brand.md): logo, colours, type, wording
 - [`CONTRIBUTING.md`](CONTRIBUTING.md): workflow and Conventional Commits
+- [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md): how we treat each other
 - [`AGENTS.md`](AGENTS.md): short brief for coding agents
 - Planned work and ideas: [GitHub issues](https://github.com/adamchrabaszcz/rebattle/issues)
 - Security problems: [`SECURITY.md`](SECURITY.md) (report privately, not in issues)

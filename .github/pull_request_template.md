@@ -4,5 +4,6 @@
 ## Checks
 <!-- What you ran and looked at: node --test, node tests/browser/smoke.mjs, screenshots. -->
 - [ ] `node --test` and `node tests/browser/smoke.mjs` pass
+- [ ] No personal data (real riders' names, emails other than `@example.com`)
 
 Closes #
