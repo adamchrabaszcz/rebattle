@@ -4,6 +4,8 @@ Contributions are welcome: bug reports, fixes, refactors, ideas. Start with an i
 
 From a fork, the same rules apply; GitHub asks a maintainer to approve the checks on your first pull request.
 
+Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md). Editors pick up the shared settings (UTF-8, LF, final newline, 2-space indent) from `.editorconfig`.
+
 ## Workflow
 
 1. Branch from the latest `main`: `<type>/<short-topic>`, e.g. `feat/follow-me-card`, `fix/lb-final-detection`.
