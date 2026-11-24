@@ -26,3 +26,18 @@ Keep this file short. Detailed context lives in `docs/`; read the relevant doc b
 - Online tournaments: the browser sends whole snapshots with `baseVersion`; the Worker checks login, same origin, size, `validateTournament` and ownership on every write. Keep owner emails out of anything public (`/api/t/*` and the live feed).
 - Conventional Commits; branch + PR, never commit straight to `main`.
 - One feature or fix per PR, each branched from `main` and mergeable on its own; split multi-part requests (CONTRIBUTING.md).
+
+## Code review
+
+Claude reviews each pull request when it's opened or marked ready (`.github/workflows/claude-review.yml`); `@claude review` in a comment asks for another pass (only the owner, members and collaborators can start it; fork pull requests get no automatic review). When reviewing, look first at what CI can't see:
+
+- **Outside text:** a user-supplied string (names, titles, codes, imported files) reaching HTML without `escapeHtml`; an inline handler instead of `data-action`.
+- **Read-only view:** a new entry in `VIEW_ACTIONS` that changes data.
+- **The engine:** `public/js/engine/` touching the DOM or storage, or importing anything.
+- **The Worker:** a write path missing a check (login, same origin, size, `validateTournament`, ownership, `baseVersion`); an owner email in `/api/t/*`, the public list or the live feed.
+- **Saved data:** a renamed `ruedaBattle.*` key, or a new key not under `rebattle.*`; a change to the tournament format without a `!` and a note on existing data.
+- **Dependencies:** a runtime npm dependency, a CDN, or a vendored file that is modified or not noted in `docs/architecture.md`.
+- **Tests:** an engine or Worker change without a test that fails without it.
+- **No personal data or secrets** in code, tests, docs or examples (real riders' names, emails other than `@example.com`).
+
+Skip what the tests, the smoke test, the Worker build and the format check already catch. The summary is a checklist of these points and CONTRIBUTING.md's rules, `[x]` when fine and `[ ]` with what needs attention (leaving out what doesn't apply), then the verdict. If nothing important turns up, keep it short.

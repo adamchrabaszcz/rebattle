@@ -147,6 +147,7 @@ Ids are plain tokens (`[A-Za-z0-9_.-]`). Import enforces this, because ids end u
 - API responses set their own headers (`worker/index.js`); `_headers` only covers static files.
 - Wrangler is a pinned dev dependency (`package.json` + `package-lock.json`), so local runs, CI and Cloudflare's build use the same version.
 - Cloudflare's GitHub integration deploys `main` on every merge and builds a preview for each pull request.
+- **AI review:** `.github/workflows/claude-review.yml` runs Claude Code on each pull request when it's opened or marked ready (not drafts, forks or Dependabot); `claude.yml` answers `@claude` in comments from the owner, members and collaborators. Both run on the owner's Claude subscription (repository secret `CLAUDE_CODE_OAUTH_TOKEN`), use Opus capped at 30 turns, and can comment but not push or approve. What the review looks for is in AGENTS.md ("Code review").
 - `public/_headers` sets the security headers and caching:
   - **CSP:** only the site's own files. No inline scripts or `<style>` tags; `style="…"` attributes are allowed because the UI sets widths and colours with them. A new outside source (analytics, a CDN, the future API on another host) needs adding to the CSP first.
   - **Caching:** fonts are cached for a year (rename a font file to change it), icons and brand files (`/brand/*`) for a week. HTML, CSS and JS are always revalidated, so a deploy shows up at once.
