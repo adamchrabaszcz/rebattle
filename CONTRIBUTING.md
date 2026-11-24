@@ -5,7 +5,7 @@
 1. Branch from the latest `main`: `<type>/<short-topic>`, e.g. `feat/follow-me-card`, `fix/lb-final-detection`.
 2. Make the change, keeping it focused on one thing.
 3. Run the checks (below) and look at the change in a browser, on desktop and phone width.
-4. Open a pull request into `main`. CI must be green before merging.
+4. Open a pull request into `main`. CI must be green before merging. Claude reviews it once it's opened or marked ready, with inline comments and a checklist (AGENTS.md, "Code review"); `@claude review` in a comment asks for another pass after new commits. The review advises; merging is the owner's decision.
 
 ### One feature or fix per pull request
 
@@ -107,7 +107,7 @@ It only works on `127.0.0.1` and `localhost`. Online tournaments then work too: 
 - One job per module; keep files under ~350 lines (the engine excepted). The module map is in `docs/architecture.md`.
 - Interaction goes through `data-action` attributes handled in `public/js/app.js`; no inline event handlers.
 - Comments explain *why*, not *what*.
-- The saved-data keys (`ruedaBattle.*`) predate the rename and stay as they are.
+- The saved-data keys (`ruedaBattle.*`) predate the rename and stay as they are; new keys go under `rebattle.*`.
 - Brand rules (logo, colours, fonts, wording) are in `docs/brand.md`.
 
 ## Docs
