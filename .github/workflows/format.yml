@@ -46,7 +46,8 @@ jobs:
           fi
 
   pull-request:
-    # Dependabot's action updates have no issue to close; they're reviewed like any pull request.
+    # Dependabot's pull requests (action and npm security updates) have no issue to close;
+    # they're reviewed like any pull request.
     if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
