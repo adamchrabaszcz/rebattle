@@ -98,4 +98,11 @@ Saved tournaments live in each browser per address, so data on `127.0.0.1` doesn
 - [`CONTRIBUTING.md`](CONTRIBUTING.md): workflow and Conventional Commits
 - [`AGENTS.md`](AGENTS.md): short brief for coding agents
 - Planned work and ideas: [GitHub issues](https://github.com/adamchrabaszcz/rebattle/issues)
+- Security problems: [`SECURITY.md`](SECURITY.md) (report privately, not in issues)
+
+## Licence
+
+The code is under the [MIT licence](LICENSE): use it, run it, change it, and contributions are welcome under the same terms ([`CONTRIBUTING.md`](CONTRIBUTING.md)).
+
+The **rebattle** name and logo (`public/brand/`, `public/icons/`) are not covered by the licence: they stay reserved, so a copy you run should have its own name and look. The bundled fonts keep their own licence (SIL OFL, `public/fonts/OFL.txt`), and the files in `public/js/vendor/` theirs (MIT, noted in `docs/architecture.md`).
 
